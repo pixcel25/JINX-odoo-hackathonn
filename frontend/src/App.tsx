@@ -1,8 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import './App.css'
 import { EmployeeDetailsModal } from './components/EmployeeDetailsModal'
 import type { Employee } from './components/EmployeeDetailsModal'
+import { DEFAULT_SALARY_STRUCTURE } from './data/salary'
+import type { SalaryLog, SalaryStructure } from './data/salary'
+import { DEFAULT_PRIVATE_INFO } from './data/privateInfo'
+import type { PrivateInfo } from './data/privateInfo'
+import { LeaveApplicationModal } from './components/LeaveApplicationModal'
 import employeeData from './data/employees.json'
 import timeOffRequestData from './data/timeOffRequests.json'
 import dashboardData from './data/dashboard.json'
@@ -277,6 +282,31 @@ interface TimeOffRequest {
 
 const INITIAL_EMPLOYEES = employeeData as Employee[]
 const INITIAL_TIME_OFF_REQUESTS = timeOffRequestData as TimeOffRequest[]
+const ADMIN_PROFILE: Employee = {
+  id: 'admin-profile',
+  name: 'Admin User',
+  title: 'HR Administrator',
+  empId: 'ADMIN-001',
+  dept: 'Administration',
+  status: 'Present',
+  email: 'admin@dayflow.com',
+  phone: '+91 9876543210',
+  company: 'DayFlow Technologies',
+  manager: 'Executive Team',
+  location: 'Goa, India',
+  about: 'Administrator responsible for managing employee records, attendance, and time off workflows.',
+  jobLove: 'Helping teams work smoothly through simple and reliable HR processes.',
+  hobbies: 'Reading, planning, and exploring new productivity tools.',
+  skills: ['HR Management', 'Team Leadership', 'Reporting', 'Administration'],
+  certifications: ['DayFlow Admin Access'],
+  avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+  initials: 'AU',
+  paidLeaveAvailable: 24,
+  sickLeaveAvailable: 7,
+  casualLeaveAvailable: 5,
+  attendanceHistory: [],
+  leaveHistory: []
+}
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -288,11 +318,37 @@ function App() {
   const [authLoading, setAuthLoading] = useState(false)
   
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'Employees' | 'Attendance' | 'Time Off'>('Employees')
+  const [activeTab, setActiveTab] = useState<'Employees' | 'Attendance' | 'Time Off' | 'Salary Logs'>('Employees')
   const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES)
   
   // Employee Popup Modal State
   const [profileModalEmployee, setProfileModalEmployee] = useState<Employee | null>(null)
+  const [salaryByEmployee, setSalaryByEmployee] = useState<Record<string, SalaryStructure>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('dayflow-salary-structures') ?? '{}') as Record<string, SalaryStructure>
+    } catch {
+      return {}
+    }
+  })
+  const [salaryLogsByEmployee, setSalaryLogsByEmployee] = useState<Record<string, SalaryLog[]>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('dayflow-salary-logs') ?? '{}') as Record<string, SalaryLog[]>
+    } catch {
+      return {}
+    }
+  })
+  const [salarySaving, setSalarySaving] = useState(false)
+  const [salaryError, setSalaryError] = useState('')
+  const [privateInfoByEmployee, setPrivateInfoByEmployee] = useState<Record<string, PrivateInfo>>({})
+
+  useEffect(() => {
+    localStorage.setItem('dayflow-salary-structures', JSON.stringify(salaryByEmployee))
+  }, [salaryByEmployee])
+
+  useEffect(() => {
+    localStorage.setItem('dayflow-salary-logs', JSON.stringify(salaryLogsByEmployee))
+  }, [salaryLogsByEmployee])
+  const [selectedLeaveApplication, setSelectedLeaveApplication] = useState<TimeOffRequest | null>(null)
 
   // Time Off view state & requests
   const [timeOffSubTab, setTimeOffSubTab] = useState<'Time Off' | 'Allocation'>('Time Off')
@@ -308,6 +364,10 @@ function App() {
     company: string
     name: string
     email: string
+    title: string
+    empId: string
+    dept: string
+    status: Employee['status']
     phone: string
     password: string
     confirmPassword: string
@@ -315,6 +375,10 @@ function App() {
     company: '',
     name: '',
     email: '',
+    title: '',
+    empId: '',
+    dept: dashboardData.defaultDepartment,
+    status: dashboardData.defaultAttendanceStatus as Employee['status'],
     phone: '',
     password: '',
     confirmPassword: ''
@@ -326,8 +390,48 @@ function App() {
 
   // Open employee details modal popup handler
   const openEmployeePopup = (emp: Employee) => {
-    // idvuudub
+    setSalaryError('')
     setProfileModalEmployee(emp)
+  }
+
+  const handleSaveSalary = async (employee: Employee, nextSalary: SalaryStructure) => {
+    setSalarySaving(true)
+    setSalaryError('')
+    const previousSalary = salaryByEmployee[employee.id] ?? DEFAULT_SALARY_STRUCTURE
+    try {
+      const token = await getCsrfToken()
+      const response = await fetch(`${API_URL}/auth/salary-change/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'X-CSRFToken': token } : {}) },
+        body: JSON.stringify({
+          employeeEmail: employee.email,
+          employeeName: employee.name,
+          oldSalary: previousSalary,
+          newSalary: nextSalary
+        })
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error ?? 'Unable to send the salary update email.')
+      setSalaryByEmployee((current) => ({ ...current, [employee.id]: nextSalary }))
+      setSalaryLogsByEmployee((current) => ({
+        ...current,
+        [employee.id]: [...(current[employee.id] ?? []), {
+          id: `${employee.id}-${Date.now()}`,
+          changedAt: new Date().toISOString(),
+          oldSalary: previousSalary,
+          newSalary: nextSalary
+        }]
+      }))
+    } catch (error) {
+      setSalaryError(error instanceof Error ? error.message : 'Unable to save the salary update.')
+    } finally {
+      setSalarySaving(false)
+    }
+  }
+
+  const handleSavePrivateInfo = (employee: Employee, privateInfo: PrivateInfo) => {
+    setPrivateInfoByEmployee((current) => ({ ...current, [employee.id]: privateInfo }))
   }
 
   const handleAuthSubmit = async (e: FormEvent) => {
@@ -425,7 +529,7 @@ function App() {
         leaveHistory: []
       }
       setEmployees(currentEmployees => [created, ...currentEmployees])
-      setNewEmp({ company: '', name: '', email: '', phone: '', password: '', confirmPassword: '' })
+      setNewEmp({ company: '', name: '', email: '', title: '', empId: '', dept: dashboardData.defaultDepartment, status: dashboardData.defaultAttendanceStatus as Employee['status'], phone: '', password: '', confirmPassword: '' })
       setLogoFileName('')
       setEmployeeFormSuccess(`Employee added successfully. Login ID: ${data.employeeId}`)
     } catch (error) {
@@ -464,6 +568,9 @@ function App() {
     req.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     req.timeOffType.toLowerCase().includes(searchQuery.toLowerCase())
   )
+  const leaveApplicationEmployee = selectedLeaveApplication
+    ? employees.find(emp => emp.name === selectedLeaveApplication.employeeName) ?? null
+    : null
 
   if (!isAuthenticated) {
     return (
@@ -567,6 +674,12 @@ function App() {
             >
               Time Off
             </button>
+            <button
+              className={`nav-link-btn ${activeTab === 'Salary Logs' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('Salary Logs'); setStatusFilter('All'); }}
+            >
+              Salary Logs
+            </button>
           </nav>
         </div>
 
@@ -576,10 +689,10 @@ function App() {
           </button>
           <div 
             className="nav-user-box blue-badge" 
-            title="Sign Out"
-            onClick={() => setIsAuthenticated(false)}
+            title="View Admin Profile"
+            onClick={() => openEmployeePopup(ADMIN_PROFILE)}
           >
-            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80" alt="User Avatar" />
+            <img src={ADMIN_PROFILE.avatarUrl} alt="Admin profile" />
           </div>
         </div>
       </header>
@@ -595,6 +708,13 @@ function App() {
             <button type="button" className="btn-add-new-emp" onClick={() => { setEmployeeFormError(''); setEmployeeFormSuccess(''); setIsModalOpen(true) }}>
               + Add Employee
             </button>
+          </div>
+        </div>
+      )}
+      {activeTab === 'Salary Logs' && (
+        <div className="wireframe-subheader">
+          <div className="subheader-title-group">
+            <h1 className="subheader-title">Salary Logs</h1>
           </div>
         </div>
       )}
@@ -622,7 +742,7 @@ function App() {
                   <circle cx="11" cy="11" r="8"/>
                   <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
-                <input 
+                <input
                   type="text" 
                   placeholder="Search employee by name, ID, title..." 
                   value={searchQuery}
@@ -963,6 +1083,13 @@ function App() {
                               {req.status}
                             </span>
                             <div className="approval-action-boxes">
+                              <button
+                                className="view-application-btn"
+                                title="View Application"
+                                onClick={() => setSelectedLeaveApplication(req)}
+                              >
+                                View Application
+                              </button>
                               <button 
                                 className="box-btn-reject"
                                 title="Refuse Request"
@@ -988,6 +1115,39 @@ function App() {
             </div>
           </div>
         )}
+
+        {activeTab === 'Salary Logs' && (
+          <div className="salary-logs-page">
+            <div className="salary-logs-page-header">
+              <div>
+                <h2 className="salary-logs-page-title">Salary Change History</h2>
+                <p className="salary-logs-page-subtitle">Review previous and current salary structures for every employee.</p>
+              </div>
+              <span className="overview-badge">Audit Log</span>
+            </div>
+            {Object.entries(salaryLogsByEmployee).some(([, logs]) => logs.length > 0) ? (
+              <div className="salary-logs-list">
+                {Object.entries(salaryLogsByEmployee).flatMap(([employeeId, logs]) => {
+                  const employee = employees.find((item) => item.id === employeeId)
+                  return employee ? [...logs].reverse().map((log) => (
+                    <div className="salary-log-entry" key={log.id}>
+                      <div className="salary-log-header">
+                        <strong>{employee.name}</strong>
+                        <span>{new Date(log.changedAt).toLocaleString()}</span>
+                      </div>
+                      <div className="salary-log-structures">
+                        <div><span className="salary-log-label">Previous</span><span>{log.oldSalary.payGrade} | {log.oldSalary.baseSalary} | {log.oldSalary.allowances} | {log.oldSalary.taxDeduction}</span></div>
+                        <div><span className="salary-log-label">New</span><span>{log.newSalary.payGrade} | {log.newSalary.baseSalary} | {log.newSalary.allowances} | {log.newSalary.taxDeduction}</span></div>
+                      </div>
+                    </div>
+                  )) : []
+                })}
+              </div>
+            ) : (
+              <p className="salary-logs-empty">No salary changes have been recorded.</p>
+            )}
+          </div>
+        )}
       </main>
 
       {/* Employee Details Popup Modal Overlay Component */}
@@ -997,7 +1157,21 @@ function App() {
         onClose={() => setProfileModalEmployee(null)}
         showAllTabs={activeTab !== 'Time Off'}
         defaultTab={activeTab === 'Time Off' ? 'Leave & Time Off' : undefined}
+        salary={profileModalEmployee ? salaryByEmployee[profileModalEmployee.id] : undefined}
+        onSaveSalary={profileModalEmployee ? (salary) => handleSaveSalary(profileModalEmployee, salary) : undefined}
+        salarySaving={salarySaving}
+        salaryError={salaryError}
+        privateInfo={profileModalEmployee ? privateInfoByEmployee[profileModalEmployee.id] ?? DEFAULT_PRIVATE_INFO : undefined}
+        onSavePrivateInfo={profileModalEmployee ? (privateInfo) => handleSavePrivateInfo(profileModalEmployee, privateInfo) : undefined}
       />
+
+      {selectedLeaveApplication && leaveApplicationEmployee && (
+        <LeaveApplicationModal
+          employee={leaveApplicationEmployee}
+          application={selectedLeaveApplication}
+          onClose={() => setSelectedLeaveApplication(null)}
+        />
+      )}
 
       {/* New Employee Modal */}
       {isModalOpen && (
@@ -1053,7 +1227,7 @@ function App() {
 
               <div className="modal-field">
                 <label htmlFor="employee-email">Email</label>
-                <input 
+                <input
                   id="employee-email"
                   type="email"
                   required

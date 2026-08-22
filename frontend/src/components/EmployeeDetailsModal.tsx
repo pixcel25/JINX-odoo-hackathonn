@@ -1,4 +1,8 @@
 import React, { useState } from 'react'
+import { DEFAULT_SALARY_STRUCTURE } from '../data/salary'
+import type { SalaryStructure } from '../data/salary'
+import { DEFAULT_PRIVATE_INFO } from '../data/privateInfo'
+import type { PrivateInfo } from '../data/privateInfo'
 
 export interface AttendanceRecord {
   date: string
@@ -51,19 +55,45 @@ interface EmployeeDetailsModalProps {
   employee: Employee | null
   onClose: () => void
   showAllTabs?: boolean
-  defaultTab?: 'Attendance History' | 'Leave & Time Off' | 'Private Info' | 'Resume' | 'Salary Info'
+  defaultTab?: 'Attendance History' | 'Leave & Time Off' | 'Private Info' | 'Resume' | 'Salary Info' | 'Security'
+  salary?: SalaryStructure
+  onSaveSalary?: (salary: SalaryStructure) => Promise<void>
+  salarySaving?: boolean
+  salaryError?: string
+  privateInfo?: PrivateInfo
+  onSavePrivateInfo?: (privateInfo: PrivateInfo) => void
 }
 
 export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   employee,
   onClose,
   showAllTabs = true,
-  defaultTab
+  defaultTab,
+  salary = DEFAULT_SALARY_STRUCTURE,
+  onSaveSalary,
+  salarySaving = false,
+  salaryError = '',
+  privateInfo = DEFAULT_PRIVATE_INFO,
+  onSavePrivateInfo
 }) => {
   const initialActiveTab = defaultTab || (showAllTabs ? 'Attendance History' : 'Leave & Time Off')
   const [activeTab, setActiveTab] = useState<
-    'Attendance History' | 'Leave & Time Off' | 'Private Info' | 'Resume' | 'Salary Info'
+    'Attendance History' | 'Leave & Time Off' | 'Private Info' | 'Resume' | 'Salary Info' | 'Security'
   >(initialActiveTab)
+  const [editedSalary, setEditedSalary] = useState<SalaryStructure>({ ...DEFAULT_SALARY_STRUCTURE, ...salary })
+  const [isEditingSalary, setIsEditingSalary] = useState(false)
+  const [editedPrivateInfo, setEditedPrivateInfo] = useState<PrivateInfo>({ ...DEFAULT_PRIVATE_INFO, ...privateInfo })
+  const [isEditingPrivateInfo, setIsEditingPrivateInfo] = useState(false)
+
+  const handleSalarySave = async () => {
+    if (!onSaveSalary) return
+    await onSaveSalary(editedSalary)
+    setIsEditingSalary(false)
+  }
+
+  const updatePrivateField = (field: keyof PrivateInfo, value: string) => {
+    setEditedPrivateInfo((current) => ({ ...current, [field]: value }))
+  }
 
   if (!employee) return null
 
@@ -147,7 +177,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
               className={`wireframe-tab-btn ${activeTab === 'Attendance History' ? 'active' : ''}`}
               onClick={() => setActiveTab('Attendance History')}
             >
-              Attendance Track Record
+               Attendance Record
             </button>
 
             <button 
@@ -191,16 +221,27 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 >
                   Salary Info
                 </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'Security'}
+                  className={`wireframe-tab-btn ${activeTab === 'Security' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('Security')}
+                >
+                  Security
+                </button>
+
               </>
             )}
           </div>
 
-          {/* TAB 1: Attendance Track Record */}
+           {/* TAB 1: Attendance Record */}
           {activeTab === 'Attendance History' && (
             <div className="wireframe-single-card">
               <div className="content-card-box">
                 <div className="card-header-line">
-                  <h3 className="box-title">Attendance Track Record</h3>
+                  <h3 className="box-title">Attendance Record</h3>
                   <span className="overview-badge">Historical Attendance Log</span>
                 </div>
 
@@ -320,59 +361,38 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
 
           {/* TAB 3: Private Info */}
           {showAllTabs && activeTab === 'Private Info' && (
-            <div className="wireframe-tab-grid">
-              <div className="tab-left-col">
-                <div className="content-card-box">
-                  <div className="card-header-line">
-                    <h3 className="box-title">About</h3>
-                    <button className="card-pencil-btn" title="Edit About">✎</button>
-                  </div>
-                  <p className="box-text-content">{employee.about}</p>
-                </div>
-
-                <div className="content-card-box">
-                  <div className="card-header-line">
-                    <h3 className="box-title">What I love about my job</h3>
-                    <button className="card-pencil-btn" title="Edit Job Interest">✎</button>
-                  </div>
-                  <p className="box-text-content">{employee.jobLove}</p>
-                </div>
-
-                <div className="content-card-box">
-                  <div className="card-header-line">
-                    <h3 className="box-title">My interests and hobbies</h3>
-                    <button className="card-pencil-btn" title="Edit Hobbies">✎</button>
-                  </div>
-                  <p className="box-text-content">{employee.hobbies}</p>
+            <div className="private-info-card">
+              <div className="private-info-header">
+                <h3 className="box-title">My Profile</h3>
+                {onSavePrivateInfo && !isEditingPrivateInfo && (
+                  <button type="button" className="private-edit-btn" onClick={() => setIsEditingPrivateInfo(true)}>Edit Details</button>
+                )}
+                {onSavePrivateInfo && isEditingPrivateInfo && (
+                  <button type="button" className="private-save-btn" onClick={() => { onSavePrivateInfo(editedPrivateInfo); setIsEditingPrivateInfo(false) }}>Save Details</button>
+                )}
+              </div>
+              <div className="private-profile-summary">
+                <div className="private-profile-avatar">{employee.initials || 'EP'}</div>
+                <div className="private-profile-name">{employee.name}<span>{employee.title}</span></div>
+                <div className="private-summary-fields">
+                  <span>Company<strong>{employee.company}</strong></span>
+                  <span>Department<strong>{employee.dept}</strong></span>
+                  <span>Manager<strong>{employee.manager}</strong></span>
+                  <span>Location<strong>{employee.location}</strong></span>
                 </div>
               </div>
-
-              <div className="tab-right-col">
-                <div className="content-card-box">
-                  <div className="card-header-line">
-                    <h3 className="box-title">Skills</h3>
-                  </div>
-                  
-                  <div className="tags-flex-wrap">
-                    {employee.skills.map((skill, index) => (
-                      <span key={index} className="skill-pill-tag">{skill}</span>
-                    ))}
-                  </div>
+              <div className="private-info-columns">
+                <div>
+                  <h4>Personal Information</h4>
+                  {(['dateOfBirth', 'residingAddress', 'nationality', 'personalEmail', 'gender', 'maritalStatus', 'dateOfJoining'] as Array<keyof PrivateInfo>).map((field) => (
+                    <label key={field}>{field.replace(/([A-Z])/g, ' $1').replace(/^./, (letter) => letter.toUpperCase())}<input value={editedPrivateInfo[field]} readOnly={!isEditingPrivateInfo} onChange={(event) => updatePrivateField(field, event.target.value)} /></label>
+                  ))}
                 </div>
-
-                <div className="content-card-box">
-                  <div className="card-header-line">
-                    <h3 className="box-title">Certification</h3>
-                  </div>
-
-                  <div className="cert-list-wrap">
-                    {employee.certifications.map((cert, index) => (
-                      <div key={index} className="cert-item-row">
-                        <span className="cert-badge-dot"></span>
-                        <span className="cert-title">{cert}</span>
-                      </div>
-                    ))}
-                  </div>
+                <div>
+                  <h4>Bank Details</h4>
+                  {(['bankDetails', 'accountNumber', 'bankName', 'ifscCode', 'panNumber', 'uanNumber', 'employeeCode'] as Array<keyof PrivateInfo>).map((field) => (
+                    <label key={field}>{field.replace(/([A-Z])/g, ' $1').replace(/^./, (letter) => letter.toUpperCase())}<input value={editedPrivateInfo[field]} readOnly={!isEditingPrivateInfo} onChange={(event) => updatePrivateField(field, event.target.value)} /></label>
+                  ))}
                 </div>
               </div>
             </div>
@@ -403,28 +423,74 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
           {showAllTabs && activeTab === 'Salary Info' && (
             <div className="wireframe-single-card">
               <div className="content-card-box">
-                <h3 className="box-title">Compensation & Salary Information</h3>
-                <div className="salary-info-grid">
-                  <div className="salary-box">
-                    <span className="salary-label">Pay Grade</span>
-                    <span className="salary-val">Level 4 — Senior Engineer</span>
-                  </div>
-                  <div className="salary-box">
-                    <span className="salary-label">Base Salary</span>
-                    <span className="salary-val">$110,000 / annum</span>
-                  </div>
-                  <div className="salary-box">
-                    <span className="salary-label">HRA & Allowances</span>
-                    <span className="salary-val">$18,000 / annum</span>
-                  </div>
-                  <div className="salary-box">
-                    <span className="salary-label">Tax Deduction</span>
-                    <span className="salary-val">Standard Corporate Slab</span>
-                  </div>
+                <div className="card-header-line">
+                  <h3 className="box-title">Compensation & Salary Information</h3>
+                  {onSaveSalary && !isEditingSalary && (
+                    <button type="button" className="salary-edit-btn" onClick={() => setIsEditingSalary(true)}>
+                      Edit Salary
+                    </button>
+                  )}
+                  {onSaveSalary && isEditingSalary && (
+                    <button
+                      type="button"
+                      className="salary-save-btn"
+                      onClick={handleSalarySave}
+                      disabled={salarySaving}
+                    >
+                      {salarySaving ? 'Saving...' : 'Save Salary'}
+                    </button>
+                  )}
+                </div>
+                {salaryError && <div className="alert error salary-save-error" role="alert">{salaryError}</div>}
+                <div className="salary-overview-grid">
+                  <div className="salary-overview-field"><span>Month Wage</span><input value={editedSalary.monthWage ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, monthWage: event.target.value })} /><small>/ Month</small></div>
+                  <div className="salary-overview-field"><span>Yearly Wage</span><input value={editedSalary.yearlyWage ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, yearlyWage: event.target.value })} /><small>/ Yearly</small></div>
+                  <div className="salary-overview-field"><span>No. of working days in a week</span><input value={editedSalary.workingDays ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, workingDays: event.target.value })} /></div>
+                  <div className="salary-overview-field"><span>Break Time / Hours</span><input value={editedSalary.workingHours ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, workingHours: event.target.value })} /><small>/ Hrs</small></div>
+                </div>
+
+                <div className="salary-sections-grid">
+                  <section className="salary-section">
+                    <h4>Salary Components</h4>
+                    <div className="salary-component-row"><span>Basic Salary</span><input value={editedSalary.basicSalary ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, basicSalary: event.target.value })} /><small>₹ / month</small><b>50.00%</b></div>
+                    <p>Define Basic salary from company cost based on monthly wages</p>
+                    <div className="salary-component-row"><span>House Rent Allowance</span><input value={editedSalary.houseRentAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, houseRentAllowance: event.target.value })} /><small>₹ / month</small><b>50.00%</b></div>
+                    <p>HRA provided to employees 50% of the basic salary</p>
+                    <div className="salary-component-row"><span>Standard Allowance</span><input value={editedSalary.standardAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, standardAllowance: event.target.value })} /><small>₹ / month</small><b>16.67%</b></div>
+                    <p>A standard allowance is a predetermined, fixed amount provided to employees.</p>
+                    <div className="salary-component-row"><span>Performance Bonus</span><input value={editedSalary.performanceBonus ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, performanceBonus: event.target.value })} /><small>₹ / month</small><b>8.33%</b></div>
+                    <p>Variable amount paid during payroll based on performance.</p>
+                    <div className="salary-component-row"><span>Leave Travel Allowance</span><input value={editedSalary.leaveTravelAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, leaveTravelAllowance: event.target.value })} /><small>₹ / month</small><b>8.33%</b></div>
+                    <p>LTA is paid by the company to cover travel expenses.</p>
+                    <div className="salary-component-row"><span>Fixed Allowance</span><input value={editedSalary.fixedAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, fixedAllowance: event.target.value })} /><small>₹ / month</small><b>11.67%</b></div>
+                    <p>Fixed allowance portion of wages determined after calculating all salary components.</p>
+                  </section>
+
+                  <section className="salary-section">
+                    <h4>Provident Fund (PF) Contribution</h4>
+                    <div className="salary-component-row"><span>Employee</span><input value={editedSalary.providentFundEmployee ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, providentFundEmployee: event.target.value })} /><small>₹ / month</small><b>12.00%</b></div>
+                    <p>PF is calculated based on the basic salary.</p>
+                    <div className="salary-component-row"><span>Employer</span><input value={editedSalary.providentFundEmployer ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, providentFundEmployer: event.target.value })} /><small>₹ / month</small><b>12.00%</b></div>
+                    <p>PF is calculated based on the basic salary.</p>
+                    <h4>Tax Deductions</h4>
+                    <div className="salary-component-row"><span>Professional Tax</span><input value={editedSalary.professionalTax ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, professionalTax: event.target.value })} /><small>₹ / month</small></div>
+                    <p>Professional Tax deducted from the Gross salary.</p>
+                  </section>
                 </div>
               </div>
             </div>
           )}
+
+          {showAllTabs && activeTab === 'Security' && (
+            <div className="wireframe-single-card">
+              <div className="content-card-box security-card">
+                <h3 className="box-title">Security</h3>
+                <p className="box-text-content">Manage account access and authentication settings for this employee.</p>
+                <button type="button" className="private-edit-btn">Reset Password</button>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     </div>

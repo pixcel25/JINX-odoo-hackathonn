@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -10,6 +11,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import dayflowLogo from '../../assets/73ec5df262a941528364fc2cf853dcc4.jpg';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { AuthServiceError, changePassword, login } from '../auth/authService';
 import type { Employee } from '../auth/authService';
@@ -118,11 +120,7 @@ export function LandingScreen({ onContinue }: LandingScreenProps) {
     <View style={styles.page}>
       <View style={styles.landingDecoration} />
       <View style={styles.landingContent}>
-        <View style={styles.brandMark}>
-          <View style={styles.brandLeaf} />
-          <View style={styles.brandStem} />
-        </View>
-        <Text style={styles.brandName}>dayflow</Text>
+        <Image accessibilityLabel="Dayflow logo" source={dayflowLogo} style={styles.landingLogo} />
         <Text style={styles.tagline}>A calmer workday starts here.</Text>
         <Text style={styles.landingCopy}>
           Your work life, thoughtfully gathered in one place.
@@ -253,6 +251,7 @@ export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
           <Text style={styles.backText}>{'<  Back'}</Text>
         </Pressable>
         <View style={styles.loginPanel}>
+          <Image accessibilityLabel="Dayflow logo" source={dayflowLogo} style={styles.loginLogo} />
           <Text style={styles.eyebrow}>EMPLOYEE ACCESS</Text>
           <Text style={styles.loginTitle}>Welcome back.</Text>
           <Text style={styles.loginSubtitle}>Sign in with the details provided by your admin.</Text>
@@ -454,37 +453,10 @@ const styles = StyleSheet.create({
     marginTop: 70,
     paddingHorizontal: 30,
   },
-  brandMark: {
-    height: 43,
-    marginBottom: 9,
-    width: 48,
-  },
-  brandLeaf: {
-    backgroundColor: '#43bd70',
-    borderBottomLeftRadius: 22,
-    borderTopRightRadius: 22,
-    height: 28,
-    left: 13,
-    position: 'absolute',
-    top: 0,
-    transform: [{ rotate: '-18deg' }],
-    width: 24,
-  },
-  brandStem: {
-    backgroundColor: '#43bd70',
-    height: 29,
-    left: 25,
-    position: 'absolute',
-    top: 20,
-    transform: [{ rotate: '17deg' }],
-    width: 2,
-  },
-  brandName: {
-    color: '#128a4f',
-    fontFamily: 'serif',
-    fontSize: 48,
-    letterSpacing: 0,
-    textAlign: 'center',
+  landingLogo: {
+    height: 190,
+    marginBottom: 8,
+    width: 190,
   },
   tagline: {
     color: '#2c4034',
@@ -558,6 +530,12 @@ const styles = StyleSheet.create({
     marginTop: 33,
     paddingHorizontal: 23,
     paddingVertical: 27,
+  },
+  loginLogo: {
+    alignSelf: 'center',
+    height: 86,
+    marginBottom: 16,
+    width: 86,
   },
   eyebrow: {
     color: '#168a51',

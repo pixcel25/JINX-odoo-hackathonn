@@ -1,6 +1,7 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { FeedbackBanner } from "../../../shared/components/FeedbackBanner";
+import dayflowLogo from "../../../../assets/73ec5df262a941528364fc2cf853dcc4.jpg";
 
 type HomeScreenProps = {
   hasRegisteredToday: boolean;
@@ -33,11 +34,7 @@ export function HomeScreen({
     <View>
       <View style={styles.header}>
         <View style={styles.brandRow}>
-          <View style={styles.brandMark}>
-            <View style={styles.brandDot} />
-            <View style={[styles.brandDot, styles.brandDotSmall]} />
-            <View style={[styles.brandDot, styles.brandDotBottom]} />
-          </View>
+          <Image accessibilityLabel="Dayflow logo" source={dayflowLogo} style={styles.homeLogo} />
           <Text style={styles.brand}>DAYFLOW HRMS</Text>
         </View>
         <View style={styles.avatar}>
@@ -144,34 +141,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-  brandMark: {
-    position: "relative",
+  homeLogo: {
+    height: 34,
     width: 34,
-    height: 30,
-  },
-  brandDot: {
-    position: "absolute",
-    top: 0,
-    left: 15,
-    width: 18,
-    height: 18,
-    borderWidth: 3,
-    borderColor: "#08704f",
-    borderRadius: 9,
-  },
-  brandDotSmall: {
-    top: 17,
-    left: 0,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  brandDotBottom: {
-    top: 18,
-    left: 16,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    borderRadius: 8,
   },
   brand: {
     color: "#075f45",

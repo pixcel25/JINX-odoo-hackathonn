@@ -7,6 +7,7 @@ from django.contrib.auth.hashers import check_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.core.mail import send_mail
 from django.db import transaction
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
@@ -84,7 +85,65 @@ def login_view(request):
 
 
 @require_POST
+def salary_change_view(request):
+    try:
+        data = json.loads(request.body)
+    except (TypeError, json.JSONDecodeError):
+        return error('Invalid salary update request.')
+
+    employee_email = data.get('employeeEmail') if isinstance(data, dict) else None
+    employee_name = data.get('employeeName') if isinstance(data, dict) else None
+    old_salary = data.get('oldSalary') if isinstance(data, dict) else None
+    new_salary = data.get('newSalary') if isinstance(data, dict) else None
+    if not isinstance(employee_email, str) or not isinstance(employee_name, str):
+        return error('Employee details are required.')
+    try:
+        validate_email(employee_email)
+    except ValidationError:
+        return error('A valid employee email is required.')
+    if not isinstance(old_salary, dict) or not isinstance(new_salary, dict):
+        return error('Both old and new salary structures are required.')
+
+    def format_salary(structure):
+        return '\n'.join(f'{label}: {structure.get(key, "")}' for key, label in (
+            ('payGrade', 'Pay Grade'),
+            ('baseSalary', 'Base Salary'),
+            ('allowances', 'HRA & Allowances'),
+            ('taxDeduction', 'Tax Deduction'),
+            ('monthWage', 'Month Wage'),
+            ('yearlyWage', 'Yearly Wage'),
+            ('workingDays', 'Working Days'),
+            ('workingHours', 'Working Hours'),
+            ('basicSalary', 'Basic Salary'),
+            ('houseRentAllowance', 'House Rent Allowance'),
+            ('standardAllowance', 'Standard Allowance'),
+            ('performanceBonus', 'Performance Bonus'),
+            ('leaveTravelAllowance', 'Leave Travel Allowance'),
+            ('fixedAllowance', 'Fixed Allowance'),
+            ('providentFundEmployee', 'Employee PF'),
+            ('providentFundEmployer', 'Employer PF'),
+            ('professionalTax', 'Professional Tax'),
+        ))
+
+    message = (
+        f'Salary structure update for {employee_name}\n\n'
+        f'Previous salary structure:\n{format_salary(old_salary)}\n\n'
+        f'New salary structure:\n{format_salary(new_salary)}\n'
+    )
+    try:
+        send_mail(
+            subject=f'Salary structure updated - {employee_name}',
+            message=message,
+            from_email=None,
+            recipient_list=[employee_email, 'rylanfranco251006@gmail.com'],
+            fail_silently=False,
+        )
+    except Exception:
+        return error('Salary was not saved because the notification email could not be sent.', 502)
+    return JsonResponse({'message': 'Salary updated and notification email sent.'})
+
 @csrf_exempt
+@require_POST
 def employee_login_view(request):
     try:
         data = json.loads(request.body)
@@ -104,7 +163,43 @@ def employee_login_view(request):
         'id': employee.id,
         'employeeId': employee.login_id,
         'displayName': employee.name,
+        'name': employee.name,
+        'email': employee.email,
+        'phone': employee.phone,
+        'company': employee.company_name,
+        'joinedAt': employee.joined_at.isoformat(),
     })
+
+
+@csrf_exempt
+@require_POST
+def employee_password_change_view(request):
+    try:
+        data = json.loads(request.body)
+    except (TypeError, json.JSONDecodeError):
+        return error('Enter your current and new password.')
+
+    if not isinstance(data, dict):
+        return error('Enter your current and new password.')
+
+    login_id = data.get('loginId', '').strip().upper() if isinstance(data.get('loginId'), str) else ''
+    current_password = data.get('currentPassword') if isinstance(data.get('currentPassword'), str) else ''
+    new_password = data.get('newPassword') if isinstance(data.get('newPassword'), str) else ''
+    if not login_id or not current_password or not new_password or len(new_password) > 128:
+        return error('Enter your current and new password.')
+
+    employee = Employee.objects.filter(login_id=login_id).first()
+    if not employee or not check_password(current_password, employee.password_hash):
+        return error('Your current password is not correct.', 401)
+
+    try:
+        validate_password(new_password)
+    except ValidationError as exc:
+        return error(exc.messages[0])
+
+    employee.set_password(new_password)
+    employee.save(update_fields=['password_hash'])
+    return JsonResponse({'message': 'Password updated successfully.'})
 
 
 @require_GET
@@ -113,8 +208,6 @@ def me_view(request):
         return error('Authentication required.', 401)
     user_role = 'admin' if request.user.is_staff else 'employee'
     return JsonResponse({'id': request.user.id, 'email': request.user.email, 'role': user_role})
-
-
 def employee_code(value, length):
     letters = re.sub(r'[^A-Za-z]', '', value).upper()
     return letters[:length].ljust(length, 'X')
@@ -191,4 +284,3 @@ def create_employee_view(request):
         'email': employee.email,
         'phone': employee.phone,
     }, status=201)
-

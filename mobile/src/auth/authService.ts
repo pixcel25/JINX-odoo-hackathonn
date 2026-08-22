@@ -2,8 +2,18 @@ import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 
 export type Employee = {
+  id?: number;
   loginId: string;
   displayName: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+  joinedAt?: string;
+  title?: string;
+  department?: string;
+  manager?: string;
+  location?: string;
 };
 
 type StoredAccount = Employee & {
@@ -20,6 +30,26 @@ export class AuthServiceError extends Error {
     super(message);
     this.name = 'AuthServiceError';
   }
+}
+
+function mapEmployeeResponse(data: Record<string, unknown>): Employee {
+  const loginId = typeof data.employeeId === 'string' ? data.employeeId : '';
+  const displayName = typeof data.displayName === 'string' ? data.displayName : '';
+
+  if (!loginId || !displayName) {
+    throw new AuthServiceError('The employee profile returned by the service is incomplete.');
+  }
+
+  return {
+    id: typeof data.id === 'number' ? data.id : undefined,
+    loginId,
+    displayName,
+    name: typeof data.name === 'string' ? data.name : displayName,
+    email: typeof data.email === 'string' ? data.email : undefined,
+    phone: typeof data.phone === 'string' ? data.phone : undefined,
+    company: typeof data.company === 'string' ? data.company : undefined,
+    joinedAt: typeof data.joinedAt === 'string' ? data.joinedAt : undefined,
+  };
 }
 
 const ACCOUNT_KEY = 'dayflow.employee.account.v1';
@@ -77,19 +107,27 @@ export async function login(loginId: string, password: string): Promise<LoginRes
     }
 
     const data = await response.json().catch(() => ({}));
+    if (!data || typeof data !== 'object') {
+      throw new AuthServiceError('The employee service returned an invalid profile.');
+    }
     if (!response.ok) {
-      throw new AuthServiceError(data.error ?? 'That employee ID or password is not correct.');
+      const message = 'error' in data && typeof data.error === 'string'
+        ? data.error
+        : 'That employee ID or password is not correct.';
+      throw new AuthServiceError(message);
     }
 
     return {
       status: 'authenticated',
-      employee: { loginId: data.employeeId, displayName: data.displayName },
+      employee: mapEmployeeResponse(data as Record<string, unknown>),
     };
   }
 
   if (loginId.trim().toLowerCase() !== account.loginId || passwordHash !== account.passwordHash) {
     throw new AuthServiceError('That login ID or password is not correct.');
   }
+
+  throw new AuthServiceError('That login ID or password is not correct.');
 }
 
 export async function changePassword(
@@ -115,4 +153,29 @@ export async function changePassword(
   }
 
   return { loginId: updatedAccount.loginId, displayName: updatedAccount.displayName };
+}
+
+export async function changeEmployeePassword(
+  loginId: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/auth/employee-password-change/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ loginId, currentPassword, newPassword }),
+    });
+  } catch {
+    throw new AuthServiceError('We could not reach the employee service. Check that the backend is running.');
+  }
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
+      ? data.error
+      : 'Your password could not be changed.';
+    throw new AuthServiceError(message);
+  }
 }
