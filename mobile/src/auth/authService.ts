@@ -25,6 +25,7 @@ export class AuthServiceError extends Error {
 const ACCOUNT_KEY = 'dayflow.employee.account.v1';
 const INITIAL_LOGIN_ID = 'employee@dayflow.com';
 const INITIAL_PASSWORD = 'Dayflow@123';
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://10.1.14.110:8000/api';
 
 async function hashPassword(password: string): Promise<string> {
   return Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, password);
@@ -56,14 +57,39 @@ export async function login(loginId: string, password: string): Promise<LoginRes
   const account = await readAccount();
   const passwordHash = await hashPassword(password);
 
+  if (loginId.trim().toLowerCase() === account.loginId && passwordHash === account.passwordHash) {
+    const employee = { loginId: account.loginId, displayName: account.displayName };
+    return account.mustChangePassword
+      ? { status: 'password-change-required', employee }
+      : { status: 'authenticated', employee };
+  }
+
+  if (!loginId.includes('@')) {
+    let response: Response;
+    try {
+      response = await fetch(`${API_URL}/auth/employee-login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ loginId: loginId.trim(), password }),
+      });
+    } catch {
+      throw new AuthServiceError('We could not reach the employee service. Check that the backend is running.');
+    }
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new AuthServiceError(data.error ?? 'That employee ID or password is not correct.');
+    }
+
+    return {
+      status: 'authenticated',
+      employee: { loginId: data.employeeId, displayName: data.displayName },
+    };
+  }
+
   if (loginId.trim().toLowerCase() !== account.loginId || passwordHash !== account.passwordHash) {
     throw new AuthServiceError('That login ID or password is not correct.');
   }
-
-  const employee = { loginId: account.loginId, displayName: account.displayName };
-  return account.mustChangePassword
-    ? { status: 'password-change-required', employee }
-    : { status: 'authenticated', employee };
 }
 
 export async function changePassword(

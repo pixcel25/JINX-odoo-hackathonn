@@ -1,54 +1,37 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import './App.css'
+import { EmployeeDetailsModal } from './components/EmployeeDetailsModal'
+import type { Employee } from './components/EmployeeDetailsModal'
+import employeeData from './data/employees.json'
+import timeOffRequestData from './data/timeOffRequests.json'
+import dashboardData from './data/dashboard.json'
 
 type Mode = 'login' | 'signup'
+type FormErrors = Record<string, string>
 
-interface AttendanceRecord {
-  date: string
-  status: 'Present' | 'Absent' | 'On Leave' | 'Late' | 'Sick Leave'
-  checkIn: string
-  checkOut: string
-  workHours: string
+const API_URL = import.meta.env.VITE_API_URL ?? '/api'
+
+function validEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
-interface LeaveHistoryItem {
-  id: string
-  leaveType: string
-  startDate: string
-  endDate: string
-  days: number
-  reason: string
-  status: 'Approved' | 'Pending' | 'Refused'
+function validPassword(password: string) {
+  return password.length >= 10 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password)
 }
 
-interface Employee {
-  id: string
-  name: string
-  title: string
-  empId: string
-  dept: string
-  status: 'Present' | 'Absent' | 'On Leave' | 'Late' | 'Sick Leave'
-  email: string
-  phone: string
-  company: string
-  manager: string
-  location: string
-  checkIn?: string
-  checkOut?: string
-  workHours?: string
-  about: string
-  jobLove: string
-  hobbies: string
-  skills: string[]
-  certifications: string[]
-  avatarUrl?: string
-  initials?: string
-  paidLeaveAvailable?: number
-  sickLeaveAvailable?: number
-  casualLeaveAvailable?: number
-  attendanceHistory?: AttendanceRecord[]
-  leaveHistory?: LeaveHistoryItem[]
+function generateEmployeePassword(company: string) {
+  const companyCode = company.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+  return companyCode ? `${companyCode}123` : ''
+}
+
+function csrfCookie() {
+  return document.cookie.split('; ').find((item) => item.startsWith('csrftoken='))?.split('=')[1]
+}
+
+async function getCsrfToken() {
+  await fetch(`${API_URL}/auth/csrf/`, { credentials: 'include' })
+  return csrfCookie()
 }
 
 interface TimeOffRequest {
@@ -61,7 +44,7 @@ interface TimeOffRequest {
   allocationDays?: number
 }
 
-const INITIAL_EMPLOYEES: Employee[] = [
+/* const INITIAL_EMPLOYEES: Employee[] = [
   {
     id: '1',
     name: 'Jane Doe',
@@ -254,8 +237,9 @@ const INITIAL_EMPLOYEES: Employee[] = [
     leaveHistory: []
   }
 ]
+*/
 
-const INITIAL_TIME_OFF_REQUESTS: TimeOffRequest[] = [
+/* const INITIAL_TIME_OFF_REQUESTS: TimeOffRequest[] = [
   {
     id: '1',
     employeeName: 'Jane Doe',
@@ -289,135 +273,165 @@ const INITIAL_TIME_OFF_REQUESTS: TimeOffRequest[] = [
     status: 'Refused'
   }
 ]
+*/
+
+const INITIAL_EMPLOYEES = employeeData as Employee[]
+const INITIAL_TIME_OFF_REQUESTS = timeOffRequestData as TimeOffRequest[]
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [mode, setMode] = useState<Mode>('login')
-  const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' })
+  const [form, setForm] = useState({ email: 'admin', password: '1234567890', confirmPassword: '' })
+  const [authErrors, setAuthErrors] = useState<FormErrors>({})
+  const [authError, setAuthError] = useState('')
+  const [authSuccess, setAuthSuccess] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
   
   // Navigation state
   const [activeTab, setActiveTab] = useState<'Employees' | 'Attendance' | 'Time Off'>('Employees')
   const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES)
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
-  const [detailTab, setDetailTab] = useState<'Private Info' | 'Attendance History' | 'Leave & Time Off' | 'Resume' | 'Salary Info'>('Private Info')
   
-  // Attendance view mode option
-  const [attendanceViewMode, setAttendanceViewMode] = useState<'Day' | 'Overview'>('Overview')
+  // Employee Popup Modal State
+  const [profileModalEmployee, setProfileModalEmployee] = useState<Employee | null>(null)
 
   // Time Off view state & requests
   const [timeOffSubTab, setTimeOffSubTab] = useState<'Time Off' | 'Allocation'>('Time Off')
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>(INITIAL_TIME_OFF_REQUESTS)
-  const [isTimeOffModalOpen, setIsTimeOffModalOpen] = useState(false)
-  const [newLeave, setNewLeave] = useState<{
-    employeeName: string
-    startDate: string
-    endDate: string
-    timeOffType: 'Paid Time Off' | 'Sick Time Off' | 'Casual Leave'
-  }>({
-    employeeName: 'Jane Doe',
-    startDate: '28/10/2025',
-    endDate: '28/10/2025',
-    timeOffType: 'Paid Time Off'
-  })
   
   const [searchQuery, setSearchQuery] = useState('')
   const [deptFilter, setDeptFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [newSkillInput, setNewSkillInput] = useState('')
-  const [newCertInput, setNewCertInput] = useState('')
-  const [isAddingSkill, setIsAddingSkill] = useState(false)
-  const [isAddingCert, setIsAddingCert] = useState(false)
 
   // New Employee form state
   const [newEmp, setNewEmp] = useState<{
+    company: string
     name: string
-    title: string
-    empId: string
-    dept: string
-    status: Employee['status']
+    email: string
+    phone: string
+    password: string
+    confirmPassword: string
   }>({
+    company: '',
     name: '',
-    title: '',
-    empId: '',
-    dept: 'Engineering',
-    status: 'Present'
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
   })
+  const [employeeFormError, setEmployeeFormError] = useState('')
+  const [employeeFormSuccess, setEmployeeFormSuccess] = useState('')
+  const [logoFileName, setLogoFileName] = useState('')
+  const [employeeFormLoading, setEmployeeFormLoading] = useState(false)
 
-  // Open employee profile helper
-  const openEmployeeProfile = (emp: Employee) => {
-    setSelectedEmployee(emp)
-    setActiveTab('Employees')
-    setDetailTab('Private Info')
+  // Open employee details modal popup handler
+  const openEmployeePopup = (emp: Employee) => {
+    setProfileModalEmployee(emp)
   }
 
-  // Sign in handler
-  const handleAuthSubmit = (e: FormEvent) => {
+  const handleAuthSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setIsAuthenticated(true)
+    setAuthError('')
+    setAuthSuccess('')
+    // Temporary demo access: allow the login form to submit with both fields blank.
+    if (mode === 'login' && !form.email.trim() && !form.password) {
+      setIsAuthenticated(true)
+      return
+    }
+    const nextErrors: FormErrors = {}
+    const email = form.email.trim().toLowerCase()
+    if (!email) nextErrors.email = 'Work email is required.'
+    else if (!validEmail(email)) nextErrors.email = 'Enter a valid email address.'
+    if (!form.password) nextErrors.password = 'Password is required.'
+    else if (mode === 'signup' && !validPassword(form.password)) nextErrors.password = 'Use 10+ characters with upper, lower, and a number.'
+    if (mode === 'signup' && form.password !== form.confirmPassword) nextErrors.confirmPassword = 'Passwords do not match.'
+    setAuthErrors(nextErrors)
+    if (Object.keys(nextErrors).length) return
+    setAuthLoading(true)
+    try {
+      const token = await getCsrfToken()
+      const response = await fetch(`${API_URL}/auth/${mode}/`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'X-CSRFToken': token } : {}) },
+        body: JSON.stringify({ email, password: form.password }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error ?? 'Unable to complete your request.')
+      if (mode === 'signup') {
+        setMode('login')
+        setForm({ email, password: '', confirmPassword: '' })
+        setAuthSuccess('Account created. You can now sign in.')
+      } else setIsAuthenticated(true)
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'A network error occurred. Please try again.')
+    } finally { setAuthLoading(false) }
   }
 
-  const handleAddEmployee = (e: FormEvent) => {
+  const handleAddEmployee = async (e: FormEvent) => {
     e.preventDefault()
-    if (!newEmp.name.trim()) return
-    const initials = newEmp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-    const created: Employee = {
-      id: Date.now().toString(),
-      name: newEmp.name,
-      title: newEmp.title || 'Team Member',
-      empId: newEmp.empId || `EMP-${Math.floor(1000 + Math.random() * 9000)}`,
-      dept: newEmp.dept,
-      status: newEmp.status,
-      checkIn: newEmp.status === 'Present' ? '10:00 AM' : '-:-',
-      checkOut: newEmp.status === 'Present' ? '19:00 PM' : '-:-',
-      workHours: newEmp.status === 'Present' ? '09:00' : '00:00',
-      email: `${newEmp.name.toLowerCase().replace(/\s+/g, '.')}@dayflow.com`,
-      phone: '+91 9876543210',
-      company: 'DayFlow Technologies',
-      manager: 'Michael Chang',
-      location: 'Goa, India',
-      about: 'New team member profile.',
-      jobLove: 'Excited to contribute to DayFlow development.',
-      hobbies: 'Reading and coding.',
-      skills: ['TypeScript', 'Web Development'],
-      certifications: ['DayFlow Onboarding'],
-      initials,
-      paidLeaveAvailable: 24,
-      sickLeaveAvailable: 7,
-      casualLeaveAvailable: 5,
-      attendanceHistory: [
-        { date: '22 Oct 2025', status: newEmp.status, checkIn: newEmp.status === 'Present' ? '10:00 AM' : '-:-', checkOut: newEmp.status === 'Present' ? '19:00 PM' : '-:-', workHours: newEmp.status === 'Present' ? '09:00' : '00:00' }
-      ],
-      leaveHistory: []
+    setEmployeeFormSuccess('')
+    if (newEmp.password !== newEmp.confirmPassword) {
+      setEmployeeFormError('Passwords do not match.')
+      return
     }
-    setEmployees([created, ...employees])
-    setSelectedEmployee(created)
-    setNewEmp({ name: '', title: '', empId: '', dept: 'Engineering', status: 'Present' })
-    setIsModalOpen(false)
-  }
+    setEmployeeFormError('')
+    setEmployeeFormLoading(true)
+    try {
+      const token = await getCsrfToken()
+      const response = await fetch(`${API_URL}/auth/employees/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'X-CSRFToken': token } : {}) },
+        body: JSON.stringify({
+          company: newEmp.company,
+          name: newEmp.name,
+          email: newEmp.email,
+          phone: newEmp.phone,
+          password: newEmp.password,
+        }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error ?? 'Unable to add this employee.')
 
-  const handleAddSkill = () => {
-    if (!newSkillInput.trim() || !selectedEmployee) return
-    const updated = {
-      ...selectedEmployee,
-      skills: [...selectedEmployee.skills, newSkillInput.trim()]
+      const initials = newEmp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+      const created: Employee = {
+        id: String(data.id),
+        name: data.name,
+        title: 'Team Member',
+        empId: data.employeeId,
+        dept: dashboardData.defaultDepartment,
+        status: dashboardData.defaultAttendanceStatus as Employee['status'],
+        checkIn: '10:00 AM',
+        checkOut: '19:00 PM',
+        workHours: '09:00',
+        email: data.email,
+        phone: data.phone,
+        company: data.company,
+        manager: 'Michael Chang',
+        location: 'Goa, India',
+        about: 'New team member profile.',
+        jobLove: 'Excited to contribute to DayFlow development.',
+        hobbies: 'Reading and coding.',
+        skills: ['TypeScript', 'Web Development'],
+        certifications: ['DayFlow Onboarding'],
+        initials,
+        paidLeaveAvailable: 24,
+        sickLeaveAvailable: 7,
+        casualLeaveAvailable: 5,
+        attendanceHistory: [
+          { date: '22 Oct 2025', status: dashboardData.defaultAttendanceStatus as Employee['status'], checkIn: '10:00 AM', checkOut: '19:00 PM', workHours: '09:00' }
+        ],
+        leaveHistory: []
+      }
+      setEmployees(currentEmployees => [created, ...currentEmployees])
+      setNewEmp({ company: '', name: '', email: '', phone: '', password: '', confirmPassword: '' })
+      setLogoFileName('')
+      setEmployeeFormSuccess(`Employee added successfully. Login ID: ${data.employeeId}`)
+    } catch (error) {
+      setEmployeeFormError(error instanceof Error ? error.message : 'A network error occurred. Please try again.')
+    } finally {
+      setEmployeeFormLoading(false)
     }
-    setSelectedEmployee(updated)
-    setEmployees(employees.map(e => e.id === updated.id ? updated : e))
-    setNewSkillInput('')
-    setIsAddingSkill(false)
-  }
-
-  const handleAddCert = () => {
-    if (!newCertInput.trim() || !selectedEmployee) return
-    const updated = {
-      ...selectedEmployee,
-      certifications: [...selectedEmployee.certifications, newCertInput.trim()]
-    }
-    setSelectedEmployee(updated)
-    setEmployees(employees.map(e => e.id === updated.id ? updated : e))
-    setNewCertInput('')
-    setIsAddingCert(false)
   }
 
   // Time off actions
@@ -431,20 +445,6 @@ function App() {
     setTimeOffRequests(requests => 
       requests.map(req => req.id === id ? { ...req, status: 'Refused' } : req)
     )
-  }
-
-  const handleCreateLeaveRequest = (e: FormEvent) => {
-    e.preventDefault()
-    const created: TimeOffRequest = {
-      id: Date.now().toString(),
-      employeeName: newLeave.employeeName,
-      startDate: newLeave.startDate,
-      endDate: newLeave.endDate,
-      timeOffType: newLeave.timeOffType,
-      status: 'Pending'
-    }
-    setTimeOffRequests([created, ...timeOffRequests])
-    setIsTimeOffModalOpen(false)
   }
 
   // Filter employees
@@ -497,30 +497,35 @@ function App() {
             <h2>{mode === 'login' ? 'Admin Sign In' : 'Create Admin Account'}</h2>
 
             <div className="mode-switch" role="tablist" aria-label="Authentication mode">
-              <button className={mode === 'login' ? 'active' : ''} onClick={() => setMode('login')} role="tab" aria-selected={mode === 'login'}>Sign in</button>
-              <button className={mode === 'signup' ? 'active' : ''} onClick={() => setMode('signup')} role="tab" aria-selected={mode === 'signup'}>Sign up</button>
+              <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setForm({ email: 'admin', password: '1234567890', confirmPassword: '' }); setAuthErrors({}); setAuthError(''); setAuthSuccess('') }} role="tab" aria-selected={mode === 'login'}>Sign in</button>
+              <button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => { setMode('signup'); setForm({ email: '', password: '', confirmPassword: '' }); setAuthErrors({}); setAuthError(''); setAuthSuccess('') }} role="tab" aria-selected={mode === 'signup'}>Sign up</button>
             </div>
 
             <form onSubmit={handleAuthSubmit} noValidate>
               <div className="field-group">
-                <label htmlFor="email">Work Email</label>
-                <input id="email" type="email" autoComplete="email" placeholder="admin@company.com" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
+                <label htmlFor="email">{mode === 'login' ? 'Admin Username / Email' : 'Work Email'}</label>
+                  <input id="email" type="text" autoComplete="username" placeholder={mode === 'login' ? 'admin' : 'admin@company.com'} value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} aria-invalid={Boolean(authErrors.email)} />
+                  {authErrors.email && <span className="field-error">{authErrors.email}</span>}
               </div>
 
               <div className="field-group">
                 <label htmlFor="password">Password</label>
-                <input id="password" type="password" autoComplete="current-password" placeholder="Enter your admin password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
+                  <input id="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder={mode === 'login' ? '1234567890' : 'Enter your admin password'} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} aria-invalid={Boolean(authErrors.password)} />
+                  {authErrors.password && <span className="field-error">{authErrors.password}</span>}
               </div>
 
               {mode === 'signup' && (
                 <div className="field-group">
                   <label htmlFor="confirmPassword">Confirm Password</label>
-                  <input id="confirmPassword" type="password" autoComplete="new-password" placeholder="Repeat your admin password" value={form.confirmPassword} onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })} />
+                  <input id="confirmPassword" type="password" autoComplete="new-password" placeholder="Repeat your admin password" value={form.confirmPassword} onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })} aria-invalid={Boolean(authErrors.confirmPassword)} />
+                  {authErrors.confirmPassword && <span className="field-error">{authErrors.confirmPassword}</span>}
                 </div>
               )}
 
-              <button className="submit" type="submit">
-                {mode === 'login' ? 'Sign in to Admin Portal' : 'Create Admin Account'} <span>→</span>
+              {authError && <div className="alert error" role="alert">{authError}</div>}
+              {authSuccess && <div className="alert success" role="status">{authSuccess}</div>}
+              <button className="submit" type="submit" disabled={authLoading}>
+                {authLoading ? 'Please wait...' : mode === 'login' ? 'Sign in to Admin Portal' : 'Create Admin Account'} <span>→</span>
               </button>
             </form>
 
@@ -545,19 +550,19 @@ function App() {
           <nav className="nav-links-bar">
             <button 
               className={`nav-link-btn ${activeTab === 'Employees' ? 'active' : ''}`}
-              onClick={() => { setActiveTab('Employees'); setSelectedEmployee(null); setStatusFilter('All'); }}
+              onClick={() => { setActiveTab('Employees'); setStatusFilter('All'); }}
             >
               Employees
             </button>
             <button 
               className={`nav-link-btn ${activeTab === 'Attendance' ? 'active' : ''}`}
-              onClick={() => { setActiveTab('Attendance'); setSelectedEmployee(null); setStatusFilter('All'); }}
+              onClick={() => { setActiveTab('Attendance'); setStatusFilter('All'); }}
             >
               Attendance
             </button>
             <button 
               className={`nav-link-btn ${activeTab === 'Time Off' ? 'active' : ''}`}
-              onClick={() => { setActiveTab('Time Off'); setSelectedEmployee(null); setStatusFilter('All'); }}
+              onClick={() => { setActiveTab('Time Off'); setStatusFilter('All'); }}
             >
               Time Off
             </button>
@@ -582,22 +587,13 @@ function App() {
       {activeTab === 'Employees' && (
         <div className="wireframe-subheader">
           <div className="subheader-title-group">
-            <h1 className="subheader-title">
-              {selectedEmployee ? 'Employee Profile & Details' : 'Employees Directory'}
-            </h1>
-            {selectedEmployee && (
-              <button className="btn-back-directory" onClick={() => setSelectedEmployee(null)}>
-                ← Back to Directory
-              </button>
-            )}
+            <h1 className="subheader-title">Employees Directory</h1>
           </div>
 
           <div className="subheader-actions">
-            {!selectedEmployee && (
-              <button className="btn-add-new-emp" onClick={() => setIsModalOpen(true)}>
-                + Add Employee
-              </button>
-            )}
+            <button type="button" className="btn-add-new-emp" onClick={() => { setEmployeeFormError(''); setEmployeeFormSuccess(''); setIsModalOpen(true) }}>
+              + Add Employee
+            </button>
           </div>
         </div>
       )}
@@ -606,445 +602,64 @@ function App() {
       <main className="wireframe-main-content">
         {/* ==================== TAB 1: EMPLOYEES ==================== */}
         {activeTab === 'Employees' && (
-          selectedEmployee ? (
-            /* Detailed Profile View with Attendance & Leaves Track Record */
-            <div className="profile-format-view">
-              {/* Banner Header Card */}
-              <div className="profile-banner-box">
-                <div className="profile-avatar-pencil-wrap">
-                  {selectedEmployee.avatarUrl ? (
-                    <img src={selectedEmployee.avatarUrl} alt={selectedEmployee.name} className="profile-circle-avatar" />
-                  ) : (
-                    <div className="profile-circle-initials">{selectedEmployee.initials || 'EP'}</div>
-                  )}
-                  <button className="avatar-edit-pencil" title="Edit Profile Photo">
-                    ✎
-                  </button>
-                </div>
-
-                {/* Main Fields Grid */}
-                <div className="profile-fields-grid">
-                  {/* Column 1 */}
-                  <div className="fields-col">
-                    <div className="name-field-row">
-                      <h2 className="profile-name-heading">{selectedEmployee.name}</h2>
-                      <button className="inline-pencil-btn" title="Edit Name">✎</button>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Login ID</span>
-                      <span className="field-val-line">{selectedEmployee.empId}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Email</span>
-                      <span className="field-val-line">{selectedEmployee.email}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Mobile</span>
-                      <span className="field-val-line">{selectedEmployee.phone}</span>
-                    </div>
-                  </div>
-
-                  {/* Column 2 */}
-                  <div className="fields-col">
-                    <div className="field-line-item margin-top-spacer">
-                      <span className="field-key">Company</span>
-                      <span className="field-val-line">{selectedEmployee.company}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Department</span>
-                      <span className="field-val-line">{selectedEmployee.dept}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Manager</span>
-                      <span className="field-val-line">{selectedEmployee.manager}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Location</span>
-                      <span className="field-val-line">{selectedEmployee.location}</span>
-                    </div>
-                  </div>
-                </div>
+          <div className="directory-format-view">
+            {/* Filter Bar */}
+            <div className="directory-filter-bar">
+              <div className="filter-selects">
+                <select 
+                  value={deptFilter} 
+                  onChange={(e) => setDeptFilter(e.target.value)}
+                  className="filter-select"
+                >
+                  <option value="All">All Departments</option>
+                  {dashboardData.departments.map((department) => <option key={department} value={department}>{department}</option>)}
+                </select>
               </div>
 
-              {/* Profile Inner Tabs Bar */}
-              <div className="wireframe-tabs-bar">
-                <button 
-                  className={`wireframe-tab-btn ${detailTab === 'Private Info' ? 'active' : ''}`}
-                  onClick={() => setDetailTab('Private Info')}
-                >
-                  Private Info
-                </button>
-                <button 
-                  className={`wireframe-tab-btn ${detailTab === 'Attendance History' ? 'active' : ''}`}
-                  onClick={() => setDetailTab('Attendance History')}
-                >
-                  Attendance Track Record
-                </button>
-                <button 
-                  className={`wireframe-tab-btn ${detailTab === 'Leave & Time Off' ? 'active' : ''}`}
-                  onClick={() => setDetailTab('Leave & Time Off')}
-                >
-                  Leaves & Time Off
-                </button>
-                <button 
-                  className={`wireframe-tab-btn ${detailTab === 'Resume' ? 'active' : ''}`}
-                  onClick={() => setDetailTab('Resume')}
-                >
-                  Resume
-                </button>
-                <button 
-                  className={`wireframe-tab-btn ${detailTab === 'Salary Info' ? 'active' : ''}`}
-                  onClick={() => setDetailTab('Salary Info')}
-                >
-                  Salary Info
-                </button>
-              </div>
-
-              {/* TAB CONTENT: Private Info */}
-              {detailTab === 'Private Info' && (
-                <div className="wireframe-tab-grid">
-                  {/* Left Wide Column */}
-                  <div className="tab-left-col">
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">About</h3>
-                        <button className="card-pencil-btn" title="Edit About">✎</button>
-                      </div>
-                      <p className="box-text-content">{selectedEmployee.about}</p>
-                    </div>
-
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">What I love about my job</h3>
-                        <button className="card-pencil-btn" title="Edit Job Interest">✎</button>
-                      </div>
-                      <p className="box-text-content">{selectedEmployee.jobLove}</p>
-                    </div>
-
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">My interests and hobbies</h3>
-                        <button className="card-pencil-btn" title="Edit Hobbies">✎</button>
-                      </div>
-                      <p className="box-text-content">{selectedEmployee.hobbies}</p>
-                    </div>
-                  </div>
-
-                  {/* Right Narrow Column */}
-                  <div className="tab-right-col">
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">Skills</h3>
-                      </div>
-                      
-                      <div className="tags-flex-wrap">
-                        {selectedEmployee.skills.map((skill, index) => (
-                          <span key={index} className="skill-pill-tag">{skill}</span>
-                        ))}
-                      </div>
-
-                      {isAddingSkill ? (
-                        <div className="inline-add-input-wrap">
-                          <input 
-                            type="text" 
-                            placeholder="Enter skill name..." 
-                            value={newSkillInput}
-                            onChange={(e) => setNewSkillInput(e.target.value)}
-                            className="inline-input"
-                          />
-                          <button className="btn-inline-save" onClick={handleAddSkill}>Save</button>
-                          <button className="btn-inline-cancel" onClick={() => setIsAddingSkill(false)}>✕</button>
-                        </div>
-                      ) : (
-                        <button className="btn-add-item-action" onClick={() => setIsAddingSkill(true)}>
-                          + Add Skills
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">Certification</h3>
-                      </div>
-
-                      <div className="cert-list-wrap">
-                        {selectedEmployee.certifications.map((cert, index) => (
-                          <div key={index} className="cert-item-row">
-                            <span className="cert-badge-dot"></span>
-                            <span className="cert-title">{cert}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {isAddingCert ? (
-                        <div className="inline-add-input-wrap">
-                          <input 
-                            type="text" 
-                            placeholder="Enter certification..." 
-                            value={newCertInput}
-                            onChange={(e) => setNewCertInput(e.target.value)}
-                            className="inline-input"
-                          />
-                          <button className="btn-inline-save" onClick={handleAddCert}>Save</button>
-                          <button className="btn-inline-cancel" onClick={() => setIsAddingCert(false)}>✕</button>
-                        </div>
-                      ) : (
-                        <button className="btn-add-item-action" onClick={() => setIsAddingCert(true)}>
-                          + Add Certification
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Attendance Track Record */}
-              {detailTab === 'Attendance History' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <div className="card-header-line">
-                      <h3 className="box-title">Attendance Track Record</h3>
-                      <span className="overview-badge">Historical Attendance Log</span>
-                    </div>
-
-                    {/* Attendance Metric Mini Badges */}
-                    <div className="attendance-track-summary-grid">
-                      <div className="track-summary-box">
-                        <span className="track-val">18 Days</span>
-                        <span className="track-lbl">Present (This Month)</span>
-                      </div>
-                      <div className="track-summary-box">
-                        <span className="track-val">1 Day</span>
-                        <span className="track-lbl">Late Arrivals</span>
-                      </div>
-                      <div className="track-summary-box">
-                        <span className="track-val">1 Day</span>
-                        <span className="track-lbl">Approved Absences</span>
-                      </div>
-                    </div>
-
-                    {/* Log Table */}
-                    <div className="table-wrapper-box">
-                      <table className="profile-record-table">
-                        <thead>
-                          <tr>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Check In</th>
-                            <th>Check Out</th>
-                            <th>Work Hours</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(selectedEmployee.attendanceHistory || [
-                            { date: '22 Oct 2025', status: selectedEmployee.status, checkIn: selectedEmployee.checkIn || '10:00 AM', checkOut: selectedEmployee.checkOut || '19:00 PM', workHours: selectedEmployee.workHours || '09:00' }
-                          ]).map((log, i) => (
-                            <tr key={i}>
-                              <td><strong>{log.date}</strong></td>
-                              <td>
-                                <span className={`status-pill-wireframe ${log.status === 'Present' ? 'pill-present' : 'pill-absent'}`}>
-                                  {log.status}
-                                </span>
-                              </td>
-                              <td>{log.checkIn}</td>
-                              <td>{log.checkOut}</td>
-                              <td>{log.workHours}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Leaves & Time Off */}
-              {detailTab === 'Leave & Time Off' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <div className="card-header-line">
-                      <h3 className="box-title">Available Leaves & Leave History</h3>
-                      <span className="overview-badge">Leave Management</span>
-                    </div>
-
-                    {/* Available Leaves Balance Grid */}
-                    <div className="timeoff-balance-cards-grid margin-bottom-spacer">
-                      <div className="balance-card balance-paid">
-                        <span className="balance-title">Paid Time Off</span>
-                        <span className="balance-days">{selectedEmployee.paidLeaveAvailable ?? 24} Days Available</span>
-                      </div>
-                      <div className="balance-card balance-sick">
-                        <span className="balance-title">Sick Time Off</span>
-                        <span className="balance-days">{selectedEmployee.sickLeaveAvailable ?? 7} Days Available</span>
-                      </div>
-                      <div className="balance-card balance-casual">
-                        <span className="balance-title">Casual Leave</span>
-                        <span className="balance-days">{selectedEmployee.casualLeaveAvailable ?? 5} Days Available</span>
-                      </div>
-                    </div>
-
-                    {/* Details of Previous Leaves Taken & Reason */}
-                    <h4 className="section-subheading">Previous Leaves Taken & Reasons</h4>
-                    <div className="table-wrapper-box">
-                      <table className="profile-record-table">
-                        <thead>
-                          <tr>
-                            <th>Leave Type</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Duration</th>
-                            <th>Reason</th>
-                            <th>Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(selectedEmployee.leaveHistory && selectedEmployee.leaveHistory.length > 0) ? (
-                            selectedEmployee.leaveHistory.map(lh => (
-                              <tr key={lh.id}>
-                                <td className="type-blue-cell">{lh.leaveType}</td>
-                                <td>{lh.startDate}</td>
-                                <td>{lh.endDate}</td>
-                                <td>{lh.days} Day{lh.days > 1 ? 's' : ''}</td>
-                                <td className="reason-text-cell">{lh.reason}</td>
-                                <td>
-                                  <span className={`timeoff-status-badge status-${lh.status.toLowerCase()}`}>
-                                    {lh.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan={6} style={{ textAlign: 'center', color: '#64748b', padding: '24px' }}>
-                                No previous leave records found for {selectedEmployee.name}.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Resume */}
-              {detailTab === 'Resume' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <h3 className="box-title">Work Experience & Education</h3>
-                    <div className="resume-section">
-                      <div className="resume-item">
-                        <h4>Senior Developer — DayFlow Solutions</h4>
-                        <span className="resume-period">2023 - Present</span>
-                        <p>Building high-throughput full-stack enterprise web modules and leading backend API integrations.</p>
-                      </div>
-                      <div className="resume-item">
-                        <h4>{selectedEmployee.title}</h4>
-                        <span className="resume-period">Graduated 2022</span>
-                        <p>Focused on software architecture, algorithms, database optimization, and user interface design.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Salary Info */}
-              {detailTab === 'Salary Info' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <h3 className="box-title">Compensation & Salary Information</h3>
-                    <div className="salary-info-grid">
-                      <div className="salary-box">
-                        <span className="salary-label">Pay Grade</span>
-                        <span className="salary-val">Level 4 — Senior Engineer</span>
-                      </div>
-                      <div className="salary-box">
-                        <span className="salary-label">Base Salary</span>
-                        <span className="salary-val">$110,000 / annum</span>
-                      </div>
-                      <div className="salary-box">
-                        <span className="salary-label">HRA & Allowances</span>
-                        <span className="salary-val">$18,000 / annum</span>
-                      </div>
-                      <div className="salary-box">
-                        <span className="salary-label">Tax Deduction</span>
-                        <span className="salary-val">Standard Corporate Slab</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            /* Directory Grid View */
-            <div className="directory-format-view">
-              {/* Filter Bar */}
-              <div className="directory-filter-bar">
-                <div className="filter-selects">
-                  <select 
-                    value={deptFilter} 
-                    onChange={(e) => setDeptFilter(e.target.value)}
-                    className="filter-select"
-                  >
-                    <option value="All">All Departments</option>
-                    <option value="Engineering">Engineering</option>
-                    <option value="Design">Design</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Human Resources">Human Resources</option>
-                  </select>
-                </div>
-
-                <div className="filter-search-box">
-                  <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <circle cx="11" cy="11" r="8"/>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                  </svg>
-                  <input 
-                    type="text" 
-                    placeholder="Search employee by name, ID, title..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Cards Grid */}
-              <div className="directory-cards-grid">
-                {filteredEmployees.map(emp => (
-                  <div 
-                    key={emp.id} 
-                    className="directory-emp-card"
-                    onClick={() => openEmployeeProfile(emp)}
-                  >
-                    <div className="card-top-avatar">
-                      {emp.avatarUrl ? (
-                        <img src={emp.avatarUrl} alt={emp.name} className="dir-avatar-img" />
-                      ) : (
-                        <div className="dir-avatar-initials">{emp.initials || 'EP'}</div>
-                      )}
-                    </div>
-
-                    <div className="dir-card-info">
-                      <h3 className="dir-emp-name">{emp.name}</h3>
-                      <p className="dir-emp-title">{emp.title}</p>
-                      <span className="dir-emp-dept">{emp.dept}</span>
-                      
-                      <div className="dir-emp-footer">
-                        <span className="dir-emp-id">ID: {emp.empId}</span>
-                        <span className="view-profile-link">View Profile →</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="filter-search-box">
+                <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input 
+                  type="text" 
+                  placeholder="Search employee by name, ID, title..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
             </div>
-          )
+
+            {/* Cards Grid */}
+            <div className="directory-cards-grid">
+              {filteredEmployees.map(emp => (
+                <div 
+                  key={emp.id} 
+                  className="directory-emp-card"
+                  onClick={() => openEmployeePopup(emp)}
+                >
+                  <div className="card-top-avatar">
+                    {emp.avatarUrl ? (
+                      <img src={emp.avatarUrl} alt={emp.name} className="dir-avatar-img" />
+                    ) : (
+                      <div className="dir-avatar-initials">{emp.initials || 'EP'}</div>
+                    )}
+                  </div>
+
+                  <div className="dir-card-info">
+                    <h3 className="dir-emp-name">{emp.name}</h3>
+                    <p className="dir-emp-title">{emp.title}</p>
+                    <span className="dir-emp-dept">{emp.dept}</span>
+                    
+                    <div className="dir-emp-footer">
+                      <span className="dir-emp-id">ID: {emp.empId}</span>
+                      <span className="view-profile-link">View Details →</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* ==================== TAB 2: ATTENDANCE ==================== */}
@@ -1063,7 +678,7 @@ function App() {
                     <circle cx="11" cy="11" r="8"/>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                   </svg>
-                  <input 
+                  <input
                     type="text" 
                     placeholder="Search employee..." 
                     value={searchQuery}
@@ -1086,7 +701,7 @@ function App() {
               </div>
             </div>
 
-            {/* Controls Bar (Date controls + View tabs + Present/Absent Summary) */}
+            {/* Controls Bar (Date controls + Present/Absent Summary) */}
             <div className="attendance-control-panel">
               <div className="panel-left-controls">
                 <div className="arrow-btn-group">
@@ -1098,27 +713,12 @@ function App() {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   Date ▾
                 </button>
-
-                <div className="view-mode-toggle-group">
-                  <button 
-                    className={`ctrl-btn-tab ${attendanceViewMode === 'Day' ? 'active' : ''}`}
-                    onClick={() => setAttendanceViewMode('Day')}
-                  >
-                    Day
-                  </button>
-                  <button 
-                    className={`ctrl-btn-tab ${attendanceViewMode === 'Overview' ? 'active' : ''}`}
-                    onClick={() => setAttendanceViewMode('Overview')}
-                  >
-                    Overview
-                  </button>
-                </div>
               </div>
 
               <div className="panel-center-date">
                 <div className="date-display-pill">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  <span>22 October 2025</span>
+                   <span>{dashboardData.attendanceDate}</span>
                 </div>
               </div>
 
@@ -1132,85 +732,83 @@ function App() {
               </div>
             </div>
 
-            {/* Attendance Overview Metrics Panel (PLACED BELOW DATE/CONTROL BAR) */}
-            {attendanceViewMode === 'Overview' && (
-              <div className="attendance-overview-expandable-card">
-                <div className="overview-card-header">
-                  <div>
-                    <h3 className="overview-card-title">Attendance Overview & Daily Statistics</h3>
-                    <p className="overview-card-sub">Real-time attendance rate, status breakdown, and staff metrics</p>
+            {/* Attendance Overview Metrics Panel (PERMANENTLY VISIBLE BELOW DATE BAR) */}
+            <div className="attendance-overview-expandable-card">
+              <div className="overview-card-header">
+                <div>
+                  <h3 className="overview-card-title">Attendance Overview & Daily Statistics</h3>
+                  <p className="overview-card-sub">Real-time attendance rate, status breakdown, and staff metrics</p>
+                </div>
+                <span className="overview-badge">Live Metrics Overview</span>
+              </div>
+
+              <div className="attendance-metrics-grid">
+                <div 
+                  className={`metric-card metric-present ${statusFilter === 'Present' ? 'active-metric' : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'Present' ? 'All' : 'Present')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                   </div>
-                  <span className="overview-badge">Live Metrics Overview</span>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'Present').length}</span>
+                    <span className="metric-label">Present Today</span>
+                  </div>
                 </div>
 
-                <div className="attendance-metrics-grid">
-                  <div 
-                    className={`metric-card metric-present ${statusFilter === 'Present' ? 'active-metric' : ''}`}
-                    onClick={() => setStatusFilter(statusFilter === 'Present' ? 'All' : 'Present')}
-                  >
-                    <div className="metric-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    </div>
-                    <div className="metric-info">
-                      <span className="metric-value">{employees.filter(e => e.status === 'Present').length}</span>
-                      <span className="metric-label">Present Today</span>
-                    </div>
+                <div 
+                  className={`metric-card metric-absent ${statusFilter === 'Absent' ? 'active-metric' : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'Absent' ? 'All' : 'Absent')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </div>
-
-                  <div 
-                    className={`metric-card metric-absent ${statusFilter === 'Absent' ? 'active-metric' : ''}`}
-                    onClick={() => setStatusFilter(statusFilter === 'Absent' ? 'All' : 'Absent')}
-                  >
-                    <div className="metric-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </div>
-                    <div className="metric-info">
-                      <span className="metric-value">{employees.filter(e => e.status === 'Absent').length}</span>
-                      <span className="metric-label">Absent</span>
-                    </div>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'Absent').length}</span>
+                    <span className="metric-label">Absent</span>
                   </div>
+                </div>
 
-                  <div 
-                    className={`metric-card metric-on-leave ${statusFilter === 'On Leave' ? 'active-metric' : ''}`}
-                    onClick={() => setStatusFilter(statusFilter === 'On Leave' ? 'All' : 'On Leave')}
-                  >
-                    <div className="metric-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    </div>
-                    <div className="metric-info">
-                      <span className="metric-value">{employees.filter(e => e.status === 'On Leave').length}</span>
-                      <span className="metric-label">On Leave</span>
-                    </div>
+                <div 
+                  className={`metric-card metric-on-leave ${statusFilter === 'On Leave' ? 'active-metric' : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'On Leave' ? 'All' : 'On Leave')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   </div>
-
-                  <div 
-                    className={`metric-card metric-late ${statusFilter === 'Late' ? 'active-metric' : ''}`}
-                    onClick={() => setStatusFilter(statusFilter === 'Late' ? 'All' : 'Late')}
-                  >
-                    <div className="metric-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </div>
-                    <div className="metric-info">
-                      <span className="metric-value">{employees.filter(e => e.status === 'Late').length}</span>
-                      <span className="metric-label">Late Arrival</span>
-                    </div>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'On Leave').length}</span>
+                    <span className="metric-label">On Leave</span>
                   </div>
+                </div>
 
-                  <div 
-                    className={`metric-card metric-sick ${statusFilter === 'Sick Leave' ? 'active-metric' : ''}`}
-                    onClick={() => setStatusFilter(statusFilter === 'Sick Leave' ? 'All' : 'Sick Leave')}
-                  >
-                    <div className="metric-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                    </div>
-                    <div className="metric-info">
-                      <span className="metric-value">{employees.filter(e => e.status === 'Sick Leave').length}</span>
-                      <span className="metric-label">Sick Leave</span>
-                    </div>
+                <div 
+                  className={`metric-card metric-late ${statusFilter === 'Late' ? 'active-metric' : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'Late' ? 'All' : 'Late')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'Late').length}</span>
+                    <span className="metric-label">Late Arrival</span>
+                  </div>
+                </div>
+
+                <div 
+                  className={`metric-card metric-sick ${statusFilter === 'Sick Leave' ? 'active-metric' : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'Sick Leave' ? 'All' : 'Sick Leave')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                  </div>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'Sick Leave').length}</span>
+                    <span className="metric-label">Sick Leave</span>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
 
             {/* Attendance Wireframe Table Card */}
             <div className="attendance-wireframe-card">
@@ -1232,7 +830,7 @@ function App() {
                     return (
                       <tr key={emp.id} className={isAbsent ? 'row-absent' : ''}>
                         <td>
-                          <div className="emp-cell clickable-emp-row" onClick={() => openEmployeeProfile(emp)}>
+                          <div className="emp-cell clickable-emp-row" onClick={() => openEmployeePopup(emp)}>
                             <div className={`emp-cell-avatar ${isAbsent ? 'avatar-absent' : 'avatar-present'}`}>
                               {emp.initials || emp.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
                             </div>
@@ -1254,7 +852,7 @@ function App() {
                           {emp.status === 'Present' ? '01:00' : '00:00'}
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          <button className="row-action-pencil" title="View Details" onClick={() => openEmployeeProfile(emp)}>✎</button>
+                          <button className="row-action-pencil" title="View Details" onClick={() => openEmployeePopup(emp)}>✎</button>
                         </td>
                       </tr>
                     )
@@ -1299,15 +897,8 @@ function App() {
               </button>
             </div>
 
-            {/* Action Bar: NEW Button + Searchbar */}
+            {/* Action Bar: Searchbar */}
             <div className="timeoff-action-bar">
-              <button 
-                className="btn-timeoff-new"
-                onClick={() => setIsTimeOffModalOpen(true)}
-              >
-                NEW
-              </button>
-
               <div className="timeoff-searchbar">
                 <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <circle cx="11" cy="11" r="8"/>
@@ -1326,11 +917,11 @@ function App() {
             <div className="timeoff-balance-cards-grid">
               <div className="balance-card balance-paid">
                 <span className="balance-title">Paid time Off</span>
-                <span className="balance-days">24 Days Available</span>
+                 <span className="balance-days">{dashboardData.leaveBalances.paid} Days Available</span>
               </div>
               <div className="balance-card balance-sick">
                 <span className="balance-title">Sick time off</span>
-                <span className="balance-days">07 Days Available</span>
+                 <span className="balance-days">{String(dashboardData.leaveBalances.sick).padStart(2, '0')} Days Available</span>
               </div>
             </div>
 
@@ -1355,7 +946,7 @@ function App() {
                           <span 
                             className="clickable-link-name"
                             onClick={() => {
-                              if (targetEmp) openEmployeeProfile(targetEmp)
+                              if (targetEmp) openEmployeePopup(targetEmp)
                             }}
                             title="Click to view employee details"
                           >
@@ -1398,141 +989,124 @@ function App() {
         )}
       </main>
 
-      {/* New Time Off Request Modal */}
-      {isTimeOffModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsTimeOffModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>New Time Off Request</h2>
-              <button className="close-btn" onClick={() => setIsTimeOffModalOpen(false)}>✕</button>
-            </div>
-            <form onSubmit={handleCreateLeaveRequest} className="modal-form">
-              <div className="modal-field">
-                <label>Employee Name</label>
-                <select 
-                  value={newLeave.employeeName}
-                  onChange={(e) => setNewLeave({ ...newLeave, employeeName: e.target.value })}
-                >
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.name}>{emp.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="modal-field">
-                <label>Start Date</label>
-                <input 
-                  type="text" 
-                  required 
-                  placeholder="e.g. 28/10/2025"
-                  value={newLeave.startDate}
-                  onChange={(e) => setNewLeave({ ...newLeave, startDate: e.target.value })}
-                />
-              </div>
-
-              <div className="modal-field">
-                <label>End Date</label>
-                <input 
-                  type="text" 
-                  required 
-                  placeholder="e.g. 28/10/2025"
-                  value={newLeave.endDate}
-                  onChange={(e) => setNewLeave({ ...newLeave, endDate: e.target.value })}
-                />
-              </div>
-
-              <div className="modal-field">
-                <label>Time Off Type</label>
-                <select 
-                  value={newLeave.timeOffType}
-                  onChange={(e) => setNewLeave({ ...newLeave, timeOffType: e.target.value as TimeOffRequest['timeOffType'] })}
-                >
-                  <option value="Paid Time Off">Paid Time Off</option>
-                  <option value="Sick Time Off">Sick Time Off</option>
-                  <option value="Casual Leave">Casual Leave</option>
-                </select>
-              </div>
-
-              <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setIsTimeOffModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn-primary">Submit Request</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Employee Details Popup Modal Overlay Component */}
+      <EmployeeDetailsModal 
+        key={`${profileModalEmployee?.id || 'emp'}-${activeTab}`}
+        employee={profileModalEmployee}
+        onClose={() => setProfileModalEmployee(null)}
+        showAllTabs={activeTab !== 'Time Off'}
+        defaultTab={activeTab === 'Time Off' ? 'Leave & Time Off' : undefined}
+      />
 
       {/* New Employee Modal */}
       {isModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content employee-signup-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Add New Employee</h2>
+              <h2>Add Employee</h2>
               <button className="close-btn" onClick={() => setIsModalOpen(false)}>✕</button>
             </div>
             <form onSubmit={handleAddEmployee} className="modal-form">
+              <div className="employee-logo-field">
+                <div className="logo-placeholder">d</div>
+                <div>
+                  <strong>App/Web Logo</strong>
+                  <label className="logo-upload" htmlFor="employee-logo">⇧ Upload Logo</label>
+                  <input
+                    id="employee-logo"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setLogoFileName(e.target.files?.[0]?.name ?? '')}
+                  />
+                  {logoFileName && <span className="logo-file-name">{logoFileName}</span>}
+                </div>
+              </div>
+
               <div className="modal-field">
-                <label>Full Name</label>
+                <label htmlFor="employee-company">Company Name</label>
+                <input
+                  id="employee-company"
+                  type="text"
+                  required
+                  placeholder="Enter company name"
+                  value={newEmp.company}
+                  onChange={(e) => {
+                    const company = e.target.value
+                    const password = generateEmployeePassword(company)
+                    setNewEmp({ ...newEmp, company, password, confirmPassword: password })
+                  }}
+                />
+              </div>
+
+              <div className="modal-field">
+                <label htmlFor="employee-name">Name</label>
                 <input 
+                  id="employee-name"
                   type="text" 
-                  required 
-                  placeholder="e.g. Sarah Jenkins"
+                  required
+                  placeholder="Enter employee name"
                   value={newEmp.name}
                   onChange={(e) => setNewEmp({ ...newEmp, name: e.target.value })}
                 />
               </div>
 
               <div className="modal-field">
-                <label>Job Title</label>
+                <label htmlFor="employee-email">Email</label>
                 <input 
-                  type="text" 
-                  placeholder="e.g. UX Designer"
-                  value={newEmp.title}
-                  onChange={(e) => setNewEmp({ ...newEmp, title: e.target.value })}
+                  id="employee-email"
+                  type="email"
+                  required
+                  placeholder="employee@company.com"
+                  value={newEmp.email}
+                  onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })}
                 />
               </div>
 
               <div className="modal-field">
-                <label>Employee ID</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. EMP-2041"
-                  value={newEmp.empId}
-                  onChange={(e) => setNewEmp({ ...newEmp, empId: e.target.value })}
+                <label htmlFor="employee-phone">Phone</label>
+                <input
+                  id="employee-phone"
+                  type="tel"
+                  required
+                  placeholder="Enter phone number"
+                  value={newEmp.phone}
+                  onChange={(e) => setNewEmp({ ...newEmp, phone: e.target.value })}
                 />
               </div>
 
               <div className="modal-field">
-                <label>Department</label>
-                <select 
-                  value={newEmp.dept}
-                  onChange={(e) => setNewEmp({ ...newEmp, dept: e.target.value })}
-                >
-                  <option value="Engineering">Engineering</option>
-                  <option value="Design">Design</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Human Resources">Human Resources</option>
-                </select>
+                <label htmlFor="employee-password">Password</label>
+                <input
+                  id="employee-password"
+                  type="password"
+                  required
+                  minLength={8}
+                  placeholder="Generated from company name"
+                  readOnly
+                  value={newEmp.password}
+                />
               </div>
 
               <div className="modal-field">
-                <label>Attendance Status</label>
-                <select 
-                  value={newEmp.status}
-                  onChange={(e) => setNewEmp({ ...newEmp, status: e.target.value as Employee['status'] })}
-                >
-                  <option value="Present">Present</option>
-                  <option value="Absent">Absent</option>
-                  <option value="On Leave">On Leave</option>
-                  <option value="Late">Late</option>
-                  <option value="Sick Leave">Sick Leave</option>
-                </select>
+                <label htmlFor="employee-confirm-password">Confirm Password</label>
+                <input
+                  id="employee-confirm-password"
+                  type="password"
+                  required
+                  minLength={8}
+                  placeholder="Generated automatically"
+                  readOnly
+                  value={newEmp.confirmPassword}
+                />
               </div>
 
+              {employeeFormError && <div className="alert error" role="alert">{employeeFormError}</div>}
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn-primary">Add Employee</button>
+                <button type="submit" className="btn-primary employee-signup-button" disabled={employeeFormLoading}>
+                  {employeeFormLoading ? 'Saving...' : 'Add Employee'}
+                </button>
               </div>
+              {employeeFormSuccess && <div className="alert success employee-form-success" role="status">{employeeFormSuccess}</div>}
             </form>
           </div>
         </div>

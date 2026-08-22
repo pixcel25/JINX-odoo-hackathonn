@@ -1,0 +1,6 @@
+[
+  {"id":"1","employeeName":"Jane Doe","startDate":"28/10/2025","endDate":"28/10/2025","timeOffType":"Paid Time Off","status":"Pending"},
+  {"id":"2","employeeName":"John Smith","startDate":"01/11/2025","endDate":"03/11/2025","timeOffType":"Sick Time Off","status":"Approved"},
+  {"id":"3","employeeName":"Alice Wong","startDate":"12/11/2025","endDate":"15/11/2025","timeOffType":"Paid Time Off","status":"Pending"},
+  {"id":"4","employeeName":"Michael Kim","startDate":"20/11/2025","endDate":"20/11/2025","timeOffType":"Paid Time Off","status":"Refused"}
+]
