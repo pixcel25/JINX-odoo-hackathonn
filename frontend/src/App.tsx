@@ -335,11 +335,18 @@ function App() {
             <div className="employee-details-page">
               {/* Breadcrumb & Actions Header */}
               <div className="details-header">
-                <nav className="breadcrumb">
-                  <span className="breadcrumb-link" onClick={() => setSelectedEmployee(null)}>Employees</span>
-                  <span className="breadcrumb-separator">&gt;</span>
-                  <span className="breadcrumb-current">Employee Details</span>
-                </nav>
+                <div className="header-left-group">
+                  <button className="btn-back-link" onClick={() => setSelectedEmployee(null)}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    <span>Back to Employees</span>
+                  </button>
+
+                  <nav className="breadcrumb">
+                    <span className="breadcrumb-link" onClick={() => setSelectedEmployee(null)}>Employees</span>
+                    <span className="breadcrumb-separator">&gt;</span>
+                    <span className="breadcrumb-current">Employee Details</span>
+                  </nav>
+                </div>
 
                 <div className="details-action-buttons">
                   <button className="btn-deactivate">Deactivate</button>

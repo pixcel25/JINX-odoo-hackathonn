@@ -812,6 +812,39 @@ input:focus {
   justify-content: space-between;
 }
 
+.header-left-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn-back-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid #cce8d8;
+  border-radius: 8px;
+  background-color: #eef7f2;
+  color: #197344;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-back-link:hover {
+  background-color: #197344;
+  color: #ffffff;
+  border-color: #197344;
+}
+
+.btn-back-link svg {
+  width: 16px;
+  height: 16px;
+}
+
 .breadcrumb {
   display: flex;
   align-items: center;
