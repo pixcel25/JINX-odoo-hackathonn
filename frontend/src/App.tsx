@@ -31,15 +31,15 @@ interface Employee {
 const INITIAL_EMPLOYEES: Employee[] = [
   {
     id: '1',
-    name: 'Ashvek Anand Parab',
+    name: 'Jane Doe',
     title: 'BE Computer Engineering',
     empId: '24C010',
     dept: 'Engineering',
     status: 'Present',
-    checkIn: '09:00 AM',
-    checkOut: '06:00 PM',
-    workHours: '9h 00m',
-    email: '24c010@aiemgoa.ac.in',
+    checkIn: '10:00 AM',
+    checkOut: '19:00 PM',
+    workHours: '09:00',
+    email: 'jane.doe@dayflow.com',
     phone: '+91 9518788852',
     company: 'DayFlow Technologies',
     manager: 'Michael Chang',
@@ -49,19 +49,19 @@ const INITIAL_EMPLOYEES: Employee[] = [
     hobbies: 'Building side projects, playing chess, listening to tech podcasts, and exploring nature.',
     skills: ['TypeScript', 'React', 'Python', 'Django', 'REST APIs', 'UI/UX Design'],
     certifications: ['AWS Certified Developer', 'Meta Front-End Certificate', 'Scrum Master'],
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+    initials: 'JD'
   },
   {
     id: '2',
-    name: 'Alex Mercer',
-    title: 'Senior Developer',
+    name: 'John Smith',
+    title: 'Marketing Specialist',
     empId: 'EMP-1042',
-    dept: 'Engineering',
-    status: 'Late',
-    checkIn: '09:45 AM',
-    checkOut: '06:15 PM',
-    workHours: '8h 30m',
-    email: 'alex.mercer@dayflow.com',
+    dept: 'Marketing',
+    status: 'Present',
+    checkIn: '10:00 AM',
+    checkOut: '19:00 PM',
+    workHours: '09:00',
+    email: 'john.smith@dayflow.com',
     phone: '+91 9876543210',
     company: 'DayFlow Technologies',
     manager: 'Michael Chang',
@@ -69,21 +69,21 @@ const INITIAL_EMPLOYEES: Employee[] = [
     about: 'Full-stack software architect with 6+ years of enterprise application development.',
     jobLove: 'Architecting scalable systems and mentoring junior engineers.',
     hobbies: 'Open source contribution, cycling, and web performance tuning.',
-    skills: ['React', 'Node.js', 'PostgreSQL', 'Docker', 'GraphQL'],
-    certifications: ['AWS Solutions Architect', 'Google Cloud Engineer'],
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+    skills: ['SEO', 'Digital Marketing', 'HubSpot', 'Content Strategy'],
+    certifications: ['Google Analytics Professional'],
+    initials: 'JS'
   },
   {
     id: '3',
-    name: 'Jordan Lee',
-    title: 'Lead Product Designer',
+    name: 'Alice Wong',
+    title: 'Sales Lead',
     empId: 'EMP-1089',
-    dept: 'Design',
-    status: 'On Leave',
-    checkIn: 'N/A',
-    checkOut: 'N/A',
-    workHours: '0h 00m',
-    email: 'jordan.lee@dayflow.com',
+    dept: 'Sales',
+    status: 'Absent',
+    checkIn: '-:-',
+    checkOut: '-:-',
+    workHours: '00:00',
+    email: 'alice.wong@dayflow.com',
     phone: '+91 9123456789',
     company: 'DayFlow Technologies',
     manager: 'Michael Chang',
@@ -91,21 +91,21 @@ const INITIAL_EMPLOYEES: Employee[] = [
     about: 'Lead UI/UX designer crafting intuitive digital experiences for enterprise SaaS platforms.',
     jobLove: 'Transforming complex administrative workflows into beautiful, effortless user journeys.',
     hobbies: 'UI motion design, photography, and interior styling.',
-    skills: ['Figma', 'Design Systems', 'User Research', 'Prototyping'],
-    certifications: ['Nielsen Norman UX Certification', 'Interaction Design Specialist'],
-    avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80'
+    skills: ['Salesforce', 'B2B Sales', 'Negotiation'],
+    certifications: ['Certified Sales Professional'],
+    initials: 'AW'
   },
   {
     id: '4',
-    name: 'Taylor Cruz',
-    title: 'Marketing Manager',
+    name: 'Michael Kim',
+    title: 'Senior Developer',
     empId: 'EMP-1102',
-    dept: 'Marketing',
-    status: 'Sick Leave',
-    checkIn: 'N/A',
-    checkOut: 'N/A',
-    workHours: '0h 00m',
-    email: 'taylor.cruz@dayflow.com',
+    dept: 'Engineering',
+    status: 'Present',
+    checkIn: '09:00 AM',
+    checkOut: '17:00 PM',
+    workHours: '08:00',
+    email: 'michael.kim@dayflow.com',
     phone: '+91 9988776655',
     company: 'DayFlow Technologies',
     manager: 'Michael Chang',
@@ -113,31 +113,31 @@ const INITIAL_EMPLOYEES: Employee[] = [
     about: 'Strategic marketing practitioner focusing on B2B SaaS growth and product positioning.',
     jobLove: 'Connecting HR leaders with innovative software solutions that save them time.',
     hobbies: 'Content writing, marathon running, and digital media analytics.',
-    skills: ['SEO', 'Content Strategy', 'HubSpot', 'Growth Hacking'],
-    certifications: ['HubSpot Inbound Marketing', 'Google Analytics Professional'],
-    initials: 'TC'
+    skills: ['React', 'Node.js', 'PostgreSQL', 'Docker'],
+    certifications: ['AWS Solutions Architect'],
+    initials: 'MK'
   },
   {
     id: '5',
-    name: 'Michael Chang',
-    title: 'HR Director',
-    empId: 'EMP-0012',
-    dept: 'Human Resources',
+    name: 'Ashvek Anand Parab',
+    title: 'BE Computer Engineering',
+    empId: '24C010',
+    dept: 'Engineering',
     status: 'Present',
-    checkIn: '08:45 AM',
-    checkOut: '05:45 PM',
-    workHours: '9h 00m',
-    email: 'michael.chang@dayflow.com',
-    phone: '+91 9811223344',
+    checkIn: '09:00 AM',
+    checkOut: '06:00 PM',
+    workHours: '09:00',
+    email: '24c010@aiemgoa.ac.in',
+    phone: '+91 9518788852',
     company: 'DayFlow Technologies',
-    manager: 'Executive Board',
+    manager: 'Michael Chang',
     location: 'Goa, India',
-    about: 'Human Resources Director overseeing global talent acquisition, culture, and employee success.',
-    jobLove: 'Empowering team members to reach their full career potential in a supportive culture.',
-    hobbies: 'Leadership coaching, tennis, and organizational psychology.',
-    skills: ['Talent Management', 'HR Policy', 'Conflict Resolution'],
-    certifications: ['SHRM-SCP Senior Certified', 'SPHR Professional'],
-    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'
+    about: 'Passionate software engineer focused on building clean web interfaces.',
+    jobLove: 'I love solving complex workflow challenges.',
+    hobbies: 'Building side projects, playing chess.',
+    skills: ['TypeScript', 'React', 'Python'],
+    certifications: ['AWS Certified Developer'],
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
   },
   {
     id: '6',
@@ -147,41 +147,19 @@ const INITIAL_EMPLOYEES: Employee[] = [
     dept: 'Design',
     status: 'Present',
     checkIn: '09:10 AM',
-    checkOut: 'Pending',
-    workHours: '7h 50m',
+    checkOut: '18:00 PM',
+    workHours: '08:50',
     email: 'sarah.jenkins@dayflow.com',
     phone: '+91 9871122334',
     company: 'DayFlow Technologies',
     manager: 'Jordan Lee',
     location: 'Goa, India',
-    about: 'UX engineer bridging the gap between interface aesthetics and frontend architecture.',
+    about: 'UX engineer bridging interface aesthetics with frontend architecture.',
     jobLove: 'Crafting responsive accessibility tools.',
-    hobbies: 'Sketching, hiking, and acoustic guitar.',
-    skills: ['Figma', 'Accessibility', 'React', 'CSS Architecture'],
+    hobbies: 'Sketching, hiking.',
+    skills: ['Figma', 'Accessibility', 'React'],
     certifications: ['CPACC Accessibility Certification'],
     avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'
-  },
-  {
-    id: '7',
-    name: 'David Miller',
-    title: 'Backend Lead',
-    empId: 'EMP-1055',
-    dept: 'Engineering',
-    status: 'Absent',
-    checkIn: 'N/A',
-    checkOut: 'N/A',
-    workHours: '0h 00m',
-    email: 'david.miller@dayflow.com',
-    phone: '+91 9776655443',
-    company: 'DayFlow Technologies',
-    manager: 'Michael Chang',
-    location: 'Pune, India',
-    about: 'Distributed database specialist optimizing high-concurrency microservices.',
-    jobLove: 'Tuning query response times under high loads.',
-    hobbies: 'Chess engine programming and cycling.',
-    skills: ['Python', 'PostgreSQL', 'Redis', 'Kubernetes'],
-    certifications: ['AWS Certified DevOps Engineer'],
-    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80'
   }
 ]
 
@@ -229,6 +207,7 @@ function App() {
   const handleAddEmployee = (e: FormEvent) => {
     e.preventDefault()
     if (!newEmp.name.trim()) return
+    const initials = newEmp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     const created: Employee = {
       id: Date.now().toString(),
       name: newEmp.name,
@@ -236,9 +215,9 @@ function App() {
       empId: newEmp.empId || `EMP-${Math.floor(1000 + Math.random() * 9000)}`,
       dept: newEmp.dept,
       status: newEmp.status,
-      checkIn: newEmp.status === 'Present' ? '09:00 AM' : newEmp.status === 'Late' ? '09:40 AM' : 'N/A',
-      checkOut: newEmp.status === 'Present' || newEmp.status === 'Late' ? 'Pending' : 'N/A',
-      workHours: newEmp.status === 'Present' || newEmp.status === 'Late' ? '8h 00m' : '0h 00m',
+      checkIn: newEmp.status === 'Present' ? '10:00 AM' : '-:-',
+      checkOut: newEmp.status === 'Present' ? '19:00 PM' : '-:-',
+      workHours: newEmp.status === 'Present' ? '09:00' : '00:00',
       email: `${newEmp.name.toLowerCase().replace(/\s+/g, '.')}@dayflow.com`,
       phone: '+91 9876543210',
       company: 'DayFlow Technologies',
@@ -249,7 +228,7 @@ function App() {
       hobbies: 'Reading and coding.',
       skills: ['TypeScript', 'Web Development'],
       certifications: ['DayFlow Onboarding'],
-      initials: newEmp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+      initials
     }
     setEmployees([created, ...employees])
     setSelectedEmployee(created)
@@ -285,7 +264,8 @@ function App() {
   const filteredEmployees = employees.filter(emp => {
     const matchesSearch = emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           emp.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          emp.empId.toLowerCase().includes(searchQuery.toLowerCase())
+                          emp.empId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          emp.dept.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesDept = deptFilter === 'All' || emp.dept === deptFilter
     const matchesStatus = statusFilter === 'All' || emp.status === statusFilter
     return matchesSearch && matchesDept && matchesStatus
@@ -405,39 +385,35 @@ function App() {
         </div>
       </header>
 
-      {/* Sub Header Title Bar */}
-      <div className="wireframe-subheader">
-        <div className="subheader-title-group">
-          <h1 className="subheader-title">
-            {activeTab === 'Attendance' ? 'Attendance Management' : 
-             activeTab === 'Time Off' ? 'Time Off & Leave Requests' :
-             selectedEmployee ? 'My Profile' : 'Employees Directory'}
-          </h1>
-          {activeTab === 'Employees' && selectedEmployee && (
-            <button className="btn-back-directory" onClick={() => setSelectedEmployee(null)}>
-              ← Back to Directory
-            </button>
-          )}
-        </div>
+      {/* Sub Header Title Bar (for non-attendance tabs) */}
+      {activeTab !== 'Attendance' && (
+        <div className="wireframe-subheader">
+          <div className="subheader-title-group">
+            <h1 className="subheader-title">
+              {activeTab === 'Time Off' ? 'Time Off & Leave Requests' :
+               selectedEmployee ? 'My Profile' : 'Employees Directory'}
+            </h1>
+            {activeTab === 'Employees' && selectedEmployee && (
+              <button className="btn-back-directory" onClick={() => setSelectedEmployee(null)}>
+                ← Back to Directory
+              </button>
+            )}
+          </div>
 
-        <div className="subheader-actions">
-          {activeTab === 'Employees' && (
-            <button className="btn-add-new-emp" onClick={() => setIsModalOpen(true)}>
-              + Add Employee
-            </button>
-          )}
-          {activeTab === 'Attendance' && (
-            <button className="btn-add-new-emp" onClick={() => setIsModalOpen(true)}>
-              + Log Attendance
-            </button>
-          )}
-          {activeTab === 'Time Off' && (
-            <button className="btn-add-new-emp">
-              + New Leave Request
-            </button>
-          )}
+          <div className="subheader-actions">
+            {activeTab === 'Employees' && (
+              <button className="btn-add-new-emp" onClick={() => setIsModalOpen(true)}>
+                + Add Employee
+              </button>
+            )}
+            {activeTab === 'Time Off' && (
+              <button className="btn-add-new-emp">
+                + New Leave Request
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main App Content View */}
       <main className="wireframe-main-content">
@@ -741,189 +717,142 @@ function App() {
           )
         )}
 
-        {/* ==================== TAB 2: ATTENDANCE ==================== */}
+        {/* ==================== TAB 2: ATTENDANCE (WIREFRAME MATCH) ==================== */}
         {activeTab === 'Attendance' && (
-          <div className="attendance-tab-container">
-            {/* Today's Attendance Overview Bar */}
-            <div className="attendance-overview-section">
-              <div className="attendance-overview-header">
-                <div>
-                  <h3 className="attendance-section-title">Today's Attendance Overview</h3>
-                  <p className="attendance-section-sub">Real-time attendance log & daily employee status metrics</p>
-                </div>
-                <span className="attendance-date-badge">22 Aug 2026</span>
+          <div className="attendance-wireframe-layout">
+            {/* Top Header Title & Action Tools */}
+            <div className="attendance-header-bar">
+              <div className="attendance-title-wrap">
+                <h1 className="attendance-main-title">Attendance</h1>
+                <p className="attendance-main-sub">View and manage daily employee attendance records.</p>
               </div>
 
-              <div className="attendance-metrics-grid">
-                <div 
-                  className={`metric-card metric-present ${statusFilter === 'Present' ? 'active-metric' : ''}`} 
-                  onClick={() => setStatusFilter(statusFilter === 'Present' ? 'All' : 'Present')}
-                >
-                  <div className="metric-icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  </div>
-                  <div className="metric-info">
-                    <span className="metric-value">{employees.filter(e => e.status === 'Present').length}</span>
-                    <span className="metric-label">Present</span>
-                  </div>
+              <div className="attendance-top-actions">
+                <div className="attendance-search-field">
+                  <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                  <input 
+                    type="text" 
+                    placeholder="Search employee..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
 
-                <div 
-                  className={`metric-card metric-absent ${statusFilter === 'Absent' ? 'active-metric' : ''}`} 
-                  onClick={() => setStatusFilter(statusFilter === 'Absent' ? 'All' : 'Absent')}
+                <button 
+                  className={`btn-attendance-filter ${statusFilter !== 'All' ? 'active' : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'All' ? 'Absent' : 'All')}
                 >
-                  <div className="metric-icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </div>
-                  <div className="metric-info">
-                    <span className="metric-value">{employees.filter(e => e.status === 'Absent').length}</span>
-                    <span className="metric-label">Absent</span>
-                  </div>
-                </div>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                  Filter
+                </button>
 
-                <div 
-                  className={`metric-card metric-on-leave ${statusFilter === 'On Leave' ? 'active-metric' : ''}`} 
-                  onClick={() => setStatusFilter(statusFilter === 'On Leave' ? 'All' : 'On Leave')}
-                >
-                  <div className="metric-icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  </div>
-                  <div className="metric-info">
-                    <span className="metric-value">{employees.filter(e => e.status === 'On Leave').length}</span>
-                    <span className="metric-label">On Leave</span>
-                  </div>
-                </div>
-
-                <div 
-                  className={`metric-card metric-late ${statusFilter === 'Late' ? 'active-metric' : ''}`} 
-                  onClick={() => setStatusFilter(statusFilter === 'Late' ? 'All' : 'Late')}
-                >
-                  <div className="metric-icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  </div>
-                  <div className="metric-info">
-                    <span className="metric-value">{employees.filter(e => e.status === 'Late').length}</span>
-                    <span className="metric-label">Late Arrival</span>
-                  </div>
-                </div>
-
-                <div 
-                  className={`metric-card metric-sick ${statusFilter === 'Sick Leave' ? 'active-metric' : ''}`} 
-                  onClick={() => setStatusFilter(statusFilter === 'Sick Leave' ? 'All' : 'Sick Leave')}
-                >
-                  <div className="metric-icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                  </div>
-                  <div className="metric-info">
-                    <span className="metric-value">{employees.filter(e => e.status === 'Sick Leave').length}</span>
-                    <span className="metric-label">Sick Leave</span>
-                  </div>
-                </div>
+                <button className="btn-attendance-export">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export
+                </button>
               </div>
             </div>
 
-            {/* Attendance Filter Bar */}
-            <div className="directory-filter-bar">
-              <div className="filter-selects">
-                <select 
-                  value={statusFilter} 
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="filter-select"
-                >
-                  <option value="All">All Statuses</option>
-                  <option value="Present">Present</option>
-                  <option value="Absent">Absent</option>
-                  <option value="On Leave">On Leave</option>
-                  <option value="Late">Late Arrival</option>
-                  <option value="Sick Leave">Sick Leave</option>
-                </select>
+            {/* Controls Bar (Date controls + Present/Absent Badges) */}
+            <div className="attendance-control-panel">
+              <div className="panel-left-controls">
+                <div className="arrow-btn-group">
+                  <button className="ctrl-btn-square">‹</button>
+                  <button className="ctrl-btn-square">›</button>
+                </div>
 
-                <select 
-                  value={deptFilter} 
-                  onChange={(e) => setDeptFilter(e.target.value)}
-                  className="filter-select"
-                >
-                  <option value="All">All Departments</option>
-                  <option value="Engineering">Engineering</option>
-                  <option value="Design">Design</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Human Resources">Human Resources</option>
-                </select>
+                <button className="ctrl-btn-dropdown">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Date ▾
+                </button>
+
+                <button className="ctrl-btn-tab active">Day</button>
               </div>
 
-              <div className="filter-search-box">
-                <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <circle cx="11" cy="11" r="8"/>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
-                <input 
-                  type="text" 
-                  placeholder="Search attendance by name or ID..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+              <div className="panel-center-date">
+                <div className="date-display-pill">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <span>22 October 2025</span>
+                </div>
+              </div>
+
+              <div className="panel-right-summary">
+                <span className="summary-pill present">
+                  <span className="dot present-dot"></span> Present ({employees.filter(e => e.status === 'Present').length})
+                </span>
+                <span className="summary-pill absent">
+                  <span className="dot absent-dot"></span> Absent ({employees.filter(e => e.status === 'Absent' || e.status === 'On Leave' || e.status === 'Sick Leave').length})
+                </span>
               </div>
             </div>
 
-            {/* Attendance Records Table */}
-            <div className="attendance-table-card">
-              <table className="attendance-table">
+            {/* Attendance Wireframe Table Card */}
+            <div className="attendance-wireframe-card">
+              <table className="attendance-wireframe-table">
                 <thead>
                   <tr>
                     <th>Employee</th>
-                    <th>Department</th>
+                    <th>Status</th>
                     <th>Check In</th>
                     <th>Check Out</th>
                     <th>Work Hours</th>
-                    <th>Status</th>
-                    <th>Action</th>
+                    <th>Extra Hours</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredEmployees.map(emp => (
-                    <tr key={emp.id}>
-                      <td>
-                        <div className="table-emp-user">
-                          {emp.avatarUrl ? (
-                            <img src={emp.avatarUrl} alt={emp.name} className="table-avatar" />
-                          ) : (
-                            <div className="table-avatar-initials">{emp.initials || 'EP'}</div>
-                          )}
-                          <div className="table-emp-text">
-                            <span className="table-emp-name">{emp.name}</span>
-                            <span className="table-emp-id">{emp.empId}</span>
+                  {filteredEmployees.map(emp => {
+                    const isAbsent = emp.status === 'Absent' || emp.status === 'On Leave' || emp.status === 'Sick Leave'
+                    return (
+                      <tr key={emp.id} className={isAbsent ? 'row-absent' : ''}>
+                        <td>
+                          <div className="emp-cell">
+                            <div className={`emp-cell-avatar ${isAbsent ? 'avatar-absent' : 'avatar-present'}`}>
+                              {emp.initials || emp.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+                            </div>
+                            <div className="emp-cell-info">
+                              <span className="emp-cell-name">{emp.name}</span>
+                              <span className="emp-cell-dept">{emp.dept}</span>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="table-dept-tag">{emp.dept}</span>
-                      </td>
-                      <td>
-                        <span className="table-time-text">{emp.checkIn || 'N/A'}</span>
-                      </td>
-                      <td>
-                        <span className="table-time-text">{emp.checkOut || 'N/A'}</span>
-                      </td>
-                      <td>
-                        <span className="table-hours-text">{emp.workHours || '0h 00m'}</span>
-                      </td>
-                      <td>
-                        <span className={`status-pill status-${emp.status.toLowerCase().replace(/\s+/g, '-')}`}>
-                          {emp.status}
-                        </span>
-                      </td>
-                      <td>
-                        <button 
-                          className="btn-table-action"
-                          onClick={() => { setActiveTab('Employees'); setSelectedEmployee(emp); }}
-                        >
-                          View Profile
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td>
+                          <span className={`status-pill-wireframe ${isAbsent ? 'pill-absent' : 'pill-present'}`}>
+                            {emp.status}
+                          </span>
+                        </td>
+                        <td>{emp.checkIn || '-:-'}</td>
+                        <td>{emp.checkOut || '-:-'}</td>
+                        <td>{emp.workHours || '00:00'}</td>
+                        <td className="extra-hours-cell">
+                          {emp.status === 'Present' ? '01:00' : '00:00'}
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <button className="row-action-pencil" title="Edit Record">✎</button>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
+
+              {/* Table Pagination Footer */}
+              <div className="table-pagination-footer">
+                <span className="pagination-text">
+                  Showing 1 to {filteredEmployees.length} of {employees.length} entries
+                </span>
+                <div className="pagination-btns">
+                  <button className="pg-btn disabled">Previous</button>
+                  <button className="pg-btn active">1</button>
+                  <button className="pg-btn">2</button>
+                  <button className="pg-btn">3</button>
+                  <span className="pg-ellipsis">...</span>
+                  <button className="pg-btn">Next</button>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -990,9 +919,9 @@ function App() {
                   <tr>
                     <td>
                       <div className="table-emp-user">
-                        <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80" className="table-avatar" />
+                        <div className="table-avatar-initials">AW</div>
                         <div className="table-emp-text">
-                          <span className="table-emp-name">Jordan Lee</span>
+                          <span className="table-emp-name">Alice Wong</span>
                           <span className="table-emp-id">EMP-1089</span>
                         </div>
                       </div>
@@ -1000,26 +929,8 @@ function App() {
                     <td>Annual Paid Leave</td>
                     <td>3 Days</td>
                     <td>22 Aug - 24 Aug</td>
-                    <td>Family Vacation</td>
+                    <td>Personal Vacation</td>
                     <td><span className="status-pill status-on-leave">Approved</span></td>
-                    <td><button className="btn-table-action">Details</button></td>
-                  </tr>
-
-                  <tr>
-                    <td>
-                      <div className="table-emp-user">
-                        <div className="table-avatar-initials">TC</div>
-                        <div className="table-emp-text">
-                          <span className="table-emp-name">Taylor Cruz</span>
-                          <span className="table-emp-id">EMP-1102</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>Medical Sick Leave</td>
-                    <td>1 Day</td>
-                    <td>22 Aug 2026</td>
-                    <td>Doctor Appointment</td>
-                    <td><span className="status-pill status-sick-leave">Approved</span></td>
                     <td><button className="btn-table-action">Details</button></td>
                   </tr>
                 </tbody>
