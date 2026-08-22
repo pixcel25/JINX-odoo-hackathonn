@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from django.views.decorators.http import require_GET, require_POST
@@ -75,10 +76,55 @@ def login_view(request):
     return JsonResponse({'id': user.id, 'email': user.email, 'role': user_role})
 
 
+@require_POST
+def salary_change_view(request):
+    try:
+        data = json.loads(request.body)
+    except (TypeError, json.JSONDecodeError):
+        return error('Invalid salary update request.')
+
+    employee_email = data.get('employeeEmail') if isinstance(data, dict) else None
+    employee_name = data.get('employeeName') if isinstance(data, dict) else None
+    old_salary = data.get('oldSalary') if isinstance(data, dict) else None
+    new_salary = data.get('newSalary') if isinstance(data, dict) else None
+    if not isinstance(employee_email, str) or not isinstance(employee_name, str):
+        return error('Employee details are required.')
+    try:
+        validate_email(employee_email)
+    except ValidationError:
+        return error('A valid employee email is required.')
+    if not isinstance(old_salary, dict) or not isinstance(new_salary, dict):
+        return error('Both old and new salary structures are required.')
+
+    def format_salary(structure):
+        return '\n'.join(f'{label}: {structure.get(key, "")}' for key, label in (
+            ('payGrade', 'Pay Grade'),
+            ('baseSalary', 'Base Salary'),
+            ('allowances', 'HRA & Allowances'),
+            ('taxDeduction', 'Tax Deduction'),
+        ))
+
+    message = (
+        f'Salary structure update for {employee_name}\n\n'
+        f'Previous salary structure:\n{format_salary(old_salary)}\n\n'
+        f'New salary structure:\n{format_salary(new_salary)}\n'
+    )
+    try:
+        send_mail(
+            subject=f'Salary structure updated - {employee_name}',
+            message=message,
+            from_email=None,
+            recipient_list=[employee_email, 'rylanfranco251006@gmail.com'],
+            fail_silently=False,
+        )
+    except Exception:
+        return error('Salary was not saved because the notification email could not be sent.', 502)
+    return JsonResponse({'message': 'Salary updated and notification email sent.'})
+
+
 @require_GET
 def me_view(request):
     if not request.user.is_authenticated:
         return error('Authentication required.', 401)
     user_role = 'admin' if request.user.is_staff else 'employee'
     return JsonResponse({'id': request.user.id, 'email': request.user.email, 'role': user_role})
-

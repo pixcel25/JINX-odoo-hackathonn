@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { DEFAULT_SALARY_STRUCTURE } from '../data/salary'
+import type { SalaryStructure } from '../data/salary'
 
 export interface AttendanceRecord {
   date: string
@@ -52,18 +54,34 @@ interface EmployeeDetailsModalProps {
   onClose: () => void
   showAllTabs?: boolean
   defaultTab?: 'Attendance History' | 'Leave & Time Off' | 'Private Info' | 'Resume' | 'Salary Info'
+  salary?: SalaryStructure
+  onSaveSalary?: (salary: SalaryStructure) => Promise<void>
+  salarySaving?: boolean
+  salaryError?: string
 }
 
 export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   employee,
   onClose,
   showAllTabs = true,
-  defaultTab
+  defaultTab,
+  salary = DEFAULT_SALARY_STRUCTURE,
+  onSaveSalary,
+  salarySaving = false,
+  salaryError = ''
 }) => {
   const initialActiveTab = defaultTab || (showAllTabs ? 'Attendance History' : 'Leave & Time Off')
   const [activeTab, setActiveTab] = useState<
     'Attendance History' | 'Leave & Time Off' | 'Private Info' | 'Resume' | 'Salary Info'
   >(initialActiveTab)
+  const [editedSalary, setEditedSalary] = useState<SalaryStructure>(salary)
+  const [isEditingSalary, setIsEditingSalary] = useState(false)
+
+  const handleSalarySave = async () => {
+    if (!onSaveSalary) return
+    await onSaveSalary(editedSalary)
+    setIsEditingSalary(false)
+  }
 
   if (!employee) return null
 
@@ -403,23 +421,41 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
           {showAllTabs && activeTab === 'Salary Info' && (
             <div className="wireframe-single-card">
               <div className="content-card-box">
-                <h3 className="box-title">Compensation & Salary Information</h3>
+                <div className="card-header-line">
+                  <h3 className="box-title">Compensation & Salary Information</h3>
+                  {onSaveSalary && !isEditingSalary && (
+                    <button type="button" className="salary-edit-btn" onClick={() => setIsEditingSalary(true)}>
+                      Edit Salary
+                    </button>
+                  )}
+                  {onSaveSalary && isEditingSalary && (
+                    <button
+                      type="button"
+                      className="salary-save-btn"
+                      onClick={handleSalarySave}
+                      disabled={salarySaving}
+                    >
+                      {salarySaving ? 'Saving...' : 'Save Salary'}
+                    </button>
+                  )}
+                </div>
+                {salaryError && <div className="alert error salary-save-error" role="alert">{salaryError}</div>}
                 <div className="salary-info-grid">
                   <div className="salary-box">
                     <span className="salary-label">Pay Grade</span>
-                    <span className="salary-val">Level 4 — Senior Engineer</span>
+                    <input className="salary-input" value={editedSalary.payGrade} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, payGrade: event.target.value })} />
                   </div>
                   <div className="salary-box">
                     <span className="salary-label">Base Salary</span>
-                    <span className="salary-val">$110,000 / annum</span>
+                    <input className="salary-input" value={editedSalary.baseSalary} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, baseSalary: event.target.value })} />
                   </div>
                   <div className="salary-box">
                     <span className="salary-label">HRA & Allowances</span>
-                    <span className="salary-val">$18,000 / annum</span>
+                    <input className="salary-input" value={editedSalary.allowances} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, allowances: event.target.value })} />
                   </div>
                   <div className="salary-box">
                     <span className="salary-label">Tax Deduction</span>
-                    <span className="salary-val">Standard Corporate Slab</span>
+                    <input className="salary-input" value={editedSalary.taxDeduction} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, taxDeduction: event.target.value })} />
                   </div>
                 </div>
               </div>

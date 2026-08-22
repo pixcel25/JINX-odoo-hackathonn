@@ -3,6 +3,9 @@ import type { FormEvent } from 'react'
 import './App.css'
 import { EmployeeDetailsModal } from './components/EmployeeDetailsModal'
 import type { Employee } from './components/EmployeeDetailsModal'
+import { DEFAULT_SALARY_STRUCTURE } from './data/salary'
+import type { SalaryStructure } from './data/salary'
+import { LeaveApplicationModal } from './components/LeaveApplicationModal'
 import employeeData from './data/employees.json'
 import timeOffRequestData from './data/timeOffRequests.json'
 import dashboardData from './data/dashboard.json'
@@ -313,6 +316,10 @@ function App() {
   
   // Employee Popup Modal State
   const [profileModalEmployee, setProfileModalEmployee] = useState<Employee | null>(null)
+  const [salaryByEmployee, setSalaryByEmployee] = useState<Record<string, SalaryStructure>>({})
+  const [salarySaving, setSalarySaving] = useState(false)
+  const [salaryError, setSalaryError] = useState('')
+  const [selectedLeaveApplication, setSelectedLeaveApplication] = useState<TimeOffRequest | null>(null)
 
   // Time Off view state & requests
   const [timeOffSubTab, setTimeOffSubTab] = useState<'Time Off' | 'Allocation'>('Time Off')
@@ -340,7 +347,35 @@ function App() {
 
   // Open employee details modal popup handler
   const openEmployeePopup = (emp: Employee) => {
+    setSalaryError('')
     setProfileModalEmployee(emp)
+  }
+
+  const handleSaveSalary = async (employee: Employee, nextSalary: SalaryStructure) => {
+    setSalarySaving(true)
+    setSalaryError('')
+    const previousSalary = salaryByEmployee[employee.id] ?? DEFAULT_SALARY_STRUCTURE
+    try {
+      const token = await getCsrfToken()
+      const response = await fetch(`${API_URL}/auth/salary-change/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'X-CSRFToken': token } : {}) },
+        body: JSON.stringify({
+          employeeEmail: employee.email,
+          employeeName: employee.name,
+          oldSalary: previousSalary,
+          newSalary: nextSalary
+        })
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error ?? 'Unable to send the salary update email.')
+      setSalaryByEmployee((current) => ({ ...current, [employee.id]: nextSalary }))
+    } catch (error) {
+      setSalaryError(error instanceof Error ? error.message : 'Unable to save the salary update.')
+    } finally {
+      setSalarySaving(false)
+    }
   }
 
   const handleAuthSubmit = async (e: FormEvent) => {
@@ -449,6 +484,9 @@ function App() {
     req.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     req.timeOffType.toLowerCase().includes(searchQuery.toLowerCase())
   )
+  const leaveApplicationEmployee = selectedLeaveApplication
+    ? employees.find(emp => emp.name === selectedLeaveApplication.employeeName) ?? null
+    : null
 
   if (!isAuthenticated) {
     return (
@@ -948,6 +986,13 @@ function App() {
                               {req.status}
                             </span>
                             <div className="approval-action-boxes">
+                              <button
+                                className="view-application-btn"
+                                title="View Application"
+                                onClick={() => setSelectedLeaveApplication(req)}
+                              >
+                                View Application
+                              </button>
                               <button 
                                 className="box-btn-reject"
                                 title="Refuse Request"
@@ -982,7 +1027,19 @@ function App() {
         onClose={() => setProfileModalEmployee(null)}
         showAllTabs={activeTab !== 'Time Off'}
         defaultTab={activeTab === 'Time Off' ? 'Leave & Time Off' : undefined}
+        salary={profileModalEmployee ? salaryByEmployee[profileModalEmployee.id] : undefined}
+        onSaveSalary={profileModalEmployee ? (salary) => handleSaveSalary(profileModalEmployee, salary) : undefined}
+        salarySaving={salarySaving}
+        salaryError={salaryError}
       />
+
+      {selectedLeaveApplication && leaveApplicationEmployee && (
+        <LeaveApplicationModal
+          employee={leaveApplicationEmployee}
+          application={selectedLeaveApplication}
+          onClose={() => setSelectedLeaveApplication(null)}
+        />
+      )}
 
       {/* New Employee Modal */}
       {isModalOpen && (

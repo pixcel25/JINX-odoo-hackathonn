@@ -2078,6 +2078,66 @@ input[aria-invalid='true'] {
   color: #0f172a;
 }
 
+.salary-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #0f172a;
+  background-color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.salary-input:focus {
+  border-color: #197344;
+  box-shadow: 0 0 0 3px rgba(25, 115, 68, 0.12);
+}
+
+.salary-save-btn {
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 7px;
+  background-color: #197344;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.salary-edit-btn {
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid #197344;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #197344;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.salary-edit-btn:hover {
+  background-color: #eef7f2;
+}
+
+.salary-input[readonly] {
+  border-color: transparent;
+  background-color: transparent;
+  cursor: default;
+}
+
+.salary-save-btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.salary-save-error {
+  margin: 16px 0 0;
+}
+
 .resume-section {
   display: flex;
   flex-direction: column;
@@ -2236,6 +2296,152 @@ input[aria-invalid='true'] {
   width: 100%;
 }
 
+.application-popup-modal .modal-body-scrollable {
+  gap: 20px;
+}
+
+.application-popup-modal .profile-banner-box {
+  margin-bottom: 0;
+}
+
+.application-details-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 24px 28px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.application-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.application-request-fields {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+}
+
+.application-request-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 44px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.application-request-row .application-detail-label {
+  flex: 0 0 135px;
+}
+
+.application-detail-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.application-request-row strong {
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.application-period-separator,
+.application-unit {
+  margin: 0 16px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.application-attachment-value {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.attachment-upload-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 6px;
+  background-color: #197344;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.attachment-upload-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.application-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.application-submit-btn,
+.application-discard-btn {
+  height: 34px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.application-submit-btn {
+  border: 1px solid #197344;
+  background-color: #197344;
+  color: #ffffff;
+}
+
+.application-discard-btn {
+  border: 1px solid #cbd5e1;
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.view-application-btn {
+  padding: 0 10px;
+  height: 30px;
+  border: 1px solid #197344;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #197344;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.view-application-btn:hover {
+  background-color: #eef7f2;
+}
+
+@media (max-width: 600px) {
+  .application-request-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .application-request-row .application-detail-label {
+    flex-basis: auto;
+  }
+}
+
 .balance-card.balance-paid,
 .balance-card.balance-sick,
 .balance-card.balance-casual {
@@ -2293,5 +2499,3 @@ input[aria-invalid='true'] {
   color: #be123c;
   border: 1px solid #fecdd3;
 }
-
-
