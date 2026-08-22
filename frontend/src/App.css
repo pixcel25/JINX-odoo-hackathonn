@@ -450,13 +450,18 @@ input:focus {
   margin: 0 auto;
 }
 
-/* Attendance Overview Section on Dashboard */
+/* Attendance & Timeoff Tab Containers */
+.attendance-tab-container, .timeoff-tab-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 .attendance-overview-section {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 20px 24px;
-  margin-bottom: 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
@@ -469,9 +474,15 @@ input:focus {
 
 .attendance-section-title {
   margin: 0;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   color: #0f172a;
+}
+
+.attendance-section-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
 }
 
 .attendance-date-badge {
@@ -479,7 +490,7 @@ input:focus {
   font-weight: 600;
   color: #197344;
   background-color: #eef7f2;
-  padding: 4px 12px;
+  padding: 6px 14px;
   border-radius: 20px;
   border: 1px solid #cce8d8;
 }
@@ -538,7 +549,7 @@ input:focus {
   color: #64748b;
 }
 
-/* Metric Colors */
+/* Metric Theme Colors */
 .metric-present {
   background-color: #eef7f2;
   border-color: #cce8d8;
@@ -597,6 +608,121 @@ input:focus {
 }
 .metric-sick .metric-value {
   color: #7e22ce;
+}
+
+/* Attendance Records Table */
+.attendance-table-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.attendance-table th {
+  background-color: #f8fafc;
+  padding: 14px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.attendance-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 14px;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.attendance-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.table-emp-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.table-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.table-avatar-initials {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: #197344;
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.table-emp-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-emp-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.table-emp-id {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.table-dept-tag {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.table-time-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.table-hours-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: #197344;
+}
+
+.btn-table-action {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid #cce8d8;
+  border-radius: 6px;
+  background-color: #eef7f2;
+  color: #197344;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-table-action:hover {
+  background-color: #197344;
+  color: #ffffff;
 }
 
 /* Profile Format View */
@@ -948,7 +1074,7 @@ input:focus {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 280px;
+  width: 320px;
   height: 40px;
   padding: 0 14px;
   border: 1px solid #cbd5e1;
@@ -1069,6 +1195,12 @@ input:focus {
   font-size: 12px;
   color: #94a3b8;
   font-weight: 600;
+}
+
+.view-profile-link {
+  font-size: 12px;
+  font-weight: 700;
+  color: #197344;
 }
 
 .status-pill {
@@ -1241,5 +1373,9 @@ input:focus {
   }
   .wireframe-tab-grid {
     grid-template-columns: 1fr;
+  }
+  .attendance-table {
+    display: block;
+    overflow-x: auto;
   }
 }
