@@ -301,12 +301,12 @@ export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
               value={loginId}
             />
             <FormField
-              autoComplete="password"
-              label="Password"
+               autoComplete={employeeIdPattern.test(loginId.trim()) ? 'email' : 'password'}
+               label={employeeIdPattern.test(loginId.trim()) ? 'Email' : 'Password'}
               onChangeText={handleLoginPasswordChange}
               error={errors.password}
               returnKeyType="done"
-              secure
+               secure={!employeeIdPattern.test(loginId.trim())}
               value={password}
               onSubmitEditing={handleLogin}
             />

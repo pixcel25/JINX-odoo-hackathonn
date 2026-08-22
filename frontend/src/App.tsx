@@ -213,7 +213,7 @@ function App() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // New Employee form state
+  // New Employee form state is used by the admin employee provisioning dialog.
   const [newEmp, setNewEmp] = useState<{
     company: string;
     name: string;
@@ -355,6 +355,29 @@ function App() {
       });
     }
   };
+
+  const handleSaveResume = (employee: Employee, resumeEntries: ResumeEntry[]) => {
+    setResumeByEmployee((current) => ({ ...current, [employee.id]: resumeEntries }))
+  }
+
+  const handleSaveEmployee = (updatedEmployee: Employee) => {
+    setEmployees((currentEmployees) => currentEmployees.map((employee) => employee.id === updatedEmployee.id ? updatedEmployee : employee))
+    setProfileModalEmployee(updatedEmployee)
+  }
+
+  const handleDeleteEmployee = (employee: Employee) => {
+    setEmployees((currentEmployees) => currentEmployees.filter((item) => item.id !== employee.id))
+    setProfileModalEmployee(null)
+  }
+
+  const shiftAttendanceDate = (days: number) => {
+    const nextDate = new Date(`${attendanceDate}T00:00:00`)
+    nextDate.setDate(nextDate.getDate() + days)
+    const nextDateValue = nextDate.toISOString().slice(0, 10)
+    if (nextDateValue >= ATTENDANCE_MIN_DATE && nextDateValue <= ATTENDANCE_MAX_DATE) {
+      setAttendanceDate(nextDateValue)
+    }
+  }
 
   const handleAuthSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -528,8 +551,7 @@ function App() {
         <section className="brand-panel">
           <div className="brand-content">
             <div className="brand-badge">
-              <div className="brand-mark">d</div>
-              <h1 className="brand-title">DayFlow</h1>
+              <img className="brand-logo-image" src={logo} alt="DayFlow" />
             </div>
             <div className="brand-card">
               <div className="card-dot"></div>
@@ -555,8 +577,7 @@ function App() {
         <section className="form-panel">
           <div className="form-wrap">
             <div className="mobile-brand">
-              <div className="brand-mark">d</div>
-              <span className="brand-title">DayFlow</span>
+              <img className="brand-logo-image" src={logo} alt="DayFlow" />
             </div>
 
             <div className="admin-badge-tag">ADMIN PORTAL</div>
@@ -709,8 +730,7 @@ function App() {
       <header className="wireframe-navbar">
         <div className="nav-left">
           <div className="company-logo-badge">
-            <span className="logo-icon">d</span>
-            <span className="logo-text">Company Logo</span>
+            <img className="company-logo-image" src={logo} alt="DayFlow" />
           </div>
 
           <nav className="nav-links-bar">
@@ -976,8 +996,8 @@ function App() {
             <div className="attendance-control-panel">
               <div className="panel-left-controls">
                 <div className="arrow-btn-group">
-                  <button className="ctrl-btn-square">‹</button>
-                  <button className="ctrl-btn-square">›</button>
+                  <button className="ctrl-btn-square" onClick={() => shiftAttendanceDate(-1)} disabled={attendanceDate <= ATTENDANCE_MIN_DATE} aria-label="Previous date">‹</button>
+                  <button className="ctrl-btn-square" onClick={() => shiftAttendanceDate(1)} disabled={attendanceDate >= ATTENDANCE_MAX_DATE} aria-label="Next date">›</button>
                 </div>
 
                 <button className="ctrl-btn-dropdown">
@@ -1402,7 +1422,7 @@ function App() {
                             >
                               {req.status}
                             </span>
-                            <div className="approval-action-boxes">
+                            {!isAllocationView && <div className="approval-action-boxes">
                               <button
                                 className="view-application-btn"
                                 title="View Application"
@@ -1424,7 +1444,7 @@ function App() {
                               >
                                 ✔
                               </button>
-                            </div>
+                            </div>}
                           </div>
                         </td>
                       </tr>
@@ -1648,16 +1668,15 @@ function App() {
               </div>
 
               <div className="modal-field">
-                <label htmlFor="employee-password">Password</label>
-                <input
-                  id="employee-password"
-                  type="password"
+                <label htmlFor="employee-department">Department</label>
+                <select
+                  id="employee-department"
                   required
-                  minLength={8}
-                  placeholder="Generated from company name"
-                  readOnly
-                  value={newEmp.password}
-                />
+                  value={newEmp.dept}
+                  onChange={(e) => setNewEmp({ ...newEmp, dept: e.target.value })}
+                >
+                  {dashboardData.departments.map((department) => <option key={department} value={department}>{department}</option>)}
+                </select>
               </div>
 
               <div className="modal-field">
@@ -1665,13 +1684,22 @@ function App() {
                   Confirm Password
                 </label>
                 <input
-                  id="employee-confirm-password"
-                  type="password"
+                  id="employee-location"
+                  type="text"
                   required
-                  minLength={8}
-                  placeholder="Generated automatically"
+                  placeholder="Enter work location"
+                  value={newEmp.location}
+                  onChange={(e) => setNewEmp({ ...newEmp, location: e.target.value })}
+                />
+              </div>
+
+              <div className="modal-field generated-id-field">
+                <label htmlFor="generated-employee-id">Generated Employee ID</label>
+                <input
+                  id="generated-employee-id"
+                  type="text"
+                  value={generatedEmployeeId || 'Generated after submission'}
                   readOnly
-                  value={newEmp.confirmPassword}
                 />
               </div>
 

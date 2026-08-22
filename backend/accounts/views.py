@@ -1,5 +1,8 @@
 import json
 import re
+import secrets
+
+# Admin API handlers for authentication, employee provisioning, and salary notices.
 
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login, logout
@@ -12,7 +15,6 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import Employee
@@ -59,10 +61,6 @@ def signup_view(request):
         return error('An account with this email already exists.')
     is_staff = (role == 'admin')
     user = User(username=email, email=email, is_staff=is_staff)
-    try:
-        validate_password(password, user)
-    except ValidationError as exc:
-        return error(exc.messages[0])
     user.set_password(password)
     user.save()
     return JsonResponse({'message': f'Account created for {role}.'}, status=201)
@@ -150,16 +148,16 @@ def employee_login_view(request):
     try:
         data = json.loads(request.body)
     except (TypeError, json.JSONDecodeError):
-        return error('Enter your employee ID and password.')
+        return error('Enter your employee ID and email.')
 
     login_id = data.get('loginId', '').strip().upper() if isinstance(data, dict) and isinstance(data.get('loginId'), str) else ''
-    password = data.get('password', '') if isinstance(data, dict) else ''
-    if not login_id or not isinstance(password, str):
-        return error('Enter your employee ID and password.')
+    email = data.get('email', '').strip().lower() if isinstance(data, dict) and isinstance(data.get('email'), str) else ''
+    if not re.fullmatch(r'DF\d{3}', login_id) or not email:
+        return error('Enter your employee ID and email.')
 
-    employee = Employee.objects.filter(login_id=login_id).first()
-    if not employee or not check_password(password, employee.password_hash):
-        return error('That employee ID or password is not correct.', 401)
+    employee = Employee.objects.filter(login_id=login_id, email=email).first()
+    if not employee:
+        return error('That employee ID and email do not match.', 401)
 
     return JsonResponse({
         'id': employee.id,
@@ -251,38 +249,51 @@ def create_employee_view(request):
     if not isinstance(data, dict):
         return error('Enter valid employee details.')
 
-    company = data.get('company', '').strip()
-    name = data.get('name', '').strip()
-    email = data.get('email', '').strip().lower()
-    phone = data.get('phone', '').strip()
-    password = data.get('password', '')
+    raw_fields = {
+        'company': data.get('company', ''),
+        'name': data.get('name', ''),
+        'email': data.get('email', ''),
+        'phone': data.get('phone', ''),
+        'department': data.get('department', ''),
+        'location': data.get('location', ''),
+    }
+    if not all(isinstance(value, str) for value in raw_fields.values()):
+        return error('Company, name, email, phone, department, and location must be text values.')
 
-    if not all(isinstance(value, str) for value in (company, name, email, phone, password)):
-        return error('Enter valid employee details.')
-    if not company or not name or not phone or len(company) > 200 or len(name) > 200 or len(phone) > 30:
-        return error('Company, name, and phone are required.')
+    company = raw_fields['company'].strip()
+    name = raw_fields['name'].strip()
+    email = raw_fields['email'].strip().lower()
+    phone = raw_fields['phone'].strip()
+    department = raw_fields['department'].strip()
+    location = raw_fields['location'].strip()
+    if not company or not name or not phone or not department or not location or len(company) > 200 or len(name) > 200 or len(phone) > 30 or len(department) > 100 or len(location) > 200:
+        return error('Company, name, phone, department, and location are required.')
     try:
         validate_email(email)
-        validate_password(password)
     except ValidationError as exc:
         return error(exc.messages[0])
     if Employee.objects.filter(email=email).exists():
         return error('An employee with this email already exists.')
-
-    year = timezone.localdate().year
-    company_prefix = company_code(company)
-    name_prefix = name_code(name)
+    employee_id = next(
+        (candidate for candidate in (f'DF{secrets.randbelow(1000):03d}' for _ in range(1000))
+         if not Employee.objects.filter(login_id=candidate).exists()),
+        None,
+    )
+    if employee_id is None:
+        return error('Could not generate a unique employee ID. Please try again.', 503)
 
     with transaction.atomic():
-        sequence = Employee.objects.filter(joined_at__year=year).count() + 1
         employee = Employee(
             company_name=company,
             name=name,
             email=email,
             phone=phone,
-            login_id=f'{company_prefix}{name_prefix}{year}{sequence:04d}',
+            department=department,
+            location=location,
+            login_id=employee_id,
         )
-        employee.set_password(password)
+        # Keep a server-side hash for the existing schema; login uses the ID/email pair.
+        employee.password_hash = make_password(secrets.token_urlsafe(24))
         employee.save()
 
     return JsonResponse({
@@ -292,4 +303,6 @@ def create_employee_view(request):
         'name': employee.name,
         'email': employee.email,
         'phone': employee.phone,
+        'department': employee.department,
+        'location': employee.location,
     }, status=201)

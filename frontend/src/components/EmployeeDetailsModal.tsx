@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+// Shared admin profile modal for attendance, leave, private, resume, and salary records.
 import { DEFAULT_SALARY_STRUCTURE } from '../data/salary'
 import type { SalaryStructure } from '../data/salary'
 import { DEFAULT_PRIVATE_INFO } from '../data/privateInfo'
@@ -20,6 +21,13 @@ export interface LeaveHistoryItem {
   days: number
   reason: string
   status: 'Approved' | 'Pending' | 'Refused'
+}
+
+export interface ResumeEntry {
+  id: string
+  title: string
+  period: string
+  description: string
 }
 
 export interface Employee {
@@ -55,13 +63,35 @@ interface EmployeeDetailsModalProps {
   employee: Employee | null
   onClose: () => void
   showAllTabs?: boolean
-  defaultTab?: 'Attendance History' | 'Leave & Time Off' | 'Private Info' | 'Resume' | 'Salary Info' | 'Security'
+  defaultTab?: 'Attendance History' | 'Leave & Time Off' | 'Private Info' | 'Resume' | 'Salary Info'
   salary?: SalaryStructure
   onSaveSalary?: (salary: SalaryStructure) => Promise<void>
   salarySaving?: boolean
   salaryError?: string
   privateInfo?: PrivateInfo
   onSavePrivateInfo?: (privateInfo: PrivateInfo) => void
+  resumeEntries?: ResumeEntry[]
+  onSaveResume?: (resumeEntries: ResumeEntry[]) => void
+  onSaveEmployee?: (employee: Employee) => void
+  onDeleteEmployee?: (employee: Employee) => void
+}
+
+function numericSalaryValue(value: string | undefined) {
+  const parsed = Number((value ?? '').replace(/[^0-9.]/g, ''))
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function calculateProfessionalTax(salary: SalaryStructure) {
+  const monthlySalary = [
+    salary.monthWage,
+    salary.basicSalary,
+    salary.houseRentAllowance,
+    salary.standardAllowance,
+    salary.performanceBonus,
+    salary.leaveTravelAllowance,
+    salary.fixedAllowance
+  ].reduce((total, value) => total + numericSalaryValue(value), 0)
+  return (monthlySalary * 0.004).toFixed(2)
 }
 
 export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
@@ -74,21 +104,66 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   salarySaving = false,
   salaryError = '',
   privateInfo = DEFAULT_PRIVATE_INFO,
-  onSavePrivateInfo
+  onSavePrivateInfo,
+  resumeEntries,
+  onSaveResume,
+  onSaveEmployee,
+  onDeleteEmployee
 }) => {
   const initialActiveTab = defaultTab || (showAllTabs ? 'Attendance History' : 'Leave & Time Off')
+  // Keep edits local until the administrator explicitly saves the section.
   const [activeTab, setActiveTab] = useState<
-    'Attendance History' | 'Leave & Time Off' | 'Private Info' | 'Resume' | 'Salary Info' | 'Security'
+    'Attendance History' | 'Leave & Time Off' | 'Private Info' | 'Resume' | 'Salary Info'
   >(initialActiveTab)
-  const [editedSalary, setEditedSalary] = useState<SalaryStructure>({ ...DEFAULT_SALARY_STRUCTURE, ...salary })
+  const [editedSalary, setEditedSalary] = useState<SalaryStructure>(() => {
+    const initialSalary = { ...DEFAULT_SALARY_STRUCTURE, ...salary }
+    const initialPf = numericSalaryValue(initialSalary.basicSalary) ? (numericSalaryValue(initialSalary.basicSalary) * 0.12).toFixed(2) : ''
+    return {
+      ...initialSalary,
+      taxDeduction: Object.values(initialSalary).some(Boolean) ? calculateProfessionalTax(initialSalary) : '',
+      providentFundEmployee: initialPf,
+      providentFundEmployer: initialPf
+    }
+  })
   const [isEditingSalary, setIsEditingSalary] = useState(false)
   const [editedPrivateInfo, setEditedPrivateInfo] = useState<PrivateInfo>({ ...DEFAULT_PRIVATE_INFO, ...privateInfo })
   const [isEditingPrivateInfo, setIsEditingPrivateInfo] = useState(false)
+  const [editedResumeEntries, setEditedResumeEntries] = useState<ResumeEntry[]>(resumeEntries ?? [
+    { id: 'default-work', title: 'Senior Developer - DayFlow Solutions', period: '2023 - Present', description: 'Building high-throughput full-stack enterprise web modules and leading backend API integrations.' },
+    { id: 'default-education', title: employee?.title ?? 'Education', period: 'Graduated 2022', description: 'Focused on software architecture, algorithms, database optimization, and user interface design.' }
+  ])
+  const [isEditingResume, setIsEditingResume] = useState(false)
+  const [newResumeEntry, setNewResumeEntry] = useState({ title: '', period: '', description: '' })
+  const [editedEmployee, setEditedEmployee] = useState<Employee>(employee ? { ...employee } : {} as Employee)
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+
+  const updateEmployeeField = (field: keyof Employee, value: string) => {
+    setEditedEmployee((current) => ({ ...current, [field]: value }))
+  }
+
+  const profileField = (field: keyof Employee, value: string) => isEditingProfile
+    ? <input className="profile-edit-input" value={value} onChange={(event) => updateEmployeeField(field, event.target.value)} />
+    : <span className="field-val-line">{value}</span>
 
   const handleSalarySave = async () => {
     if (!onSaveSalary) return
     await onSaveSalary(editedSalary)
     setIsEditingSalary(false)
+  }
+
+  const updateSalaryField = (field: keyof SalaryStructure, value: string) => {
+    setEditedSalary((current) => {
+      const nextSalary = { ...current, [field]: value }
+      if (field !== 'payGrade' && field !== 'taxDeduction') {
+        nextSalary.taxDeduction = calculateProfessionalTax(nextSalary)
+      }
+      if (field === 'basicSalary') {
+        const providentFund = (numericSalaryValue(value) * 0.12).toFixed(2)
+        nextSalary.providentFundEmployee = providentFund
+        nextSalary.providentFundEmployer = providentFund
+      }
+      return nextSalary
+    })
   }
 
   const updatePrivateField = (field: keyof PrivateInfo, value: string) => {
@@ -105,7 +180,20 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
             <h2>Employee Details & Track Record</h2>
             <span className="popup-emp-id">ID: {employee.empId}</span>
           </div>
-          <button className="close-btn" onClick={onClose} title="Close Modal">✕</button>
+            <button className="close-btn" onClick={onClose} title="Close Modal">✕</button>
+            {onSaveEmployee && !isEditingProfile && <button type="button" className="profile-edit-btn" onClick={() => setIsEditingProfile(true)}>Edit Profile</button>}
+            {onSaveEmployee && isEditingProfile && <button type="button" className="profile-save-btn" onClick={() => { onSaveEmployee(editedEmployee); setIsEditingProfile(false) }}>Save Profile</button>}
+            {onDeleteEmployee && employee.id !== 'admin-profile' && (
+              <button
+                type="button"
+                className="profile-delete-btn"
+                onClick={() => {
+                  if (window.confirm(`Delete ${employee.name}'s profile? This action cannot be undone.`)) onDeleteEmployee(employee)
+                }}
+              >
+                Delete Profile
+              </button>
+            )}
         </div>
 
         <div className="modal-body-scrollable">
@@ -124,45 +212,45 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
             <div className="profile-fields-grid">
               <div className="fields-col">
                 <div className="name-field-row">
-                  <h2 className="profile-name-heading">{employee.name}</h2>
-                  <button className="inline-pencil-btn" title="Edit Name">✎</button>
+                  {isEditingProfile ? <input className="profile-name-edit-input" value={editedEmployee.name} onChange={(event) => updateEmployeeField('name', event.target.value)} /> : <h2 className="profile-name-heading">{editedEmployee.name}</h2>}
+                  <button className="inline-pencil-btn" title="Edit Name" onClick={() => setIsEditingProfile(true)}>✎</button>
                 </div>
 
                 <div className="field-line-item">
                   <span className="field-key">Login ID</span>
-                  <span className="field-val-line">{employee.empId}</span>
+                  <span className="field-val-line">{editedEmployee.empId}</span>
                 </div>
 
                 <div className="field-line-item">
                   <span className="field-key">Email</span>
-                  <span className="field-val-line">{employee.email}</span>
+                  {profileField('email', editedEmployee.email)}
                 </div>
 
                 <div className="field-line-item">
                   <span className="field-key">Mobile</span>
-                  <span className="field-val-line">{employee.phone}</span>
+                  {profileField('phone', editedEmployee.phone)}
                 </div>
               </div>
 
               <div className="fields-col">
                 <div className="field-line-item margin-top-spacer">
                   <span className="field-key">Company</span>
-                  <span className="field-val-line">{employee.company}</span>
+                  {profileField('company', editedEmployee.company)}
                 </div>
 
                 <div className="field-line-item">
                   <span className="field-key">Department</span>
-                  <span className="field-val-line">{employee.dept}</span>
+                  {profileField('dept', editedEmployee.dept)}
                 </div>
 
                 <div className="field-line-item">
                   <span className="field-key">Manager</span>
-                  <span className="field-val-line">{employee.manager}</span>
+                  {profileField('manager', editedEmployee.manager)}
                 </div>
 
                 <div className="field-line-item">
                   <span className="field-key">Location</span>
-                  <span className="field-val-line">{employee.location}</span>
+                  {profileField('location', editedEmployee.location)}
                 </div>
               </div>
             </div>
@@ -220,16 +308,6 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                   onClick={() => setActiveTab('Salary Info')}
                 >
                   Salary Info
-                </button>
-
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === 'Security'}
-                  className={`wireframe-tab-btn ${activeTab === 'Security' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('Security')}
-                >
-                  Security
                 </button>
 
               </>
@@ -402,18 +480,31 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
           {showAllTabs && activeTab === 'Resume' && (
             <div className="wireframe-single-card">
               <div className="content-card-box">
-                <h3 className="box-title">Work Experience & Education</h3>
+                <div className="card-header-line">
+                  <h3 className="box-title">Work Experience & Education</h3>
+                  {onSaveResume && !isEditingResume && <button type="button" className="resume-edit-btn" onClick={() => setIsEditingResume(true)}>Edit Resume</button>}
+                  {onSaveResume && isEditingResume && <button type="button" className="resume-save-btn" onClick={() => { onSaveResume(editedResumeEntries); setIsEditingResume(false) }}>Save Resume</button>}
+                </div>
+                {isEditingResume && (
+                  <div className="resume-add-form">
+                    <input placeholder="Job title or education" value={newResumeEntry.title} onChange={(event) => setNewResumeEntry({ ...newResumeEntry, title: event.target.value })} />
+                    <input placeholder="Period (e.g. 2024 - Present)" value={newResumeEntry.period} onChange={(event) => setNewResumeEntry({ ...newResumeEntry, period: event.target.value })} />
+                    <textarea placeholder="Description" value={newResumeEntry.description} onChange={(event) => setNewResumeEntry({ ...newResumeEntry, description: event.target.value })} />
+                    <button type="button" className="resume-add-btn" onClick={() => {
+                      if (!newResumeEntry.title.trim()) return
+                      setEditedResumeEntries([...editedResumeEntries, { ...newResumeEntry, id: `resume-${Date.now()}` }])
+                      setNewResumeEntry({ title: '', period: '', description: '' })
+                    }}>+ Add Job</button>
+                  </div>
+                )}
                 <div className="resume-section">
-                  <div className="resume-item">
-                    <h4>Senior Developer — DayFlow Solutions</h4>
-                    <span className="resume-period">2023 - Present</span>
-                    <p>Building high-throughput full-stack enterprise web modules and leading backend API integrations.</p>
-                  </div>
-                  <div className="resume-item">
-                    <h4>{employee.title}</h4>
-                    <span className="resume-period">Graduated 2022</span>
-                    <p>Focused on software architecture, algorithms, database optimization, and user interface design.</p>
-                  </div>
+                  {editedResumeEntries.map((entry) => (
+                    <div className="resume-item" key={entry.id}>
+                      <h4>{entry.title}</h4>
+                      <span className="resume-period">{entry.period}</span>
+                      <p>{entry.description}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -443,37 +534,37 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 </div>
                 {salaryError && <div className="alert error salary-save-error" role="alert">{salaryError}</div>}
                 <div className="salary-overview-grid">
-                  <div className="salary-overview-field"><span>Month Wage</span><input value={editedSalary.monthWage ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, monthWage: event.target.value })} /><small>/ Month</small></div>
-                  <div className="salary-overview-field"><span>Yearly Wage</span><input value={editedSalary.yearlyWage ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, yearlyWage: event.target.value })} /><small>/ Yearly</small></div>
-                  <div className="salary-overview-field"><span>No. of working days in a week</span><input value={editedSalary.workingDays ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, workingDays: event.target.value })} /></div>
-                  <div className="salary-overview-field"><span>Break Time / Hours</span><input value={editedSalary.workingHours ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, workingHours: event.target.value })} /><small>/ Hrs</small></div>
+                  <div className="salary-overview-field"><span>Month Wage</span><input value={editedSalary.monthWage ?? ''} readOnly={!isEditingSalary} onChange={(event) => updateSalaryField('monthWage', event.target.value)} /><small>/ Month</small></div>
+                  <div className="salary-overview-field"><span>Yearly Wage</span><input value={editedSalary.yearlyWage ?? ''} readOnly={!isEditingSalary} onChange={(event) => updateSalaryField('yearlyWage', event.target.value)} /><small>/ Yearly</small></div>
+                  <div className="salary-overview-field"><span>No. of working days in a week</span><input value={editedSalary.workingDays ?? ''} readOnly={!isEditingSalary} onChange={(event) => updateSalaryField('workingDays', event.target.value)} /></div>
+                  <div className="salary-overview-field"><span>Break Time / Hours</span><input value={editedSalary.workingHours ?? ''} readOnly={!isEditingSalary} onChange={(event) => updateSalaryField('workingHours', event.target.value)} /><small>/ Hrs</small></div>
                 </div>
 
                 <div className="salary-sections-grid">
                   <section className="salary-section">
                     <h4>Salary Components</h4>
-                    <div className="salary-component-row"><span>Basic Salary</span><input value={editedSalary.basicSalary ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, basicSalary: event.target.value })} /><small>₹ / month</small><b>50.00%</b></div>
+                    <div className="salary-component-row"><span>Basic Salary</span><input value={editedSalary.basicSalary ?? ''} readOnly={!isEditingSalary} onChange={(event) => updateSalaryField('basicSalary', event.target.value)} /><small>₹ / month</small><b>50.00%</b></div>
                     <p>Define Basic salary from company cost based on monthly wages</p>
-                    <div className="salary-component-row"><span>House Rent Allowance</span><input value={editedSalary.houseRentAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, houseRentAllowance: event.target.value })} /><small>₹ / month</small><b>50.00%</b></div>
+                    <div className="salary-component-row"><span>House Rent Allowance</span><input value={editedSalary.houseRentAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => updateSalaryField('houseRentAllowance', event.target.value)} /><small>₹ / month</small><b>50.00%</b></div>
                     <p>HRA provided to employees 50% of the basic salary</p>
-                    <div className="salary-component-row"><span>Standard Allowance</span><input value={editedSalary.standardAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, standardAllowance: event.target.value })} /><small>₹ / month</small><b>16.67%</b></div>
+                    <div className="salary-component-row"><span>Standard Allowance</span><input value={editedSalary.standardAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => updateSalaryField('standardAllowance', event.target.value)} /><small>₹ / month</small><b>16.67%</b></div>
                     <p>A standard allowance is a predetermined, fixed amount provided to employees.</p>
-                    <div className="salary-component-row"><span>Performance Bonus</span><input value={editedSalary.performanceBonus ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, performanceBonus: event.target.value })} /><small>₹ / month</small><b>8.33%</b></div>
+                    <div className="salary-component-row"><span>Performance Bonus</span><input value={editedSalary.performanceBonus ?? ''} readOnly={!isEditingSalary} onChange={(event) => updateSalaryField('performanceBonus', event.target.value)} /><small>₹ / month</small><b>8.33%</b></div>
                     <p>Variable amount paid during payroll based on performance.</p>
-                    <div className="salary-component-row"><span>Leave Travel Allowance</span><input value={editedSalary.leaveTravelAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, leaveTravelAllowance: event.target.value })} /><small>₹ / month</small><b>8.33%</b></div>
+                    <div className="salary-component-row"><span>Leave Travel Allowance</span><input value={editedSalary.leaveTravelAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => updateSalaryField('leaveTravelAllowance', event.target.value)} /><small>₹ / month</small><b>8.33%</b></div>
                     <p>LTA is paid by the company to cover travel expenses.</p>
-                    <div className="salary-component-row"><span>Fixed Allowance</span><input value={editedSalary.fixedAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, fixedAllowance: event.target.value })} /><small>₹ / month</small><b>11.67%</b></div>
+                    <div className="salary-component-row"><span>Fixed Allowance</span><input value={editedSalary.fixedAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => updateSalaryField('fixedAllowance', event.target.value)} /><small>₹ / month</small><b>11.67%</b></div>
                     <p>Fixed allowance portion of wages determined after calculating all salary components.</p>
                   </section>
 
                   <section className="salary-section">
                     <h4>Provident Fund (PF) Contribution</h4>
-                    <div className="salary-component-row"><span>Employee</span><input value={editedSalary.providentFundEmployee ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, providentFundEmployee: event.target.value })} /><small>₹ / month</small><b>12.00%</b></div>
+                    <div className="salary-component-row"><span>Employee</span><input value={editedSalary.providentFundEmployee ?? ''} readOnly /><small>₹ / month</small><b>12.00%</b></div>
                     <p>PF is calculated based on the basic salary.</p>
-                    <div className="salary-component-row"><span>Employer</span><input value={editedSalary.providentFundEmployer ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, providentFundEmployer: event.target.value })} /><small>₹ / month</small><b>12.00%</b></div>
+                    <div className="salary-component-row"><span>Employer</span><input value={editedSalary.providentFundEmployer ?? ''} readOnly /><small>₹ / month</small><b>12.00%</b></div>
                     <p>PF is calculated based on the basic salary.</p>
                     <h4>Tax Deductions</h4>
-                    <div className="salary-component-row"><span>Professional Tax</span><input value={editedSalary.professionalTax ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, professionalTax: event.target.value })} /><small>₹ / month</small></div>
+                    <div className="salary-component-row"><span>Professional Tax</span><input value={editedSalary.taxDeduction} readOnly /><small>₹ / month</small></div>
                     <p>Professional Tax deducted from the Gross salary.</p>
                   </section>
                 </div>
@@ -481,15 +572,6 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
             </div>
           )}
 
-          {showAllTabs && activeTab === 'Security' && (
-            <div className="wireframe-single-card">
-              <div className="content-card-box security-card">
-                <h3 className="box-title">Security</h3>
-                <p className="box-text-content">Manage account access and authentication settings for this employee.</p>
-                <button type="button" className="private-edit-btn">Reset Password</button>
-              </div>
-            </div>
-          )}
 
         </div>
       </div>

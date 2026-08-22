@@ -1,3 +1,5 @@
+// Editable private and banking fields displayed in the admin employee profile.
+
 export interface PrivateInfo {
   dateOfBirth: string
   residingAddress: string
