@@ -1,0 +1,8 @@
+{
+  "departments": ["Engineering", "Design", "Marketing", "Human Resources"],
+  "attendanceStatuses": ["Present", "Absent", "On Leave", "Late", "Sick Leave"],
+  "defaultDepartment": "Engineering",
+  "defaultAttendanceStatus": "Present",
+  "attendanceDate": "22 October 2025",
+  "leaveBalances": {"paid": 24, "sick": 7}
+}

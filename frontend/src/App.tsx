@@ -3,6 +3,9 @@ import type { FormEvent } from 'react'
 import './App.css'
 import { EmployeeDetailsModal } from './components/EmployeeDetailsModal'
 import type { Employee } from './components/EmployeeDetailsModal'
+import employeeData from './data/employees.json'
+import timeOffRequestData from './data/timeOffRequests.json'
+import dashboardData from './data/dashboard.json'
 
 type Mode = 'login' | 'signup'
 type FormErrors = Record<string, string>
@@ -36,7 +39,7 @@ interface TimeOffRequest {
   allocationDays?: number
 }
 
-const INITIAL_EMPLOYEES: Employee[] = [
+/* const INITIAL_EMPLOYEES: Employee[] = [
   {
     id: '1',
     name: 'Jane Doe',
@@ -229,8 +232,9 @@ const INITIAL_EMPLOYEES: Employee[] = [
     leaveHistory: []
   }
 ]
+*/
 
-const INITIAL_TIME_OFF_REQUESTS: TimeOffRequest[] = [
+/* const INITIAL_TIME_OFF_REQUESTS: TimeOffRequest[] = [
   {
     id: '1',
     employeeName: 'Jane Doe',
@@ -264,11 +268,15 @@ const INITIAL_TIME_OFF_REQUESTS: TimeOffRequest[] = [
     status: 'Refused'
   }
 ]
+*/
+
+const INITIAL_EMPLOYEES = employeeData as Employee[]
+const INITIAL_TIME_OFF_REQUESTS = timeOffRequestData as TimeOffRequest[]
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [mode, setMode] = useState<Mode>('login')
-  const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' })
+  const [form, setForm] = useState({ email: 'admin', password: '1234567890', confirmPassword: '' })
   const [authErrors, setAuthErrors] = useState<FormErrors>({})
   const [authError, setAuthError] = useState('')
   const [authSuccess, setAuthSuccess] = useState('')
@@ -301,8 +309,8 @@ function App() {
     name: '',
     title: '',
     empId: '',
-    dept: 'Engineering',
-    status: 'Present'
+    dept: dashboardData.defaultDepartment,
+    status: dashboardData.defaultAttendanceStatus as Employee['status']
   })
 
   // Open employee details modal popup handler
@@ -314,10 +322,6 @@ function App() {
     e.preventDefault()
     setAuthError('')
     setAuthSuccess('')
-    if (mode === 'login') {
-      setIsAuthenticated(true)
-      return
-    }
     const nextErrors: FormErrors = {}
     const email = form.email.trim().toLowerCase()
     if (!email) nextErrors.email = 'Work email is required.'
@@ -382,7 +386,7 @@ function App() {
     }
     setEmployees([created, ...employees])
     openEmployeePopup(created)
-    setNewEmp({ name: '', title: '', empId: '', dept: 'Engineering', status: 'Present' })
+    setNewEmp({ name: '', title: '', empId: '', dept: dashboardData.defaultDepartment, status: dashboardData.defaultAttendanceStatus as Employee['status'] })
     setIsModalOpen(false)
   }
 
@@ -449,20 +453,20 @@ function App() {
             <h2>{mode === 'login' ? 'Admin Sign In' : 'Create Admin Account'}</h2>
 
             <div className="mode-switch" role="tablist" aria-label="Authentication mode">
-              <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setAuthErrors({}); setAuthError(''); setAuthSuccess('') }} role="tab" aria-selected={mode === 'login'}>Sign in</button>
-              <button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => { setMode('signup'); setAuthErrors({}); setAuthError(''); setAuthSuccess('') }} role="tab" aria-selected={mode === 'signup'}>Sign up</button>
+              <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setForm({ email: 'admin', password: '1234567890', confirmPassword: '' }); setAuthErrors({}); setAuthError(''); setAuthSuccess('') }} role="tab" aria-selected={mode === 'login'}>Sign in</button>
+              <button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => { setMode('signup'); setForm({ email: '', password: '', confirmPassword: '' }); setAuthErrors({}); setAuthError(''); setAuthSuccess('') }} role="tab" aria-selected={mode === 'signup'}>Sign up</button>
             </div>
 
             <form onSubmit={handleAuthSubmit} noValidate>
               <div className="field-group">
-                <label htmlFor="email">Work Email</label>
-                  <input id="email" type="email" autoComplete="email" placeholder="admin@company.com" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} aria-invalid={Boolean(authErrors.email)} />
+                <label htmlFor="email">{mode === 'login' ? 'Admin Username / Email' : 'Work Email'}</label>
+                  <input id="email" type="text" autoComplete="username" placeholder={mode === 'login' ? 'admin' : 'admin@company.com'} value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} aria-invalid={Boolean(authErrors.email)} />
                   {authErrors.email && <span className="field-error">{authErrors.email}</span>}
               </div>
 
               <div className="field-group">
                 <label htmlFor="password">Password</label>
-                  <input id="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder="Enter your admin password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} aria-invalid={Boolean(authErrors.password)} />
+                  <input id="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder={mode === 'login' ? '1234567890' : 'Enter your admin password'} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} aria-invalid={Boolean(authErrors.password)} />
                   {authErrors.password && <span className="field-error">{authErrors.password}</span>}
               </div>
 
@@ -564,10 +568,7 @@ function App() {
                   className="filter-select"
                 >
                   <option value="All">All Departments</option>
-                  <option value="Engineering">Engineering</option>
-                  <option value="Design">Design</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Human Resources">Human Resources</option>
+                  {dashboardData.departments.map((department) => <option key={department} value={department}>{department}</option>)}
                 </select>
               </div>
 
@@ -673,7 +674,7 @@ function App() {
               <div className="panel-center-date">
                 <div className="date-display-pill">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  <span>22 October 2025</span>
+                   <span>{dashboardData.attendanceDate}</span>
                 </div>
               </div>
 
@@ -872,11 +873,11 @@ function App() {
             <div className="timeoff-balance-cards-grid">
               <div className="balance-card balance-paid">
                 <span className="balance-title">Paid time Off</span>
-                <span className="balance-days">24 Days Available</span>
+                 <span className="balance-days">{dashboardData.leaveBalances.paid} Days Available</span>
               </div>
               <div className="balance-card balance-sick">
                 <span className="balance-title">Sick time off</span>
-                <span className="balance-days">07 Days Available</span>
+                 <span className="balance-days">{String(dashboardData.leaveBalances.sick).padStart(2, '0')} Days Available</span>
               </div>
             </div>
 
@@ -999,10 +1000,7 @@ function App() {
                   value={newEmp.dept}
                   onChange={(e) => setNewEmp({ ...newEmp, dept: e.target.value })}
                 >
-                  <option value="Engineering">Engineering</option>
-                  <option value="Design">Design</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Human Resources">Human Resources</option>
+                  {dashboardData.departments.map((department) => <option key={department} value={department}>{department}</option>)}
                 </select>
               </div>
 
@@ -1012,11 +1010,7 @@ function App() {
                   value={newEmp.status}
                   onChange={(e) => setNewEmp({ ...newEmp, status: e.target.value as Employee['status'] })}
                 >
-                  <option value="Present">Present</option>
-                  <option value="Absent">Absent</option>
-                  <option value="On Leave">On Leave</option>
-                  <option value="Late">Late</option>
-                  <option value="Sick Leave">Sick Leave</option>
+                  {dashboardData.attendanceStatuses.map((status) => <option key={status} value={status}>{status}</option>)}
                 </select>
               </div>
 

@@ -139,8 +139,11 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
           </div>
 
           {/* Sub Navigation Bar */}
-          <div className="wireframe-tabs-bar">
+          <div className="wireframe-tabs-bar" role="tablist" aria-label="Employee details">
             <button 
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'Attendance History'}
               className={`wireframe-tab-btn ${activeTab === 'Attendance History' ? 'active' : ''}`}
               onClick={() => setActiveTab('Attendance History')}
             >
@@ -148,6 +151,9 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
             </button>
 
             <button 
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'Leave & Time Off'}
               className={`wireframe-tab-btn ${activeTab === 'Leave & Time Off' ? 'active' : ''}`}
               onClick={() => setActiveTab('Leave & Time Off')}
             >
@@ -157,6 +163,9 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
             {showAllTabs && (
               <>
                 <button 
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'Private Info'}
                   className={`wireframe-tab-btn ${activeTab === 'Private Info' ? 'active' : ''}`}
                   onClick={() => setActiveTab('Private Info')}
                 >
@@ -164,6 +173,9 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 </button>
 
                 <button 
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'Resume'}
                   className={`wireframe-tab-btn ${activeTab === 'Resume' ? 'active' : ''}`}
                   onClick={() => setActiveTab('Resume')}
                 >
@@ -171,6 +183,9 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 </button>
 
                 <button 
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'Salary Info'}
                   className={`wireframe-tab-btn ${activeTab === 'Salary Info' ? 'active' : ''}`}
                   onClick={() => setActiveTab('Salary Info')}
                 >
@@ -216,9 +231,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                       </tr>
                     </thead>
                     <tbody>
-                      {(employee.attendanceHistory || [
-                        { date: '22 Oct 2025', status: employee.status, checkIn: employee.checkIn || '10:00 AM', checkOut: employee.checkOut || '19:00 PM', workHours: employee.workHours || '09:00' }
-                      ]).map((log, i) => (
+                      {(employee.attendanceHistory || []).map((log, i) => (
                         <tr key={i}>
                           <td><strong>{log.date}</strong></td>
                           <td>
@@ -250,15 +263,15 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 <div className="timeoff-balance-cards-grid margin-bottom-spacer">
                   <div className="balance-card balance-paid">
                     <span className="balance-title">Paid Time Off</span>
-                    <span className="balance-days">{employee.paidLeaveAvailable ?? 24} Days Available</span>
+                    <span className="balance-days">{employee.paidLeaveAvailable ?? 0} Days Available</span>
                   </div>
                   <div className="balance-card balance-sick">
                     <span className="balance-title">Sick Time Off</span>
-                    <span className="balance-days">{employee.sickLeaveAvailable ?? 7} Days Available</span>
+                    <span className="balance-days">{employee.sickLeaveAvailable ?? 0} Days Available</span>
                   </div>
                   <div className="balance-card balance-casual">
                     <span className="balance-title">Casual Leave</span>
-                    <span className="balance-days">{employee.casualLeaveAvailable ?? 5} Days Available</span>
+                    <span className="balance-days">{employee.casualLeaveAvailable ?? 0} Days Available</span>
                   </div>
                 </div>
 
