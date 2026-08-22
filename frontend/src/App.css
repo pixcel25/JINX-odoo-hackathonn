@@ -590,11 +590,11 @@ input:focus {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  padding: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  padding: 22px 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
 .overview-card-header {
@@ -605,13 +605,13 @@ input:focus {
 
 .overview-card-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   color: #0f172a;
 }
 
 .overview-card-sub {
-  margin: 4px 0 0;
+  margin: 2px 0 0;
   font-size: 13px;
   color: #64748b;
 }
@@ -621,7 +621,7 @@ input:focus {
   font-weight: 700;
   color: #197344;
   background-color: #eef7f2;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 20px;
   border: 1px solid #cce8d8;
 }
@@ -632,27 +632,36 @@ input:focus {
   gap: 16px;
 }
 
+/* Enterprise Professional Metric Card (Clean White) */
 .metric-card {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 16px;
+  padding: 16px 20px;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  background-color: #f8fafc;
+  background-color: #ffffff;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-.metric-card:hover, .metric-card.active-metric {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+.metric-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+
+.metric-card.active-metric {
+  border-color: #197344;
+  background-color: #fafdfb;
+  box-shadow: 0 4px 12px rgba(25, 115, 68, 0.08);
 }
 
 .metric-icon-box {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -671,74 +680,40 @@ input:focus {
 .metric-value {
   font-size: 22px;
   font-weight: 700;
+  color: #0f172a;
   line-height: 1.1;
 }
 
 .metric-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: #64748b;
   margin-top: 2px;
 }
 
-/* Metric Colors */
-.metric-present {
-  background-color: #eef7f2;
-  border-color: #cce8d8;
-}
+/* Subtle Professional Status Accents */
 .metric-present .metric-icon-box {
-  background-color: #197344;
-  color: #ffffff;
-}
-.metric-present .metric-value {
+  background-color: #eef7f2;
   color: #197344;
 }
 
-.metric-absent {
-  background-color: #fef2f2;
-  border-color: #fecaca;
-}
 .metric-absent .metric-icon-box {
-  background-color: #dc2626;
-  color: #ffffff;
-}
-.metric-absent .metric-value {
+  background-color: #fef2f2;
   color: #dc2626;
 }
 
-.metric-on-leave {
-  background-color: #fffbeb;
-  border-color: #fef3c7;
-}
 .metric-on-leave .metric-icon-box {
-  background-color: #d97706;
-  color: #ffffff;
-}
-.metric-on-leave .metric-value {
+  background-color: #fffbeb;
   color: #d97706;
 }
 
-.metric-late {
-  background-color: #fff7ed;
-  border-color: #ffedd5;
-}
 .metric-late .metric-icon-box {
-  background-color: #ea580c;
-  color: #ffffff;
-}
-.metric-late .metric-value {
+  background-color: #fff7ed;
   color: #ea580c;
 }
 
-.metric-sick {
-  background-color: #faf5ff;
-  border-color: #e9d5ff;
-}
 .metric-sick .metric-icon-box {
-  background-color: #7e22ce;
-  color: #ffffff;
-}
-.metric-sick .metric-value {
+  background-color: #faf5ff;
   color: #7e22ce;
 }
 
