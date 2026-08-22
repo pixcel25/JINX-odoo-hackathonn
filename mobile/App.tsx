@@ -1,13 +1,8 @@
-<<<<<<< HEAD
-import { StatusBar } from "expo-status-bar";
-
-import { HrmsApp } from "./src/application/HrmsApp";
-=======
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Employee } from './src/auth/authService';
-import { HomeScreen, LandingScreen, LoginScreen } from './src/screens/AuthScreens';
->>>>>>> marshal
+import { LandingScreen, LoginScreen } from './src/screens/AuthScreens';
+import { HrmsApp } from './src/application/HrmsApp';
 
 export default function App() {
   const [screen, setScreen] = useState<'landing' | 'login' | 'home'>('landing');
@@ -16,7 +11,7 @@ export default function App() {
   if (screen === 'home' && employee) {
     return (
       <>
-        <HomeScreen employee={employee} onSignOut={() => { setEmployee(null); setScreen('landing'); }} />
+        <HrmsApp />
         <StatusBar style="dark" />
       </>
     );
@@ -33,13 +28,8 @@ export default function App() {
 
   return (
     <>
-<<<<<<< HEAD
-      <StatusBar style="dark" />
-      <HrmsApp />
-=======
       <LandingScreen onContinue={() => setScreen('login')} />
       <StatusBar style="dark" />
->>>>>>> marshal
     </>
   );
 }
