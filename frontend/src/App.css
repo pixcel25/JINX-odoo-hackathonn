@@ -1174,13 +1174,14 @@ input:focus {
 .wireframe-tabs-bar {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background-color: #f1f5f9;
-  padding: 5px;
+  gap: 8px;
+  background-color: #ffffff;
+  padding: 6px;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   overflow-x: auto;
   scrollbar-width: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .wireframe-tabs-bar::-webkit-scrollbar {
@@ -1188,22 +1189,27 @@ input:focus {
 }
 
 .wireframe-tab-btn {
-  height: 38px;
-  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 20px;
   border: none;
   border-radius: 8px;
   background-color: transparent;
   color: #64748b;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
-  cursor: pointer;
+  line-height: 1;
   white-space: nowrap;
   flex-shrink: 0;
+  cursor: pointer;
   transition: all 0.15s ease-in-out;
 }
 
 .wireframe-tab-btn:hover {
-  background-color: #e2e8f0;
+  background-color: #f1f5f9;
   color: #1e293b;
 }
 
@@ -2174,7 +2180,7 @@ input:focus {
   border: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
@@ -2185,16 +2191,22 @@ input:focus {
 }
 
 .profile-popup-modal .wireframe-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   white-space: nowrap;
   flex-shrink: 0;
-  height: 38px;
-  padding: 0 16px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 20px;
   border: none;
   border-radius: 8px;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
+  line-height: 1;
   background-color: transparent;
   color: #64748b;
+  cursor: pointer;
   transition: all 0.15s ease-in-out;
 }
 
