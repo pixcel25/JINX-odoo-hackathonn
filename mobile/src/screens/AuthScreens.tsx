@@ -39,6 +39,7 @@ type PressableStyleState = {
 };
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+const employeeIdPattern = /^[A-Z]{6}\d{8}$/i;
 
 /**
  * Validates the login identifier and password before an authentication request.
@@ -48,7 +49,9 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
  */
 function validateLogin(loginId: string, password: string): LoginValidationErrors {
   return {
-    loginId: emailPattern.test(loginId.trim()) ? '' : 'Enter the email provided by your admin.',
+    loginId: emailPattern.test(loginId.trim()) || employeeIdPattern.test(loginId.trim())
+      ? ''
+      : 'Enter the employee ID or email provided by your admin.',
     password: password.length >= 8 ? '' : 'Password must be at least 8 characters.',
   };
 }
