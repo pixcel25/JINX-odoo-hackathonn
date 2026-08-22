@@ -1808,9 +1808,9 @@ input:focus {
 }
 
 .balance-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  color: #0284c7;
+  color: #197344;
 }
 
 .balance-days {
@@ -1871,7 +1871,7 @@ input:focus {
 }
 
 .type-blue-cell {
-  color: #0284c7;
+  color: #197344;
   font-weight: 600;
 }
 
@@ -2234,31 +2234,17 @@ input:focus {
   width: 100%;
 }
 
-.balance-card.balance-paid {
-  border-left: 4px solid #0284c7;
-  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
-}
-
-.balance-card.balance-sick {
-  border-left: 4px solid #e11d48;
-  background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
-}
-
+.balance-card.balance-paid,
+.balance-card.balance-sick,
 .balance-card.balance-casual {
-  border-left: 4px solid #8b5cf6;
-  background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%);
+  border-left: none;
+  background: #ffffff;
 }
 
-.balance-card.balance-paid .balance-title {
-  color: #0284c7;
-}
-
-.balance-card.balance-sick .balance-title {
-  color: #e11d48;
-}
-
+.balance-card.balance-paid .balance-title,
+.balance-card.balance-sick .balance-title,
 .balance-card.balance-casual .balance-title {
-  color: #8b5cf6;
+  color: #197344;
 }
 
 .section-subheading {
