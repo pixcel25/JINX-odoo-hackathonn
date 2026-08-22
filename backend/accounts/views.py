@@ -143,6 +143,7 @@ def salary_change_view(request):
     return JsonResponse({'message': 'Salary updated and notification email sent.'})
 
 @csrf_exempt
+@require_POST
 def employee_login_view(request):
     try:
         data = json.loads(request.body)
@@ -168,6 +169,37 @@ def employee_login_view(request):
         'company': employee.company_name,
         'joinedAt': employee.joined_at.isoformat(),
     })
+
+
+@csrf_exempt
+@require_POST
+def employee_password_change_view(request):
+    try:
+        data = json.loads(request.body)
+    except (TypeError, json.JSONDecodeError):
+        return error('Enter your current and new password.')
+
+    if not isinstance(data, dict):
+        return error('Enter your current and new password.')
+
+    login_id = data.get('loginId', '').strip().upper() if isinstance(data.get('loginId'), str) else ''
+    current_password = data.get('currentPassword') if isinstance(data.get('currentPassword'), str) else ''
+    new_password = data.get('newPassword') if isinstance(data.get('newPassword'), str) else ''
+    if not login_id or not current_password or not new_password or len(new_password) > 128:
+        return error('Enter your current and new password.')
+
+    employee = Employee.objects.filter(login_id=login_id).first()
+    if not employee or not check_password(current_password, employee.password_hash):
+        return error('Your current password is not correct.', 401)
+
+    try:
+        validate_password(new_password)
+    except ValidationError as exc:
+        return error(exc.messages[0])
+
+    employee.set_password(new_password)
+    employee.save(update_fields=['password_hash'])
+    return JsonResponse({'message': 'Password updated successfully.'})
 
 
 @require_GET

@@ -16,11 +16,10 @@ import {
 } from "../features/attendance/services/attendanceService";
 import { HomeScreen } from "../features/home/components/HomeScreen";
 import { LeaveScreen } from "../features/leave/components/LeaveScreen";
-import { PayrollScreen } from "../features/payroll/components/PayrollScreen";
 import { ProfileScreen } from "../features/profile/components/ProfileScreen";
 import type { Employee } from "../auth/authService";
 
-type AppTab = "home" | "attendance" | "leave" | "payroll" | "profile";
+type AppTab = "home" | "attendance" | "leave" | "profile";
 
 type HrmsAppProps = {
   employee: Employee;
@@ -30,7 +29,6 @@ const tabs: Array<{ key: AppTab; label: string; icon: string }> = [
   { key: "home", label: "Home", icon: "⌂" },
   { key: "attendance", label: "Attendance", icon: "□" },
   { key: "leave", label: "Leave", icon: "+" },
-  { key: "payroll", label: "Payroll", icon: "$" },
   { key: "profile", label: "Profile", icon: "◎" },
 ];
 
@@ -87,8 +85,6 @@ export function HrmsApp({ employee }: HrmsAppProps) {
         return <AttendanceScreen />;
       case "leave":
         return <LeaveScreen />;
-      case "payroll":
-        return <PayrollScreen />;
       case "profile":
         return <ProfileScreen employee={employee} />;
       case "home":

@@ -154,3 +154,28 @@ export async function changePassword(
 
   return { loginId: updatedAccount.loginId, displayName: updatedAccount.displayName };
 }
+
+export async function changeEmployeePassword(
+  loginId: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/auth/employee-password-change/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ loginId, currentPassword, newPassword }),
+    });
+  } catch {
+    throw new AuthServiceError('We could not reach the employee service. Check that the backend is running.');
+  }
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = data && typeof data === 'object' && 'error' in data && typeof data.error === 'string'
+      ? data.error
+      : 'Your password could not be changed.';
+    throw new AuthServiceError(message);
+  }
+}

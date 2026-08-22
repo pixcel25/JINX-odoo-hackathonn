@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import * as SecureStore from "expo-secure-store";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { changeEmployeePassword, AuthServiceError } from "../../../auth/authService";
 import type { Employee } from "../../../auth/authService";
+import { FormField } from "../../../components/FormField";
 
 type ProfileTab =
   | "Private Info"
@@ -15,17 +17,15 @@ type ProfileField = {
   value: string;
 };
 
-type ResumeItem = {
-  title: string;
-  period: string;
-  description: string;
-};
-
 type StoredProfile = {
   personal: ProfileField[];
   bank: ProfileField[];
-  resume: ResumeItem[];
+  resume: ProfileField[];
+  skills: string[];
+  certifications: string[];
 };
+
+type ResumeList = "skills" | "certifications";
 
 const profileTabs: ProfileTab[] = [
   "Private Info",
@@ -51,6 +51,12 @@ const salaryInformation: ProfileField[] = [
   { label: "Employer PF Contribution", value: "3,000.00 / month" },
   { label: "Professional Tax", value: "200.00 / month" },
 ];
+
+const resumeLabels = [
+  "About",
+  "What I love about my job",
+  "My interests and hobbies",
+] as const;
 
 function profileValue(value: string | undefined): string {
   return value?.trim() || "Not provided";
@@ -82,13 +88,9 @@ function createInitialProfile(employee: Employee): StoredProfile {
       { label: "UAN Number", value: "Not provided" },
       { label: "Employee Code", value: profileValue(employee.loginId) },
     ],
-    resume: [
-      {
-        title: profileValue(employee.title),
-        period: "Not provided",
-        description: "Not provided",
-      },
-    ],
+    resume: resumeLabels.map((label) => ({ label, value: "Not provided" })),
+    skills: [],
+    certifications: [],
   };
 }
 
@@ -108,7 +110,23 @@ export function ProfileScreen({ employee }: { employee: Employee }) {
       try {
         const storedProfile = await SecureStore.getItemAsync(profileStorageKey);
         if (storedProfile && isMounted) {
-          setProfileData(JSON.parse(storedProfile) as StoredProfile);
+          const parsedProfile = JSON.parse(storedProfile) as Partial<StoredProfile>;
+          const initialProfile = createInitialProfile(employee);
+          setProfileData({
+            ...initialProfile,
+            ...parsedProfile,
+            personal: Array.isArray(parsedProfile.personal) ? parsedProfile.personal : initialProfile.personal,
+            bank: Array.isArray(parsedProfile.bank) ? parsedProfile.bank : initialProfile.bank,
+            resume: Array.isArray(parsedProfile.resume)
+              ? parsedProfile.resume.filter((field): field is ProfileField => Boolean(field && field.label && typeof field.value === "string"))
+              : initialProfile.resume,
+            skills: Array.isArray(parsedProfile.skills)
+              ? parsedProfile.skills.filter((skill): skill is string => typeof skill === "string")
+              : [],
+            certifications: Array.isArray(parsedProfile.certifications)
+              ? parsedProfile.certifications.filter((certification): certification is string => typeof certification === "string")
+              : [],
+          });
         }
       } catch {
         if (isMounted) setProfileError("We could not load your saved profile details.");
@@ -153,12 +171,30 @@ export function ProfileScreen({ employee }: { employee: Employee }) {
     }));
   }
 
-  function updateResumeField(index: number, field: keyof ResumeItem, value: string): void {
+  function updateResumeField(index: number, value: string): void {
     setProfileData((current) => ({
       ...current,
       resume: current.resume.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [field]: value } : item,
+        itemIndex === index ? { ...item, value } : item,
       ),
+    }));
+  }
+
+  function updateResumeListItem(list: ResumeList, index: number, value: string): void {
+    setProfileData((current) => ({
+      ...current,
+      [list]: current[list].map((item, itemIndex) => itemIndex === index ? value : item),
+    }));
+  }
+
+  function addResumeListItem(list: ResumeList): void {
+    setProfileData((current) => ({ ...current, [list]: [...current[list], ""] }));
+  }
+
+  function removeResumeListItem(list: ResumeList, index: number): void {
+    setProfileData((current) => ({
+      ...current,
+      [list]: current[list].filter((_, itemIndex) => itemIndex !== index),
     }));
   }
 
@@ -202,8 +238,13 @@ export function ProfileScreen({ employee }: { employee: Employee }) {
           isEditing={isEditingResume}
           isSaving={isSavingProfile}
           onToggleEdit={toggleResumeEdit}
+          certifications={profileData.certifications}
+          onAddItem={addResumeListItem}
+          onRemoveItem={removeResumeListItem}
+          onUpdateItem={updateResumeListItem}
           onUpdate={updateResumeField}
           resume={profileData.resume}
+          skills={profileData.skills}
         />
       ) : null}
       {activeTab === "Salary Info" ? <SalaryInfoTab /> : null}
@@ -244,17 +285,19 @@ function ProfileBanner({ employee }: { employee: Employee }) {
 function InfoField({
   editable = false,
   label,
+  multiline = false,
   onChangeText,
   value,
-}: ProfileField & { editable?: boolean; onChangeText?: (value: string) => void }) {
+}: ProfileField & { editable?: boolean; multiline?: boolean; onChangeText?: (value: string) => void }) {
   return (
     <View style={styles.infoField}>
       <Text style={styles.infoLabel}>{label}</Text>
       {editable ? (
         <TextInput
           accessibilityLabel={label}
+          multiline={multiline}
           onChangeText={onChangeText}
-          style={styles.infoInput}
+          style={[styles.infoInput, multiline && styles.multilineInfoInput]}
           value={value}
         />
       ) : (
@@ -362,17 +405,27 @@ function InfoGroup({
 }
 
 function ResumeTab({
+  certifications,
   isEditing,
   isSaving,
+  onAddItem,
+  onRemoveItem,
   onToggleEdit,
+  onUpdateItem,
   onUpdate,
   resume,
+  skills,
 }: {
+  certifications: string[];
   isEditing: boolean;
   isSaving: boolean;
+  onAddItem: (list: ResumeList) => void;
+  onRemoveItem: (list: ResumeList, index: number) => void;
   onToggleEdit: () => Promise<void>;
-  onUpdate: (index: number, field: keyof ResumeItem, value: string) => void;
-  resume: ResumeItem[];
+  onUpdateItem: (list: ResumeList, index: number, value: string) => void;
+  onUpdate: (index: number, value: string) => void;
+  resume: ProfileField[];
+  skills: string[];
 }) {
   return (
     <SectionCard
@@ -381,45 +434,89 @@ function ResumeTab({
           {isSaving ? <ActivityIndicator color="#ffffff" size="small" /> : <Text style={styles.editButtonText}>{isEditing ? "Save Resume" : "Edit Resume"}</Text>}
         </Pressable>
       }
-      title="Work Experience & Education"
+      title="Resume"
       subtitle={isEditing ? "Editing" : "Editable"}
     >
-      {resume.map((item, index) => (
-        <View key={`${item.title}-${index}`} style={styles.resumeItem}>
-          {isEditing ? (
+      <View style={styles.resumeColumns}>
+        {resume.map((field, index) => (
+          <InfoField
+            editable={isEditing}
+            key={field.label}
+            label={field.label}
+            multiline={field.label !== "Skills" && field.label !== "Certification"}
+            onChangeText={(value) => onUpdate(index, value)}
+            value={field.value}
+          />
+        ))}
+      </View>
+      <View style={styles.resumeLists}>
+        <ResumeList
+          editable={isEditing}
+          items={skills}
+          onAdd={() => onAddItem("skills")}
+          onRemove={(index) => onRemoveItem("skills", index)}
+          onUpdate={(index, value) => onUpdateItem("skills", index, value)}
+          title="Skills"
+        />
+        <ResumeList
+          editable={isEditing}
+          items={certifications}
+          onAdd={() => onAddItem("certifications")}
+          onRemove={(index) => onRemoveItem("certifications", index)}
+          onUpdate={(index, value) => onUpdateItem("certifications", index, value)}
+          title="Certification"
+        />
+      </View>
+    </SectionCard>
+  );
+}
+
+function ResumeList({
+  editable,
+  items,
+  onAdd,
+  onRemove,
+  onUpdate,
+  title,
+}: {
+  editable: boolean;
+  items: string[];
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+  onUpdate: (index: number, value: string) => void;
+  title: string;
+}) {
+  return (
+    <View style={styles.resumeList}>
+      <Text style={styles.subheading}>{title}</Text>
+      {items.length === 0 && !editable ? <Text style={styles.emptyListText}>Not provided</Text> : null}
+      {items.map((item, index) => (
+        <View key={`${title}-${index}`} style={styles.listItem}>
+          {editable ? (
             <TextInput
-              accessibilityLabel={`Resume title ${index + 1}`}
-              onChangeText={(value) => onUpdate(index, "title", value)}
-              style={styles.resumeInput}
-              value={item.title}
+              accessibilityLabel={`${title} ${index + 1}`}
+              onChangeText={(value) => onUpdate(index, value)}
+              placeholder={`Add ${title.toLowerCase()}`}
+              placeholderTextColor="#809087"
+              style={styles.listInput}
+              value={item}
             />
           ) : (
-            <Text style={styles.resumeTitle}>{item.title}</Text>
+            <Text style={styles.listValue}>{item || "Not provided"}</Text>
           )}
-          {isEditing ? (
-            <TextInput
-              accessibilityLabel={`Resume period ${index + 1}`}
-              onChangeText={(value) => onUpdate(index, "period", value)}
-              style={styles.resumePeriodInput}
-              value={item.period}
-            />
-          ) : (
-            <Text style={styles.resumePeriod}>{item.period}</Text>
-          )}
-          {isEditing ? (
-            <TextInput
-              accessibilityLabel={`Resume description ${index + 1}`}
-              multiline
-              onChangeText={(value) => onUpdate(index, "description", value)}
-              style={styles.resumeCopyInput}
-              value={item.description}
-            />
-          ) : (
-            <Text style={styles.resumeCopy}>{item.description}</Text>
-          )}
+          {editable ? (
+            <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${title.toLowerCase()} ${index + 1}`} onPress={() => onRemove(index)} style={styles.removeButton}>
+              <Text style={styles.removeButtonText}>Remove</Text>
+            </Pressable>
+          ) : null}
         </View>
       ))}
-    </SectionCard>
+      {editable ? (
+        <Pressable accessibilityRole="button" onPress={onAdd} style={styles.addButton}>
+          <Text style={styles.addButtonText}>+ Add {title}</Text>
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
@@ -435,6 +532,45 @@ function SalaryInfoTab() {
 }
 
 function SecurityTab({ employee }: { employee: Employee }) {
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+
+  async function handlePasswordSave(): Promise<void> {
+    setPasswordError("");
+    setPasswordSuccess("");
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError("Complete all password fields.");
+      return;
+    }
+    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+      setPasswordError("Use uppercase, lowercase, a number, and a symbol in your new password.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+
+    setIsSavingPassword(true);
+    try {
+      await changeEmployeePassword(employee.loginId, currentPassword, newPassword);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordSuccess("Password changed successfully.");
+      setIsChangingPassword(false);
+    } catch (error) {
+      setPasswordError(error instanceof AuthServiceError ? error.message : "Your password could not be changed.");
+    } finally {
+      setIsSavingPassword(false);
+    }
+  }
+
   return (
     <SectionCard title="Security" subtitle="Account access">
       <Text style={styles.securityNotice}>
@@ -448,6 +584,22 @@ function SecurityTab({ employee }: { employee: Employee }) {
         <Text style={styles.securityLabel}>Password</Text>
         <Text style={styles.securityValue}>Managed securely</Text>
       </View>
+      {passwordSuccess ? <Text style={styles.passwordSuccess}>{passwordSuccess}</Text> : null}
+      {isChangingPassword ? (
+        <View style={styles.passwordForm}>
+          <FormField label="Current password" onChangeText={setCurrentPassword} secure value={currentPassword} />
+          <FormField label="New password" onChangeText={setNewPassword} secure value={newPassword} />
+          <FormField label="Confirm new password" onChangeText={setConfirmPassword} secure value={confirmPassword} />
+          {passwordError ? <Text style={styles.passwordError}>{passwordError}</Text> : null}
+          <Pressable accessibilityRole="button" disabled={isSavingPassword} onPress={handlePasswordSave} style={styles.editButton}>
+            {isSavingPassword ? <ActivityIndicator color="#ffffff" size="small" /> : <Text style={styles.editButtonText}>Save Password</Text>}
+          </Pressable>
+        </View>
+      ) : (
+        <Pressable accessibilityRole="button" onPress={() => { setPasswordError(""); setPasswordSuccess(""); setIsChangingPassword(true); }} style={styles.managePasswordButton}>
+          <Text style={styles.managePasswordText}>Manage Password</Text>
+        </Pressable>
+      )}
     </SectionCard>
   );
 }
@@ -494,10 +646,27 @@ const styles = StyleSheet.create({
   resumeInput: { minHeight: 40, paddingHorizontal: 9, paddingVertical: 7, color: "#1d2a30", fontSize: 15, fontWeight: "700", borderWidth: 1, borderColor: "#b9d9c5", borderRadius: 8, backgroundColor: "#fbfffc" },
   resumePeriodInput: { minHeight: 36, marginTop: 5, paddingHorizontal: 9, paddingVertical: 6, color: "#087451", fontSize: 12, fontWeight: "600", borderWidth: 1, borderColor: "#b9d9c5", borderRadius: 8, backgroundColor: "#fbfffc" },
   resumeCopyInput: { minHeight: 76, marginTop: 8, paddingHorizontal: 9, paddingVertical: 8, color: "#637078", fontSize: 13, lineHeight: 19, borderWidth: 1, borderColor: "#b9d9c5", borderRadius: 8, backgroundColor: "#fbfffc", textAlignVertical: "top" },
+  resumeColumns: { gap: 4 },
+  resumeLists: { marginTop: 10, gap: 18 },
+  resumeList: { paddingTop: 16, borderTopWidth: 1, borderTopColor: "#edf0ef" },
+  listItem: { minHeight: 42, marginBottom: 9, flexDirection: "row", alignItems: "center", gap: 8 },
+  listInput: { flex: 1, minHeight: 40, paddingHorizontal: 9, paddingVertical: 7, color: "#1d2a30", fontSize: 14, borderWidth: 1, borderColor: "#b9d9c5", borderRadius: 8, backgroundColor: "#fbfffc" },
+  listValue: { flex: 1, paddingVertical: 8, color: "#1d2a30", fontSize: 14, fontWeight: "600" },
+  removeButton: { paddingHorizontal: 7, paddingVertical: 7 },
+  removeButtonText: { color: "#b43c49", fontSize: 11, fontWeight: "600" },
+  addButton: { alignSelf: "flex-start", paddingHorizontal: 11, paddingVertical: 8, borderWidth: 1, borderColor: "#087f5b", borderRadius: 8 },
+  addButtonText: { color: "#087f5b", fontSize: 12, fontWeight: "700" },
+  emptyListText: { color: "#68767b", fontSize: 14, fontStyle: "italic" },
+  multilineInfoInput: { minHeight: 76, textAlignVertical: "top" },
   readOnlyNotice: { marginBottom: 17, padding: 11, color: "#53645b", fontSize: 12, lineHeight: 17, borderRadius: 9, backgroundColor: "#effaf4" },
   salaryGrid: { flexDirection: "row", flexWrap: "wrap", columnGap: 18 },
   securityNotice: { marginBottom: 16, padding: 12, color: "#53645b", fontSize: 13, lineHeight: 19, borderRadius: 9, backgroundColor: "#effaf4" },
   securityRow: { minHeight: 56, paddingVertical: 15, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: "#edf0ef" },
   securityLabel: { color: "#68767b", fontSize: 13 },
   securityValue: { color: "#1d2a30", fontSize: 14, fontWeight: "600" },
+  passwordForm: { marginTop: 18 },
+  passwordError: { marginBottom: 12, color: "#b43c49", fontSize: 13, lineHeight: 18 },
+  passwordSuccess: { marginTop: 14, color: "#087451", fontSize: 13, lineHeight: 18 },
+  managePasswordButton: { marginTop: 18, paddingVertical: 12, alignItems: "center", borderWidth: 1, borderColor: "#087f5b", borderRadius: 8 },
+  managePasswordText: { color: "#087f5b", fontSize: 14, fontWeight: "700" },
 });
