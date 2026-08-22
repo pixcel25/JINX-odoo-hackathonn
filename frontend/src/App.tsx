@@ -298,24 +298,14 @@ function App() {
   // Navigation state
   const [activeTab, setActiveTab] = useState<'Employees' | 'Attendance' | 'Time Off'>('Employees')
   const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES)
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
-  const [detailTab, setDetailTab] = useState<'Private Info' | 'Attendance History' | 'Leave & Time Off' | 'Resume' | 'Salary Info'>('Private Info')
   
+  // Employee Popup Modal State (opens without redirecting page)
+  const [profileModalEmployee, setProfileModalEmployee] = useState<Employee | null>(null)
+  const [modalDetailTab, setModalDetailTab] = useState<'Private Info' | 'Attendance History' | 'Leave & Time Off' | 'Resume' | 'Salary Info'>('Private Info')
+
   // Time Off view state & requests
   const [timeOffSubTab, setTimeOffSubTab] = useState<'Time Off' | 'Allocation'>('Time Off')
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>(INITIAL_TIME_OFF_REQUESTS)
-  const [isTimeOffModalOpen, setIsTimeOffModalOpen] = useState(false)
-  const [newLeave, setNewLeave] = useState<{
-    employeeName: string
-    startDate: string
-    endDate: string
-    timeOffType: 'Paid Time Off' | 'Sick Time Off' | 'Casual Leave'
-  }>({
-    employeeName: 'Jane Doe',
-    startDate: '28/10/2025',
-    endDate: '28/10/2025',
-    timeOffType: 'Paid Time Off'
-  })
   
   const [searchQuery, setSearchQuery] = useState('')
   const [deptFilter, setDeptFilter] = useState('All')
@@ -341,11 +331,10 @@ function App() {
     status: 'Present'
   })
 
-  // Open employee profile helper
-  const openEmployeeProfile = (emp: Employee) => {
-    setSelectedEmployee(emp)
-    setActiveTab('Employees')
-    setDetailTab('Private Info')
+  // Open employee details modal popup handler
+  const openEmployeePopup = (emp: Employee) => {
+    setProfileModalEmployee(emp)
+    setModalDetailTab('Private Info')
   }
 
   // Sign in handler
@@ -388,30 +377,30 @@ function App() {
       leaveHistory: []
     }
     setEmployees([created, ...employees])
-    setSelectedEmployee(created)
+    openEmployeePopup(created)
     setNewEmp({ name: '', title: '', empId: '', dept: 'Engineering', status: 'Present' })
     setIsModalOpen(false)
   }
 
   const handleAddSkill = () => {
-    if (!newSkillInput.trim() || !selectedEmployee) return
+    if (!newSkillInput.trim() || !profileModalEmployee) return
     const updated = {
-      ...selectedEmployee,
-      skills: [...selectedEmployee.skills, newSkillInput.trim()]
+      ...profileModalEmployee,
+      skills: [...profileModalEmployee.skills, newSkillInput.trim()]
     }
-    setSelectedEmployee(updated)
+    setProfileModalEmployee(updated)
     setEmployees(employees.map(e => e.id === updated.id ? updated : e))
     setNewSkillInput('')
     setIsAddingSkill(false)
   }
 
   const handleAddCert = () => {
-    if (!newCertInput.trim() || !selectedEmployee) return
+    if (!newCertInput.trim() || !profileModalEmployee) return
     const updated = {
-      ...selectedEmployee,
-      certifications: [...selectedEmployee.certifications, newCertInput.trim()]
+      ...profileModalEmployee,
+      certifications: [...profileModalEmployee.certifications, newCertInput.trim()]
     }
-    setSelectedEmployee(updated)
+    setProfileModalEmployee(updated)
     setEmployees(employees.map(e => e.id === updated.id ? updated : e))
     setNewCertInput('')
     setIsAddingCert(false)
@@ -428,20 +417,6 @@ function App() {
     setTimeOffRequests(requests => 
       requests.map(req => req.id === id ? { ...req, status: 'Refused' } : req)
     )
-  }
-
-  const handleCreateLeaveRequest = (e: FormEvent) => {
-    e.preventDefault()
-    const created: TimeOffRequest = {
-      id: Date.now().toString(),
-      employeeName: newLeave.employeeName,
-      startDate: newLeave.startDate,
-      endDate: newLeave.endDate,
-      timeOffType: newLeave.timeOffType,
-      status: 'Pending'
-    }
-    setTimeOffRequests([created, ...timeOffRequests])
-    setIsTimeOffModalOpen(false)
   }
 
   // Filter employees
@@ -542,19 +517,19 @@ function App() {
           <nav className="nav-links-bar">
             <button 
               className={`nav-link-btn ${activeTab === 'Employees' ? 'active' : ''}`}
-              onClick={() => { setActiveTab('Employees'); setSelectedEmployee(null); setStatusFilter('All'); }}
+              onClick={() => { setActiveTab('Employees'); setStatusFilter('All'); }}
             >
               Employees
             </button>
             <button 
               className={`nav-link-btn ${activeTab === 'Attendance' ? 'active' : ''}`}
-              onClick={() => { setActiveTab('Attendance'); setSelectedEmployee(null); setStatusFilter('All'); }}
+              onClick={() => { setActiveTab('Attendance'); setStatusFilter('All'); }}
             >
               Attendance
             </button>
             <button 
               className={`nav-link-btn ${activeTab === 'Time Off' ? 'active' : ''}`}
-              onClick={() => { setActiveTab('Time Off'); setSelectedEmployee(null); setStatusFilter('All'); }}
+              onClick={() => { setActiveTab('Time Off'); setStatusFilter('All'); }}
             >
               Time Off
             </button>
@@ -579,22 +554,13 @@ function App() {
       {activeTab === 'Employees' && (
         <div className="wireframe-subheader">
           <div className="subheader-title-group">
-            <h1 className="subheader-title">
-              {selectedEmployee ? 'Employee Profile & Details' : 'Employees Directory'}
-            </h1>
-            {selectedEmployee && (
-              <button className="btn-back-directory" onClick={() => setSelectedEmployee(null)}>
-                ← Back to Directory
-              </button>
-            )}
+            <h1 className="subheader-title">Employees Directory</h1>
           </div>
 
           <div className="subheader-actions">
-            {!selectedEmployee && (
-              <button className="btn-add-new-emp" onClick={() => setIsModalOpen(true)}>
-                + Add Employee
-              </button>
-            )}
+            <button className="btn-add-new-emp" onClick={() => setIsModalOpen(true)}>
+              + Add Employee
+            </button>
           </div>
         </div>
       )}
@@ -603,445 +569,67 @@ function App() {
       <main className="wireframe-main-content">
         {/* ==================== TAB 1: EMPLOYEES ==================== */}
         {activeTab === 'Employees' && (
-          selectedEmployee ? (
-            /* Detailed Profile View with Attendance & Leaves Track Record */
-            <div className="profile-format-view">
-              {/* Banner Header Card */}
-              <div className="profile-banner-box">
-                <div className="profile-avatar-pencil-wrap">
-                  {selectedEmployee.avatarUrl ? (
-                    <img src={selectedEmployee.avatarUrl} alt={selectedEmployee.name} className="profile-circle-avatar" />
-                  ) : (
-                    <div className="profile-circle-initials">{selectedEmployee.initials || 'EP'}</div>
-                  )}
-                  <button className="avatar-edit-pencil" title="Edit Profile Photo">
-                    ✎
-                  </button>
-                </div>
-
-                {/* Main Fields Grid */}
-                <div className="profile-fields-grid">
-                  {/* Column 1 */}
-                  <div className="fields-col">
-                    <div className="name-field-row">
-                      <h2 className="profile-name-heading">{selectedEmployee.name}</h2>
-                      <button className="inline-pencil-btn" title="Edit Name">✎</button>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Login ID</span>
-                      <span className="field-val-line">{selectedEmployee.empId}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Email</span>
-                      <span className="field-val-line">{selectedEmployee.email}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Mobile</span>
-                      <span className="field-val-line">{selectedEmployee.phone}</span>
-                    </div>
-                  </div>
-
-                  {/* Column 2 */}
-                  <div className="fields-col">
-                    <div className="field-line-item margin-top-spacer">
-                      <span className="field-key">Company</span>
-                      <span className="field-val-line">{selectedEmployee.company}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Department</span>
-                      <span className="field-val-line">{selectedEmployee.dept}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Manager</span>
-                      <span className="field-val-line">{selectedEmployee.manager}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Location</span>
-                      <span className="field-val-line">{selectedEmployee.location}</span>
-                    </div>
-                  </div>
-                </div>
+          <div className="directory-format-view">
+            {/* Filter Bar */}
+            <div className="directory-filter-bar">
+              <div className="filter-selects">
+                <select 
+                  value={deptFilter} 
+                  onChange={(e) => setDeptFilter(e.target.value)}
+                  className="filter-select"
+                >
+                  <option value="All">All Departments</option>
+                  <option value="Engineering">Engineering</option>
+                  <option value="Design">Design</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Human Resources">Human Resources</option>
+                </select>
               </div>
 
-              {/* Profile Inner Tabs Bar */}
-              <div className="wireframe-tabs-bar">
-                <button 
-                  className={`wireframe-tab-btn ${detailTab === 'Private Info' ? 'active' : ''}`}
-                  onClick={() => setDetailTab('Private Info')}
-                >
-                  Private Info
-                </button>
-                <button 
-                  className={`wireframe-tab-btn ${detailTab === 'Attendance History' ? 'active' : ''}`}
-                  onClick={() => setDetailTab('Attendance History')}
-                >
-                  Attendance Track Record
-                </button>
-                <button 
-                  className={`wireframe-tab-btn ${detailTab === 'Leave & Time Off' ? 'active' : ''}`}
-                  onClick={() => setDetailTab('Leave & Time Off')}
-                >
-                  Leaves & Time Off
-                </button>
-                <button 
-                  className={`wireframe-tab-btn ${detailTab === 'Resume' ? 'active' : ''}`}
-                  onClick={() => setDetailTab('Resume')}
-                >
-                  Resume
-                </button>
-                <button 
-                  className={`wireframe-tab-btn ${detailTab === 'Salary Info' ? 'active' : ''}`}
-                  onClick={() => setDetailTab('Salary Info')}
-                >
-                  Salary Info
-                </button>
-              </div>
-
-              {/* TAB CONTENT: Private Info */}
-              {detailTab === 'Private Info' && (
-                <div className="wireframe-tab-grid">
-                  {/* Left Wide Column */}
-                  <div className="tab-left-col">
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">About</h3>
-                        <button className="card-pencil-btn" title="Edit About">✎</button>
-                      </div>
-                      <p className="box-text-content">{selectedEmployee.about}</p>
-                    </div>
-
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">What I love about my job</h3>
-                        <button className="card-pencil-btn" title="Edit Job Interest">✎</button>
-                      </div>
-                      <p className="box-text-content">{selectedEmployee.jobLove}</p>
-                    </div>
-
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">My interests and hobbies</h3>
-                        <button className="card-pencil-btn" title="Edit Hobbies">✎</button>
-                      </div>
-                      <p className="box-text-content">{selectedEmployee.hobbies}</p>
-                    </div>
-                  </div>
-
-                  {/* Right Narrow Column */}
-                  <div className="tab-right-col">
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">Skills</h3>
-                      </div>
-                      
-                      <div className="tags-flex-wrap">
-                        {selectedEmployee.skills.map((skill, index) => (
-                          <span key={index} className="skill-pill-tag">{skill}</span>
-                        ))}
-                      </div>
-
-                      {isAddingSkill ? (
-                        <div className="inline-add-input-wrap">
-                          <input 
-                            type="text" 
-                            placeholder="Enter skill name..." 
-                            value={newSkillInput}
-                            onChange={(e) => setNewSkillInput(e.target.value)}
-                            className="inline-input"
-                          />
-                          <button className="btn-inline-save" onClick={handleAddSkill}>Save</button>
-                          <button className="btn-inline-cancel" onClick={() => setIsAddingSkill(false)}>✕</button>
-                        </div>
-                      ) : (
-                        <button className="btn-add-item-action" onClick={() => setIsAddingSkill(true)}>
-                          + Add Skills
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">Certification</h3>
-                      </div>
-
-                      <div className="cert-list-wrap">
-                        {selectedEmployee.certifications.map((cert, index) => (
-                          <div key={index} className="cert-item-row">
-                            <span className="cert-badge-dot"></span>
-                            <span className="cert-title">{cert}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {isAddingCert ? (
-                        <div className="inline-add-input-wrap">
-                          <input 
-                            type="text" 
-                            placeholder="Enter certification..." 
-                            value={newCertInput}
-                            onChange={(e) => setNewCertInput(e.target.value)}
-                            className="inline-input"
-                          />
-                          <button className="btn-inline-save" onClick={handleAddCert}>Save</button>
-                          <button className="btn-inline-cancel" onClick={() => setIsAddingCert(false)}>✕</button>
-                        </div>
-                      ) : (
-                        <button className="btn-add-item-action" onClick={() => setIsAddingCert(true)}>
-                          + Add Certification
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Attendance Track Record */}
-              {detailTab === 'Attendance History' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <div className="card-header-line">
-                      <h3 className="box-title">Attendance Track Record</h3>
-                      <span className="overview-badge">Historical Attendance Log</span>
-                    </div>
-
-                    {/* Attendance Metric Mini Badges */}
-                    <div className="attendance-track-summary-grid">
-                      <div className="track-summary-box">
-                        <span className="track-val">18 Days</span>
-                        <span className="track-lbl">Present (This Month)</span>
-                      </div>
-                      <div className="track-summary-box">
-                        <span className="track-val">1 Day</span>
-                        <span className="track-lbl">Late Arrivals</span>
-                      </div>
-                      <div className="track-summary-box">
-                        <span className="track-val">1 Day</span>
-                        <span className="track-lbl">Approved Absences</span>
-                      </div>
-                    </div>
-
-                    {/* Log Table */}
-                    <div className="table-wrapper-box">
-                      <table className="profile-record-table">
-                        <thead>
-                          <tr>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Check In</th>
-                            <th>Check Out</th>
-                            <th>Work Hours</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(selectedEmployee.attendanceHistory || [
-                            { date: '22 Oct 2025', status: selectedEmployee.status, checkIn: selectedEmployee.checkIn || '10:00 AM', checkOut: selectedEmployee.checkOut || '19:00 PM', workHours: selectedEmployee.workHours || '09:00' }
-                          ]).map((log, i) => (
-                            <tr key={i}>
-                              <td><strong>{log.date}</strong></td>
-                              <td>
-                                <span className={`status-pill-wireframe ${log.status === 'Present' ? 'pill-present' : 'pill-absent'}`}>
-                                  {log.status}
-                                </span>
-                              </td>
-                              <td>{log.checkIn}</td>
-                              <td>{log.checkOut}</td>
-                              <td>{log.workHours}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Leaves & Time Off */}
-              {detailTab === 'Leave & Time Off' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <div className="card-header-line">
-                      <h3 className="box-title">Available Leaves & Leave History</h3>
-                      <span className="overview-badge">Leave Management</span>
-                    </div>
-
-                    {/* Available Leaves Balance Grid */}
-                    <div className="timeoff-balance-cards-grid margin-bottom-spacer">
-                      <div className="balance-card balance-paid">
-                        <span className="balance-title">Paid Time Off</span>
-                        <span className="balance-days">{selectedEmployee.paidLeaveAvailable ?? 24} Days Available</span>
-                      </div>
-                      <div className="balance-card balance-sick">
-                        <span className="balance-title">Sick Time Off</span>
-                        <span className="balance-days">{selectedEmployee.sickLeaveAvailable ?? 7} Days Available</span>
-                      </div>
-                      <div className="balance-card balance-casual">
-                        <span className="balance-title">Casual Leave</span>
-                        <span className="balance-days">{selectedEmployee.casualLeaveAvailable ?? 5} Days Available</span>
-                      </div>
-                    </div>
-
-                    {/* Details of Previous Leaves Taken & Reason */}
-                    <h4 className="section-subheading">Previous Leaves Taken & Reasons</h4>
-                    <div className="table-wrapper-box">
-                      <table className="profile-record-table">
-                        <thead>
-                          <tr>
-                            <th>Leave Type</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Duration</th>
-                            <th>Reason</th>
-                            <th>Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(selectedEmployee.leaveHistory && selectedEmployee.leaveHistory.length > 0) ? (
-                            selectedEmployee.leaveHistory.map(lh => (
-                              <tr key={lh.id}>
-                                <td className="type-blue-cell">{lh.leaveType}</td>
-                                <td>{lh.startDate}</td>
-                                <td>{lh.endDate}</td>
-                                <td>{lh.days} Day{lh.days > 1 ? 's' : ''}</td>
-                                <td className="reason-text-cell">{lh.reason}</td>
-                                <td>
-                                  <span className={`timeoff-status-badge status-${lh.status.toLowerCase()}`}>
-                                    {lh.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan={6} style={{ textAlign: 'center', color: '#64748b', padding: '24px' }}>
-                                No previous leave records found for {selectedEmployee.name}.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Resume */}
-              {detailTab === 'Resume' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <h3 className="box-title">Work Experience & Education</h3>
-                    <div className="resume-section">
-                      <div className="resume-item">
-                        <h4>Senior Developer — DayFlow Solutions</h4>
-                        <span className="resume-period">2023 - Present</span>
-                        <p>Building high-throughput full-stack enterprise web modules and leading backend API integrations.</p>
-                      </div>
-                      <div className="resume-item">
-                        <h4>{selectedEmployee.title}</h4>
-                        <span className="resume-period">Graduated 2022</span>
-                        <p>Focused on software architecture, algorithms, database optimization, and user interface design.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Salary Info */}
-              {detailTab === 'Salary Info' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <h3 className="box-title">Compensation & Salary Information</h3>
-                    <div className="salary-info-grid">
-                      <div className="salary-box">
-                        <span className="salary-label">Pay Grade</span>
-                        <span className="salary-val">Level 4 — Senior Engineer</span>
-                      </div>
-                      <div className="salary-box">
-                        <span className="salary-label">Base Salary</span>
-                        <span className="salary-val">$110,000 / annum</span>
-                      </div>
-                      <div className="salary-box">
-                        <span className="salary-label">HRA & Allowances</span>
-                        <span className="salary-val">$18,000 / annum</span>
-                      </div>
-                      <div className="salary-box">
-                        <span className="salary-label">Tax Deduction</span>
-                        <span className="salary-val">Standard Corporate Slab</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            /* Directory Grid View */
-            <div className="directory-format-view">
-              {/* Filter Bar */}
-              <div className="directory-filter-bar">
-                <div className="filter-selects">
-                  <select 
-                    value={deptFilter} 
-                    onChange={(e) => setDeptFilter(e.target.value)}
-                    className="filter-select"
-                  >
-                    <option value="All">All Departments</option>
-                    <option value="Engineering">Engineering</option>
-                    <option value="Design">Design</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Human Resources">Human Resources</option>
-                  </select>
-                </div>
-
-                <div className="filter-search-box">
-                  <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <circle cx="11" cy="11" r="8"/>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                  </svg>
-                  <input 
-                    type="text" 
-                    placeholder="Search employee by name, ID, title..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Cards Grid */}
-              <div className="directory-cards-grid">
-                {filteredEmployees.map(emp => (
-                  <div 
-                    key={emp.id} 
-                    className="directory-emp-card"
-                    onClick={() => openEmployeeProfile(emp)}
-                  >
-                    <div className="card-top-avatar">
-                      {emp.avatarUrl ? (
-                        <img src={emp.avatarUrl} alt={emp.name} className="dir-avatar-img" />
-                      ) : (
-                        <div className="dir-avatar-initials">{emp.initials || 'EP'}</div>
-                      )}
-                    </div>
-
-                    <div className="dir-card-info">
-                      <h3 className="dir-emp-name">{emp.name}</h3>
-                      <p className="dir-emp-title">{emp.title}</p>
-                      <span className="dir-emp-dept">{emp.dept}</span>
-                      
-                      <div className="dir-emp-footer">
-                        <span className="dir-emp-id">ID: {emp.empId}</span>
-                        <span className="view-profile-link">View Profile →</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="filter-search-box">
+                <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input 
+                  type="text" 
+                  placeholder="Search employee by name, ID, title..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
             </div>
-          )
+
+            {/* Cards Grid */}
+            <div className="directory-cards-grid">
+              {filteredEmployees.map(emp => (
+                <div 
+                  key={emp.id} 
+                  className="directory-emp-card"
+                  onClick={() => openEmployeePopup(emp)}
+                >
+                  <div className="card-top-avatar">
+                    {emp.avatarUrl ? (
+                      <img src={emp.avatarUrl} alt={emp.name} className="dir-avatar-img" />
+                    ) : (
+                      <div className="dir-avatar-initials">{emp.initials || 'EP'}</div>
+                    )}
+                  </div>
+
+                  <div className="dir-card-info">
+                    <h3 className="dir-emp-name">{emp.name}</h3>
+                    <p className="dir-emp-title">{emp.title}</p>
+                    <span className="dir-emp-dept">{emp.dept}</span>
+                    
+                    <div className="dir-emp-footer">
+                      <span className="dir-emp-id">ID: {emp.empId}</span>
+                      <span className="view-profile-link">View Details →</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* ==================== TAB 2: ATTENDANCE ==================== */}
@@ -1083,7 +671,7 @@ function App() {
               </div>
             </div>
 
-            {/* Controls Bar (Date controls + View tabs + Present/Absent Summary) */}
+            {/* Controls Bar (Date controls + Present/Absent Summary) */}
             <div className="attendance-control-panel">
               <div className="panel-left-controls">
                 <div className="arrow-btn-group">
@@ -1212,7 +800,7 @@ function App() {
                     return (
                       <tr key={emp.id} className={isAbsent ? 'row-absent' : ''}>
                         <td>
-                          <div className="emp-cell clickable-emp-row" onClick={() => openEmployeeProfile(emp)}>
+                          <div className="emp-cell clickable-emp-row" onClick={() => openEmployeePopup(emp)}>
                             <div className={`emp-cell-avatar ${isAbsent ? 'avatar-absent' : 'avatar-present'}`}>
                               {emp.initials || emp.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
                             </div>
@@ -1234,7 +822,7 @@ function App() {
                           {emp.status === 'Present' ? '01:00' : '00:00'}
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          <button className="row-action-pencil" title="View Details" onClick={() => openEmployeeProfile(emp)}>✎</button>
+                          <button className="row-action-pencil" title="View Details" onClick={() => openEmployeePopup(emp)}>✎</button>
                         </td>
                       </tr>
                     )
@@ -1279,15 +867,8 @@ function App() {
               </button>
             </div>
 
-            {/* Action Bar: NEW Button + Searchbar */}
+            {/* Action Bar: Searchbar (NEW Button Removed per Request) */}
             <div className="timeoff-action-bar">
-              <button 
-                className="btn-timeoff-new"
-                onClick={() => setIsTimeOffModalOpen(true)}
-              >
-                NEW
-              </button>
-
               <div className="timeoff-searchbar">
                 <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <circle cx="11" cy="11" r="8"/>
@@ -1335,7 +916,7 @@ function App() {
                           <span 
                             className="clickable-link-name"
                             onClick={() => {
-                              if (targetEmp) openEmployeeProfile(targetEmp)
+                              if (targetEmp) openEmployeePopup(targetEmp)
                             }}
                             title="Click to view employee details"
                           >
@@ -1378,66 +959,381 @@ function App() {
         )}
       </main>
 
-      {/* New Time Off Request Modal */}
-      {isTimeOffModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsTimeOffModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      {/* Employee Details Popup Modal Overlay */}
+      {profileModalEmployee && (
+        <div className="modal-backdrop" onClick={() => setProfileModalEmployee(null)}>
+          <div className="modal-content profile-popup-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>New Time Off Request</h2>
-              <button className="close-btn" onClick={() => setIsTimeOffModalOpen(false)}>✕</button>
+              <div className="popup-title-wrap">
+                <h2>Employee Details & Track Record</h2>
+                <span className="popup-emp-id">ID: {profileModalEmployee.empId}</span>
+              </div>
+              <button className="close-btn" onClick={() => setProfileModalEmployee(null)}>✕</button>
             </div>
-            <form onSubmit={handleCreateLeaveRequest} className="modal-form">
-              <div className="modal-field">
-                <label>Employee Name</label>
-                <select 
-                  value={newLeave.employeeName}
-                  onChange={(e) => setNewLeave({ ...newLeave, employeeName: e.target.value })}
+
+            <div className="modal-body-scrollable">
+              {/* Banner Header Card */}
+              <div className="profile-banner-box">
+                <div className="profile-avatar-pencil-wrap">
+                  {profileModalEmployee.avatarUrl ? (
+                    <img src={profileModalEmployee.avatarUrl} alt={profileModalEmployee.name} className="profile-circle-avatar" />
+                  ) : (
+                    <div className="profile-circle-initials">{profileModalEmployee.initials || 'EP'}</div>
+                  )}
+                  <button className="avatar-edit-pencil" title="Edit Profile Photo">✎</button>
+                </div>
+
+                {/* Main Fields Grid */}
+                <div className="profile-fields-grid">
+                  <div className="fields-col">
+                    <div className="name-field-row">
+                      <h2 className="profile-name-heading">{profileModalEmployee.name}</h2>
+                      <button className="inline-pencil-btn" title="Edit Name">✎</button>
+                    </div>
+
+                    <div className="field-line-item">
+                      <span className="field-key">Login ID</span>
+                      <span className="field-val-line">{profileModalEmployee.empId}</span>
+                    </div>
+
+                    <div className="field-line-item">
+                      <span className="field-key">Email</span>
+                      <span className="field-val-line">{profileModalEmployee.email}</span>
+                    </div>
+
+                    <div className="field-line-item">
+                      <span className="field-key">Mobile</span>
+                      <span className="field-val-line">{profileModalEmployee.phone}</span>
+                    </div>
+                  </div>
+
+                  <div className="fields-col">
+                    <div className="field-line-item margin-top-spacer">
+                      <span className="field-key">Company</span>
+                      <span className="field-val-line">{profileModalEmployee.company}</span>
+                    </div>
+
+                    <div className="field-line-item">
+                      <span className="field-key">Department</span>
+                      <span className="field-val-line">{profileModalEmployee.dept}</span>
+                    </div>
+
+                    <div className="field-line-item">
+                      <span className="field-key">Manager</span>
+                      <span className="field-val-line">{profileModalEmployee.manager}</span>
+                    </div>
+
+                    <div className="field-line-item">
+                      <span className="field-key">Location</span>
+                      <span className="field-val-line">{profileModalEmployee.location}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile Inner Tabs Bar */}
+              <div className="wireframe-tabs-bar">
+                <button 
+                  className={`wireframe-tab-btn ${modalDetailTab === 'Private Info' ? 'active' : ''}`}
+                  onClick={() => setModalDetailTab('Private Info')}
                 >
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.name}>{emp.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="modal-field">
-                <label>Start Date</label>
-                <input 
-                  type="text" 
-                  required 
-                  placeholder="e.g. 28/10/2025"
-                  value={newLeave.startDate}
-                  onChange={(e) => setNewLeave({ ...newLeave, startDate: e.target.value })}
-                />
-              </div>
-
-              <div className="modal-field">
-                <label>End Date</label>
-                <input 
-                  type="text" 
-                  required 
-                  placeholder="e.g. 28/10/2025"
-                  value={newLeave.endDate}
-                  onChange={(e) => setNewLeave({ ...newLeave, endDate: e.target.value })}
-                />
-              </div>
-
-              <div className="modal-field">
-                <label>Time Off Type</label>
-                <select 
-                  value={newLeave.timeOffType}
-                  onChange={(e) => setNewLeave({ ...newLeave, timeOffType: e.target.value as TimeOffRequest['timeOffType'] })}
+                  Private Info
+                </button>
+                <button 
+                  className={`wireframe-tab-btn ${modalDetailTab === 'Attendance History' ? 'active' : ''}`}
+                  onClick={() => setModalDetailTab('Attendance History')}
                 >
-                  <option value="Paid Time Off">Paid Time Off</option>
-                  <option value="Sick Time Off">Sick Time Off</option>
-                  <option value="Casual Leave">Casual Leave</option>
-                </select>
+                  Attendance Track Record
+                </button>
+                <button 
+                  className={`wireframe-tab-btn ${modalDetailTab === 'Leave & Time Off' ? 'active' : ''}`}
+                  onClick={() => setModalDetailTab('Leave & Time Off')}
+                >
+                  Leaves & Time Off
+                </button>
+                <button 
+                  className={`wireframe-tab-btn ${modalDetailTab === 'Resume' ? 'active' : ''}`}
+                  onClick={() => setModalDetailTab('Resume')}
+                >
+                  Resume
+                </button>
+                <button 
+                  className={`wireframe-tab-btn ${modalDetailTab === 'Salary Info' ? 'active' : ''}`}
+                  onClick={() => setModalDetailTab('Salary Info')}
+                >
+                  Salary Info
+                </button>
               </div>
 
-              <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setIsTimeOffModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn-primary">Submit Request</button>
-              </div>
-            </form>
+              {/* TAB CONTENT: Private Info */}
+              {modalDetailTab === 'Private Info' && (
+                <div className="wireframe-tab-grid">
+                  <div className="tab-left-col">
+                    <div className="content-card-box">
+                      <div className="card-header-line">
+                        <h3 className="box-title">About</h3>
+                        <button className="card-pencil-btn" title="Edit About">✎</button>
+                      </div>
+                      <p className="box-text-content">{profileModalEmployee.about}</p>
+                    </div>
+
+                    <div className="content-card-box">
+                      <div className="card-header-line">
+                        <h3 className="box-title">What I love about my job</h3>
+                        <button className="card-pencil-btn" title="Edit Job Interest">✎</button>
+                      </div>
+                      <p className="box-text-content">{profileModalEmployee.jobLove}</p>
+                    </div>
+
+                    <div className="content-card-box">
+                      <div className="card-header-line">
+                        <h3 className="box-title">My interests and hobbies</h3>
+                        <button className="card-pencil-btn" title="Edit Hobbies">✎</button>
+                      </div>
+                      <p className="box-text-content">{profileModalEmployee.hobbies}</p>
+                    </div>
+                  </div>
+
+                  <div className="tab-right-col">
+                    <div className="content-card-box">
+                      <div className="card-header-line">
+                        <h3 className="box-title">Skills</h3>
+                      </div>
+                      
+                      <div className="tags-flex-wrap">
+                        {profileModalEmployee.skills.map((skill, index) => (
+                          <span key={index} className="skill-pill-tag">{skill}</span>
+                        ))}
+                      </div>
+
+                      {isAddingSkill ? (
+                        <div className="inline-add-input-wrap">
+                          <input 
+                            type="text" 
+                            placeholder="Enter skill name..." 
+                            value={newSkillInput}
+                            onChange={(e) => setNewSkillInput(e.target.value)}
+                            className="inline-input"
+                          />
+                          <button className="btn-inline-save" onClick={handleAddSkill}>Save</button>
+                          <button className="btn-inline-cancel" onClick={() => setIsAddingSkill(false)}>✕</button>
+                        </div>
+                      ) : (
+                        <button className="btn-add-item-action" onClick={() => setIsAddingSkill(true)}>
+                          + Add Skills
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="content-card-box">
+                      <div className="card-header-line">
+                        <h3 className="box-title">Certification</h3>
+                      </div>
+
+                      <div className="cert-list-wrap">
+                        {profileModalEmployee.certifications.map((cert, index) => (
+                          <div key={index} className="cert-item-row">
+                            <span className="cert-badge-dot"></span>
+                            <span className="cert-title">{cert}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {isAddingCert ? (
+                        <div className="inline-add-input-wrap">
+                          <input 
+                            type="text" 
+                            placeholder="Enter certification..." 
+                            value={newCertInput}
+                            onChange={(e) => setNewCertInput(e.target.value)}
+                            className="inline-input"
+                          />
+                          <button className="btn-inline-save" onClick={handleAddCert}>Save</button>
+                          <button className="btn-inline-cancel" onClick={() => setIsAddingCert(false)}>✕</button>
+                        </div>
+                      ) : (
+                        <button className="btn-add-item-action" onClick={() => setIsAddingCert(true)}>
+                          + Add Certification
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB CONTENT: Attendance Track Record */}
+              {modalDetailTab === 'Attendance History' && (
+                <div className="wireframe-single-card">
+                  <div className="content-card-box">
+                    <div className="card-header-line">
+                      <h3 className="box-title">Attendance Track Record</h3>
+                      <span className="overview-badge">Historical Attendance Log</span>
+                    </div>
+
+                    <div className="attendance-track-summary-grid">
+                      <div className="track-summary-box">
+                        <span className="track-val">18 Days</span>
+                        <span className="track-lbl">Present (This Month)</span>
+                      </div>
+                      <div className="track-summary-box">
+                        <span className="track-val">1 Day</span>
+                        <span className="track-lbl">Late Arrivals</span>
+                      </div>
+                      <div className="track-summary-box">
+                        <span className="track-val">1 Day</span>
+                        <span className="track-lbl">Approved Absences</span>
+                      </div>
+                    </div>
+
+                    <div className="table-wrapper-box">
+                      <table className="profile-record-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Check In</th>
+                            <th>Check Out</th>
+                            <th>Work Hours</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(profileModalEmployee.attendanceHistory || [
+                            { date: '22 Oct 2025', status: profileModalEmployee.status, checkIn: profileModalEmployee.checkIn || '10:00 AM', checkOut: profileModalEmployee.checkOut || '19:00 PM', workHours: profileModalEmployee.workHours || '09:00' }
+                          ]).map((log, i) => (
+                            <tr key={i}>
+                              <td><strong>{log.date}</strong></td>
+                              <td>
+                                <span className={`status-pill-wireframe ${log.status === 'Present' ? 'pill-present' : 'pill-absent'}`}>
+                                  {log.status}
+                                </span>
+                              </td>
+                              <td>{log.checkIn}</td>
+                              <td>{log.checkOut}</td>
+                              <td>{log.workHours}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB CONTENT: Leaves & Time Off */}
+              {modalDetailTab === 'Leave & Time Off' && (
+                <div className="wireframe-single-card">
+                  <div className="content-card-box">
+                    <div className="card-header-line">
+                      <h3 className="box-title">Available Leaves & Leave History</h3>
+                      <span className="overview-badge">Leave Management</span>
+                    </div>
+
+                    <div className="timeoff-balance-cards-grid margin-bottom-spacer">
+                      <div className="balance-card balance-paid">
+                        <span className="balance-title">Paid Time Off</span>
+                        <span className="balance-days">{profileModalEmployee.paidLeaveAvailable ?? 24} Days Available</span>
+                      </div>
+                      <div className="balance-card balance-sick">
+                        <span className="balance-title">Sick Time Off</span>
+                        <span className="balance-days">{profileModalEmployee.sickLeaveAvailable ?? 7} Days Available</span>
+                      </div>
+                      <div className="balance-card balance-casual">
+                        <span className="balance-title">Casual Leave</span>
+                        <span className="balance-days">{profileModalEmployee.casualLeaveAvailable ?? 5} Days Available</span>
+                      </div>
+                    </div>
+
+                    <h4 className="section-subheading">Previous Leaves Taken & Reasons</h4>
+                    <div className="table-wrapper-box">
+                      <table className="profile-record-table">
+                        <thead>
+                          <tr>
+                            <th>Leave Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Duration</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(profileModalEmployee.leaveHistory && profileModalEmployee.leaveHistory.length > 0) ? (
+                            profileModalEmployee.leaveHistory.map(lh => (
+                              <tr key={lh.id}>
+                                <td className="type-blue-cell">{lh.leaveType}</td>
+                                <td>{lh.startDate}</td>
+                                <td>{lh.endDate}</td>
+                                <td>{lh.days} Day{lh.days > 1 ? 's' : ''}</td>
+                                <td className="reason-text-cell">{lh.reason}</td>
+                                <td>
+                                  <span className={`timeoff-status-badge status-${lh.status.toLowerCase()}`}>
+                                    {lh.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={6} style={{ textAlign: 'center', color: '#64748b', padding: '24px' }}>
+                                No previous leave records found for {profileModalEmployee.name}.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB CONTENT: Resume */}
+              {modalDetailTab === 'Resume' && (
+                <div className="wireframe-single-card">
+                  <div className="content-card-box">
+                    <h3 className="box-title">Work Experience & Education</h3>
+                    <div className="resume-section">
+                      <div className="resume-item">
+                        <h4>Senior Developer — DayFlow Solutions</h4>
+                        <span className="resume-period">2023 - Present</span>
+                        <p>Building high-throughput full-stack enterprise web modules and leading backend API integrations.</p>
+                      </div>
+                      <div className="resume-item">
+                        <h4>{profileModalEmployee.title}</h4>
+                        <span className="resume-period">Graduated 2022</span>
+                        <p>Focused on software architecture, algorithms, database optimization, and user interface design.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB CONTENT: Salary Info */}
+              {modalDetailTab === 'Salary Info' && (
+                <div className="wireframe-single-card">
+                  <div className="content-card-box">
+                    <h3 className="box-title">Compensation & Salary Information</h3>
+                    <div className="salary-info-grid">
+                      <div className="salary-box">
+                        <span className="salary-label">Pay Grade</span>
+                        <span className="salary-val">Level 4 — Senior Engineer</span>
+                      </div>
+                      <div className="salary-box">
+                        <span className="salary-label">Base Salary</span>
+                        <span className="salary-val">$110,000 / annum</span>
+                      </div>
+                      <div className="salary-box">
+                        <span className="salary-label">HRA & Allowances</span>
+                        <span className="salary-val">$18,000 / annum</span>
+                      </div>
+                      <div className="salary-box">
+                        <span className="salary-label">Tax Deduction</span>
+                        <span className="salary-val">Standard Corporate Slab</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

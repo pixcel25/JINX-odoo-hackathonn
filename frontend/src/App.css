@@ -2101,6 +2101,69 @@ input:focus {
   margin-top: 6px;
 }
 
+/* ==================== POPUP MODAL ENHANCEMENTS ==================== */
+.profile-popup-modal {
+  width: 90%;
+  max-width: 980px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.profile-popup-modal .modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #ffffff;
+}
+
+.popup-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.popup-title-wrap h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+
+}
+
+.popup-emp-id {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  background-color: #f1f5f9;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.modal-body-scrollable {
+  padding: 24px;
+  overflow-y: auto;
+  max-height: calc(90vh - 75px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background-color: #f8fafc;
+}
+
+.profile-popup-modal .profile-banner-box {
+  background-color: #ffffff;
+}
+
+.profile-popup-modal .wireframe-tabs-bar {
+  background-color: #ffffff;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+
 
 
 
