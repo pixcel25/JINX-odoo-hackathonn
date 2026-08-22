@@ -5,6 +5,7 @@ from .api import (
     check_in_view,
     check_out_view,
     employee_login_view,
+    employee_password_change_view,
     employees_view,
     leave_request_detail_view,
     leave_requests_view,
@@ -18,6 +19,7 @@ from .api import (
 
 urlpatterns = [
     path('auth/employee-login/', employee_login_view),
+    path('auth/employee-password-change/', employee_password_change_view),
     path('me/', me_view),
     path('employees/', employees_view),
     path('attendance/', attendance_view),

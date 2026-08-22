@@ -2,17 +2,20 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import "./App.css";
 import { EmployeeDetailsModal } from "./components/EmployeeDetailsModal";
-import type { Employee } from "./components/EmployeeDetailsModal";
+import type { Employee, ResumeEntry } from "./components/EmployeeDetailsModal";
 import { DEFAULT_SALARY_STRUCTURE } from "./data/salary";
 import type { SalaryLog, SalaryStructure } from "./data/salary";
 import { DEFAULT_PRIVATE_INFO } from "./data/privateInfo";
 import type { PrivateInfo } from "./data/privateInfo";
 import { LeaveApplicationModal } from "./components/LeaveApplicationModal";
+import logo from "./assets/logo.jpeg";
 
 type Mode = "login" | "signup";
 type FormErrors = Record<string, string>;
 
 const API_URL = import.meta.env.VITE_API_URL ?? "/api";
+const ATTENDANCE_MIN_DATE = "2020-01-01";
+const ATTENDANCE_MAX_DATE = "2099-12-31";
 
 type ApiLeaveRequest = {
   id: string;
@@ -207,6 +210,10 @@ function App() {
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>(
     INITIAL_TIME_OFF_REQUESTS,
   );
+  const [attendanceDate, setAttendanceDate] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
+  const isAllocationView = timeOffSubTab === "Allocation";
 
   const [searchQuery, setSearchQuery] = useState("");
   const [deptFilter, setDeptFilter] = useState("All");
@@ -239,8 +246,11 @@ function App() {
   });
   const [employeeFormError, setEmployeeFormError] = useState("");
   const [employeeFormSuccess, setEmployeeFormSuccess] = useState("");
-  const [logoFileName, setLogoFileName] = useState("");
   const [employeeFormLoading, setEmployeeFormLoading] = useState(false);
+  const [generatedEmployeeId, setGeneratedEmployeeId] = useState("");
+  const [resumeByEmployee, setResumeByEmployee] = useState<
+    Record<string, ResumeEntry[]>
+  >({});
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -356,28 +366,43 @@ function App() {
     }
   };
 
-  const handleSaveResume = (employee: Employee, resumeEntries: ResumeEntry[]) => {
-    setResumeByEmployee((current) => ({ ...current, [employee.id]: resumeEntries }))
-  }
+  const handleSaveResume = (
+    employee: Employee,
+    resumeEntries: ResumeEntry[],
+  ) => {
+    setResumeByEmployee((current) => ({
+      ...current,
+      [employee.id]: resumeEntries,
+    }));
+  };
 
   const handleSaveEmployee = (updatedEmployee: Employee) => {
-    setEmployees((currentEmployees) => currentEmployees.map((employee) => employee.id === updatedEmployee.id ? updatedEmployee : employee))
-    setProfileModalEmployee(updatedEmployee)
-  }
+    setEmployees((currentEmployees) =>
+      currentEmployees.map((employee) =>
+        employee.id === updatedEmployee.id ? updatedEmployee : employee,
+      ),
+    );
+    setProfileModalEmployee(updatedEmployee);
+  };
 
   const handleDeleteEmployee = (employee: Employee) => {
-    setEmployees((currentEmployees) => currentEmployees.filter((item) => item.id !== employee.id))
-    setProfileModalEmployee(null)
-  }
+    setEmployees((currentEmployees) =>
+      currentEmployees.filter((item) => item.id !== employee.id),
+    );
+    setProfileModalEmployee(null);
+  };
 
   const shiftAttendanceDate = (days: number) => {
-    const nextDate = new Date(`${attendanceDate}T00:00:00`)
-    nextDate.setDate(nextDate.getDate() + days)
-    const nextDateValue = nextDate.toISOString().slice(0, 10)
-    if (nextDateValue >= ATTENDANCE_MIN_DATE && nextDateValue <= ATTENDANCE_MAX_DATE) {
-      setAttendanceDate(nextDateValue)
+    const nextDate = new Date(`${attendanceDate}T00:00:00`);
+    nextDate.setDate(nextDate.getDate() + days);
+    const nextDateValue = nextDate.toISOString().slice(0, 10);
+    if (
+      nextDateValue >= ATTENDANCE_MIN_DATE &&
+      nextDateValue <= ATTENDANCE_MAX_DATE
+    ) {
+      setAttendanceDate(nextDateValue);
     }
-  }
+  };
 
   const handleAuthSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -468,7 +493,7 @@ function App() {
         password: "",
         confirmPassword: "",
       });
-      setLogoFileName("");
+      setGeneratedEmployeeId(data.empId);
       setEmployeeFormSuccess(
         `Employee added successfully. Login ID: ${data.empId}`,
       );
@@ -996,8 +1021,22 @@ function App() {
             <div className="attendance-control-panel">
               <div className="panel-left-controls">
                 <div className="arrow-btn-group">
-                  <button className="ctrl-btn-square" onClick={() => shiftAttendanceDate(-1)} disabled={attendanceDate <= ATTENDANCE_MIN_DATE} aria-label="Previous date">‹</button>
-                  <button className="ctrl-btn-square" onClick={() => shiftAttendanceDate(1)} disabled={attendanceDate >= ATTENDANCE_MAX_DATE} aria-label="Next date">›</button>
+                  <button
+                    className="ctrl-btn-square"
+                    onClick={() => shiftAttendanceDate(-1)}
+                    disabled={attendanceDate <= ATTENDANCE_MIN_DATE}
+                    aria-label="Previous date"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    className="ctrl-btn-square"
+                    onClick={() => shiftAttendanceDate(1)}
+                    disabled={attendanceDate >= ATTENDANCE_MAX_DATE}
+                    aria-label="Next date"
+                  >
+                    ›
+                  </button>
                 </div>
 
                 <button className="ctrl-btn-dropdown">
@@ -1422,29 +1461,33 @@ function App() {
                             >
                               {req.status}
                             </span>
-                            {!isAllocationView && <div className="approval-action-boxes">
-                              <button
-                                className="view-application-btn"
-                                title="View Application"
-                                onClick={() => setSelectedLeaveApplication(req)}
-                              >
-                                View Application
-                              </button>
-                              <button
-                                className="box-btn-reject"
-                                title="Refuse Request"
-                                onClick={() => handleRejectLeave(req.id)}
-                              >
-                                ✖
-                              </button>
-                              <button
-                                className="box-btn-approve"
-                                title="Approve Request"
-                                onClick={() => handleApproveLeave(req.id)}
-                              >
-                                ✔
-                              </button>
-                            </div>}
+                            {!isAllocationView && (
+                              <div className="approval-action-boxes">
+                                <button
+                                  className="view-application-btn"
+                                  title="View Application"
+                                  onClick={() =>
+                                    setSelectedLeaveApplication(req)
+                                  }
+                                >
+                                  View Application
+                                </button>
+                                <button
+                                  className="box-btn-reject"
+                                  title="Refuse Request"
+                                  onClick={() => handleRejectLeave(req.id)}
+                                >
+                                  ✖
+                                </button>
+                                <button
+                                  className="box-btn-approve"
+                                  title="Approve Request"
+                                  onClick={() => handleApproveLeave(req.id)}
+                                >
+                                  ✔
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1556,6 +1599,19 @@ function App() {
                 handleSavePrivateInfo(profileModalEmployee, privateInfo)
             : undefined
         }
+        resumeEntries={
+          profileModalEmployee
+            ? resumeByEmployee[profileModalEmployee.id]
+            : undefined
+        }
+        onSaveResume={
+          profileModalEmployee
+            ? (resumeEntries) =>
+                handleSaveResume(profileModalEmployee, resumeEntries)
+            : undefined
+        }
+        onSaveEmployee={handleSaveEmployee}
+        onDeleteEmployee={handleDeleteEmployee}
       />
 
       {selectedLeaveApplication && leaveApplicationEmployee && (
@@ -1583,27 +1639,6 @@ function App() {
               </button>
             </div>
             <form onSubmit={handleAddEmployee} className="modal-form">
-              <div className="employee-logo-field">
-                <div className="logo-placeholder">d</div>
-                <div>
-                  <strong>App/Web Logo</strong>
-                  <label className="logo-upload" htmlFor="employee-logo">
-                    ⇧ Upload Logo
-                  </label>
-                  <input
-                    id="employee-logo"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) =>
-                      setLogoFileName(e.target.files?.[0]?.name ?? "")
-                    }
-                  />
-                  {logoFileName && (
-                    <span className="logo-file-name">{logoFileName}</span>
-                  )}
-                </div>
-              </div>
-
               <div className="modal-field">
                 <label htmlFor="employee-company">Company Name</label>
                 <input
@@ -1673,32 +1708,26 @@ function App() {
                   id="employee-department"
                   required
                   value={newEmp.dept}
-                  onChange={(e) => setNewEmp({ ...newEmp, dept: e.target.value })}
+                  onChange={(e) =>
+                    setNewEmp({ ...newEmp, dept: e.target.value })
+                  }
                 >
-                  {dashboardData.departments.map((department) => <option key={department} value={department}>{department}</option>)}
+                  {departments.map((department) => (
+                    <option key={department} value={department}>
+                      {department}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              <div className="modal-field">
-                <label htmlFor="employee-confirm-password">
-                  Confirm Password
-                </label>
-                <input
-                  id="employee-location"
-                  type="text"
-                  required
-                  placeholder="Enter work location"
-                  value={newEmp.location}
-                  onChange={(e) => setNewEmp({ ...newEmp, location: e.target.value })}
-                />
-              </div>
-
               <div className="modal-field generated-id-field">
-                <label htmlFor="generated-employee-id">Generated Employee ID</label>
+                <label htmlFor="generated-employee-id">
+                  Generated Employee ID
+                </label>
                 <input
                   id="generated-employee-id"
                   type="text"
-                  value={generatedEmployeeId || 'Generated after submission'}
+                  value={generatedEmployeeId || "Generated after submission"}
                   readOnly
                 />
               </div>

@@ -1,4 +1,11 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import { FeedbackBanner } from "../../../shared/components/FeedbackBanner";
 import { Employee } from "../../../auth/authService";
@@ -37,10 +44,32 @@ export function HomeScreen({
   onOpenLeave,
   onSignOut,
 }: HomeScreenProps) {
-  const attendanceDays = attendanceSummary.present + attendanceSummary.late + attendanceSummary.half_day;
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  const attendanceDays =
+    attendanceSummary.present +
+    attendanceSummary.late +
+    attendanceSummary.half_day;
   const attendanceRate = attendanceRecords.length
     ? Math.round((attendanceDays / attendanceRecords.length) * 100)
     : 0;
+
+  useEffect(() => {
+    setCurrentTime(Date.now());
+    if (!isCheckedIn || !todayAttendance?.checkInAt) return;
+
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [isCheckedIn, todayAttendance?.checkInAt]);
+
+  const checkInTime = todayAttendance
+    ? formatClock(todayAttendance.checkInAt, todayAttendance.checkIn)
+    : "";
+  const checkOutTime = todayAttendance?.checkOutAt
+    ? formatClock(todayAttendance.checkOutAt, todayAttendance.checkOut)
+    : todayAttendance?.checkOut;
+  const workedDuration = todayAttendance
+    ? formatWorkedDuration(todayAttendance, currentTime)
+    : "No record for this day";
 
   return (
     <View>
@@ -54,59 +83,109 @@ export function HomeScreen({
           <Text style={styles.brand}>DAYFLOW HRMS</Text>
         </View>
         <View style={styles.headerActions}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Sign out" onPress={() => void onSignOut()}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Sign out"
+            onPress={() => void onSignOut()}
+          >
             <Text style={styles.signOutText}>Sign out</Text>
           </Pressable>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{employee.displayName.slice(0, 1).toUpperCase()}</Text>
+            <Text style={styles.avatarText}>
+              {employee.displayName.slice(0, 1).toUpperCase()}
+            </Text>
           </View>
         </View>
       </View>
 
       <Text style={styles.greeting}>Good morning, {employee.displayName}</Text>
-      <Text style={styles.date}>{new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "short", year: "numeric" })}</Text>
+      <Text style={styles.date}>
+        {new Date().toLocaleDateString(undefined, {
+          weekday: "long",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })}
+      </Text>
 
-      <View style={[styles.attendanceCard, !hasRegisteredToday && styles.unregisteredCard]}>
+      <View
+        style={[
+          styles.attendanceCard,
+          !hasRegisteredToday && styles.unregisteredCard,
+        ]}
+      >
         <View style={styles.cardTopRow}>
           <View style={styles.statusPill}>
-            <Text style={styles.statusIcon}>{hasRegisteredToday && isCheckedIn ? "✓" : "-"}</Text>
+            <Text style={styles.statusIcon}>
+              {hasRegisteredToday && isCheckedIn ? "✓" : "-"}
+            </Text>
             <Text style={styles.statusText}>
-              {hasRegisteredToday ? (isCheckedIn ? "Checked In" : "Checked Out") : "Not Registered"}
+              {hasRegisteredToday
+                ? isCheckedIn
+                  ? "Checked In"
+                  : "Checked Out"
+                : "Not Registered"}
             </Text>
           </View>
           <Text style={styles.workingText}>
-            {hasRegisteredToday ? (isCheckedIn ? "Working" : "Completed") : "No attendance"}
+            {hasRegisteredToday
+              ? isCheckedIn
+                ? "Working"
+                : "Completed"
+              : "No attendance"}
           </Text>
         </View>
-        <Text style={styles.checkInTime}>{todayAttendance?.checkIn || "No check-in"}</Text>
-        <Text style={styles.elapsedTime}>
-          {todayAttendance ? todayAttendance.duration : "No record for this day"}
-        </Text>
+        <Text style={styles.checkInTime}>{checkInTime || "No check-in"}</Text>
+        <Text style={styles.elapsedTime}>{workedDuration}</Text>
+        {checkOutTime ? (
+          <Text style={styles.checkOutTime}>Checked out at {checkOutTime}</Text>
+        ) : null}
         <Pressable
           accessibilityRole="button"
-          disabled={isCheckingIn || isCheckingOut || (hasRegisteredToday && !isCheckedIn)}
+          disabled={
+            isCheckingIn ||
+            isCheckingOut ||
+            (hasRegisteredToday && !isCheckedIn)
+          }
           onPress={hasRegisteredToday ? onCheckOut : onCheckIn}
           style={({ pressed }) => [
             styles.checkOutButton,
             pressed && styles.pressed,
-            (isCheckingIn || isCheckingOut || (hasRegisteredToday && !isCheckedIn)) && styles.disabledButton,
+            (isCheckingIn ||
+              isCheckingOut ||
+              (hasRegisteredToday && !isCheckedIn)) &&
+              styles.disabledButton,
           ]}
         >
           {isCheckingIn || isCheckingOut ? (
             <ActivityIndicator color="#08684d" />
           ) : (
             <Text style={styles.checkOutText}>
-              {hasRegisteredToday ? (isCheckedIn ? "Check Out  >" : "Day complete") : "Check In  >"}
+              {hasRegisteredToday
+                ? isCheckedIn
+                  ? "Check Out  >"
+                  : "Day complete"
+                : "Check In  >"}
             </Text>
           )}
         </Pressable>
       </View>
 
-      {attendanceError ? <FeedbackBanner kind="error" message={attendanceError} /> : null}
+      {attendanceError ? (
+        <FeedbackBanner kind="error" message={attendanceError} />
+      ) : null}
 
       <View style={styles.metricsRow}>
-        <Metric label="Attendance" value={String(attendanceDays)} suffix="days" />
-        <Metric label="Leave Balance" value={String(employee.paidLeaveAvailable ?? 0)} suffix="days" />
+        <Metric
+          label="Attendance"
+          value={String(attendanceDays)}
+          suffix="days"
+        />
+        <Metric
+          label="Leave Balance"
+          value={String(employee.paidLeaveAvailable ?? 0)}
+          suffix="days"
+        />
         <Metric label="Attendance Rate" value={`${attendanceRate}%`} />
       </View>
 
@@ -118,24 +197,39 @@ export function HomeScreen({
       </View>
 
       <View style={styles.activityCard}>
-        {recentActivity.length ? recentActivity.slice(0, 3).map((item, index) => {
-          const createdAt = new Date(item.createdAt);
-          return (
-            <View key={item.id} style={[styles.activityRow, index > 0 && styles.activityBorder]}>
-              <View style={styles.activityIcon}>
-                <Text style={styles.activityIconText}>i</Text>
+        {recentActivity.length ? (
+          recentActivity.slice(0, 3).map((item, index) => {
+            const createdAt = new Date(item.createdAt);
+            return (
+              <View
+                key={item.id}
+                style={[styles.activityRow, index > 0 && styles.activityBorder]}
+              >
+                <View style={styles.activityIcon}>
+                  <Text style={styles.activityIconText}>i</Text>
+                </View>
+                <View style={styles.activityCopy}>
+                  <Text style={styles.activityTitle}>{item.message}</Text>
+                  <Text style={styles.activityDetail}>HRMS activity</Text>
+                </View>
+                <View style={styles.activityTime}>
+                  <Text style={styles.activityDate}>
+                    {createdAt.toLocaleDateString(undefined, {
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </Text>
+                  <Text style={styles.activityClock}>
+                    {createdAt.toLocaleTimeString(undefined, {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.activityCopy}>
-                <Text style={styles.activityTitle}>{item.message}</Text>
-                <Text style={styles.activityDetail}>HRMS activity</Text>
-              </View>
-              <View style={styles.activityTime}>
-                <Text style={styles.activityDate}>{createdAt.toLocaleDateString(undefined, { day: "numeric", month: "short" })}</Text>
-                <Text style={styles.activityClock}>{createdAt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}</Text>
-              </View>
-            </View>
-          );
-        }) : (
+            );
+          })
+        ) : (
           <View style={styles.emptyActivityRow}>
             <Text style={styles.activityDetail}>No recent activity.</Text>
           </View>
@@ -145,7 +239,43 @@ export function HomeScreen({
   );
 }
 
-function Metric({ label, value, suffix }: { label: string; value: string; suffix?: string }) {
+function formatClock(timestamp: string | undefined, fallback: string): string {
+  if (!timestamp) return fallback || "";
+  const date = new Date(timestamp);
+  return Number.isNaN(date.getTime())
+    ? fallback || ""
+    : date.toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+}
+
+function formatWorkedDuration(
+  record: AttendanceRecord,
+  currentTime: number,
+): string {
+  if (!record.checkInAt) return record.duration;
+  const checkIn = new Date(record.checkInAt).getTime();
+  const checkOut = record.checkOutAt
+    ? new Date(record.checkOutAt).getTime()
+    : currentTime;
+  if (Number.isNaN(checkIn) || Number.isNaN(checkOut)) return record.duration;
+
+  const totalMinutes = Math.max(0, Math.floor((checkOut - checkIn) / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+}
+
+function Metric({
+  label,
+  value,
+  suffix,
+}: {
+  label: string;
+  value: string;
+  suffix?: string;
+}) {
   return (
     <View style={styles.metricCard}>
       <Text style={styles.metricLabel}>{label}</Text>
@@ -291,6 +421,11 @@ const styles = StyleSheet.create({
     color: "#e3f5ef",
     fontSize: 23,
     fontWeight: "600",
+  },
+  checkOutTime: {
+    marginTop: 8,
+    color: "#d6eee6",
+    fontSize: 14,
   },
   checkOutButton: {
     minHeight: 60,

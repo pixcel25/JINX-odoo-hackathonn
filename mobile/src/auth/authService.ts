@@ -8,6 +8,14 @@ export type Employee = {
   email: string;
   role: "admin" | "hr" | "employee";
   token: string;
+  name?: string;
+  phone?: string;
+  company?: string;
+  joinedAt?: string;
+  title?: string;
+  department?: string;
+  manager?: string;
+  location?: string;
   paidLeaveAvailable?: number;
   sickLeaveAvailable?: number;
   casualLeaveAvailable?: number;
@@ -73,6 +81,19 @@ function employeeFromResponse(data: Record<string, unknown>): Employee {
     email: String(data.email ?? ""),
     role,
     token: String(data.token),
+    name: typeof data.name === "string" ? data.name : undefined,
+    phone: typeof data.phone === "string" ? data.phone : undefined,
+    company: typeof data.company === "string" ? data.company : undefined,
+    joinedAt: typeof data.joinedAt === "string" ? data.joinedAt : undefined,
+    title: typeof data.title === "string" ? data.title : undefined,
+    department:
+      typeof data.department === "string"
+        ? data.department
+        : typeof data.dept === "string"
+          ? data.dept
+          : undefined,
+    manager: typeof data.manager === "string" ? data.manager : undefined,
+    location: typeof data.location === "string" ? data.location : undefined,
     paidLeaveAvailable: Number(data.paidLeaveAvailable ?? 0),
     sickLeaveAvailable: Number(data.sickLeaveAvailable ?? 0),
     casualLeaveAvailable: Number(data.casualLeaveAvailable ?? 0),
@@ -119,6 +140,34 @@ export async function changePassword(
   throw new AuthServiceError(
     "Password changes are managed by your HR administrator.",
   );
+}
+
+export async function changeEmployeePassword(
+  loginId: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/hr/auth/employee-password-change/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ loginId, currentPassword, newPassword }),
+    });
+  } catch {
+    throw new AuthServiceError(
+      "We could not reach the HR service. Check that the backend is running.",
+    );
+  }
+
+  const data = await responseData(response);
+  if (!response.ok) {
+    throw new AuthServiceError(
+      typeof data.error === "string"
+        ? data.error
+        : "Your password could not be changed.",
+    );
+  }
 }
 
 export async function loadSession(): Promise<Employee | null> {

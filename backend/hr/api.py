@@ -341,6 +341,28 @@ def employee_login_view(request):
     return JsonResponse(payload)
 
 
+@csrf_exempt
+@require_POST
+def employee_password_change_view(request):
+    data = request_data(request)
+    if not data:
+        return error('Enter your current and new password.')
+
+    login_id = data.get('loginId', '')
+    current_password = data.get('currentPassword', '')
+    new_password = data.get('newPassword', '')
+    if not all(isinstance(value, str) and value for value in (login_id, current_password, new_password)):
+        return error('Enter your current and new password.')
+    user = User.objects.filter(Q(employee_id__iexact=login_id.strip()) | Q(email__iexact=login_id.strip())).first()
+    if user is None or not check_password(current_password, user.password_hash):
+        return error('The current password is not correct.', 401)
+    if len(new_password) < 8:
+        return error('The new password must be at least 8 characters.')
+    user.password_hash = make_password(new_password)
+    user.save(update_fields=['password_hash'])
+    return JsonResponse({'message': 'Password changed successfully.'})
+
+
 @require_GET
 def me_view(request):
     actor, role = current_identity(request)
