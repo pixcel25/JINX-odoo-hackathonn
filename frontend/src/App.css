@@ -1668,3 +1668,246 @@ input:focus {
     overflow-x: auto;
   }
 }
+
+/* ==================== TIME OFF WIREFRAME STYLING ==================== */
+.timeoff-wireframe-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Sub Nav Tabs: Time Off | Allocation */
+.timeoff-subnav-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.timeoff-subnav-btn {
+  padding: 8px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.timeoff-subnav-btn:hover {
+  color: #0f172a;
+}
+
+.timeoff-subnav-btn.active {
+  background-color: #197344;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Action Bar: NEW + Searchbar */
+.timeoff-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+.btn-timeoff-new {
+  height: 40px;
+  padding: 0 24px;
+  background-color: #197344;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-timeoff-new:hover {
+  background-color: #135833;
+}
+
+.timeoff-searchbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 320px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  background-color: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.timeoff-searchbar:focus-within {
+  border-color: #197344;
+  box-shadow: 0 0 0 3px rgba(25, 115, 68, 0.12);
+}
+
+.timeoff-searchbar .search-icon {
+  width: 16px;
+  height: 16px;
+  stroke: #64748b;
+}
+
+.timeoff-searchbar input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+/* Balance Cards Grid */
+.timeoff-balance-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  width: 100%;
+}
+
+.balance-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 24px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.balance-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0284c7;
+}
+
+.balance-days {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Time Off Table */
+.timeoff-wireframe-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.timeoff-wireframe-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.timeoff-wireframe-table th {
+  padding: 14px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.timeoff-wireframe-table td {
+  padding: 16px 20px;
+  font-size: 14px;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.timeoff-wireframe-table tr:last-child td {
+  border-bottom: none;
+}
+
+.emp-name-cell {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.type-blue-cell {
+  color: #0284c7;
+  font-weight: 600;
+}
+
+.timeoff-status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-approved {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.status-pending {
+  background-color: #fef9c3;
+  color: #a16207;
+}
+
+.status-refused {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Approval Actions: Red & Green Blocks */
+.approval-action-boxes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.box-btn-reject {
+  width: 32px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  background-color: #ef4444;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.box-btn-reject:hover {
+  opacity: 0.85;
+}
+
+.box-btn-approve {
+  width: 32px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  background-color: #197344;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.box-btn-approve:hover {
+  opacity: 0.85;
+}
+

@@ -28,6 +28,16 @@ interface Employee {
   initials?: string
 }
 
+interface TimeOffRequest {
+  id: string
+  employeeName: string
+  startDate: string
+  endDate: string
+  timeOffType: 'Paid Time Off' | 'Sick Time Off' | 'Casual Leave'
+  status: 'Approved' | 'Pending' | 'Refused'
+  allocationDays?: number
+}
+
 const INITIAL_EMPLOYEES: Employee[] = [
   {
     id: '1',
@@ -163,6 +173,41 @@ const INITIAL_EMPLOYEES: Employee[] = [
   }
 ]
 
+const INITIAL_TIME_OFF_REQUESTS: TimeOffRequest[] = [
+  {
+    id: '1',
+    employeeName: 'Jane Doe',
+    startDate: '28/10/2025',
+    endDate: '28/10/2025',
+    timeOffType: 'Paid Time Off',
+    status: 'Pending'
+  },
+  {
+    id: '2',
+    employeeName: 'John Smith',
+    startDate: '01/11/2025',
+    endDate: '03/11/2025',
+    timeOffType: 'Sick Time Off',
+    status: 'Approved'
+  },
+  {
+    id: '3',
+    employeeName: 'Alice Wong',
+    startDate: '12/11/2025',
+    endDate: '15/11/2025',
+    timeOffType: 'Paid Time Off',
+    status: 'Pending'
+  },
+  {
+    id: '4',
+    employeeName: 'Michael Kim',
+    startDate: '20/11/2025',
+    endDate: '20/11/2025',
+    timeOffType: 'Paid Time Off',
+    status: 'Refused'
+  }
+]
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [mode, setMode] = useState<Mode>('login')
@@ -176,6 +221,22 @@ function App() {
   
   // Attendance view mode option
   const [attendanceViewMode, setAttendanceViewMode] = useState<'Day' | 'Overview'>('Overview')
+
+  // Time Off view state & requests
+  const [timeOffSubTab, setTimeOffSubTab] = useState<'Time Off' | 'Allocation'>('Time Off')
+  const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>(INITIAL_TIME_OFF_REQUESTS)
+  const [isTimeOffModalOpen, setIsTimeOffModalOpen] = useState(false)
+  const [newLeave, setNewLeave] = useState<{
+    employeeName: string
+    startDate: string
+    endDate: string
+    timeOffType: 'Paid Time Off' | 'Sick Time Off' | 'Casual Leave'
+  }>({
+    employeeName: 'Jane Doe',
+    startDate: '28/10/2025',
+    endDate: '28/10/2025',
+    timeOffType: 'Paid Time Off'
+  })
   
   const [searchQuery, setSearchQuery] = useState('')
   const [deptFilter, setDeptFilter] = useState('All')
@@ -263,6 +324,33 @@ function App() {
     setIsAddingCert(false)
   }
 
+  // Time off actions
+  const handleApproveLeave = (id: string) => {
+    setTimeOffRequests(requests => 
+      requests.map(req => req.id === id ? { ...req, status: 'Approved' } : req)
+    )
+  }
+
+  const handleRejectLeave = (id: string) => {
+    setTimeOffRequests(requests => 
+      requests.map(req => req.id === id ? { ...req, status: 'Refused' } : req)
+    )
+  }
+
+  const handleCreateLeaveRequest = (e: FormEvent) => {
+    e.preventDefault()
+    const created: TimeOffRequest = {
+      id: Date.now().toString(),
+      employeeName: newLeave.employeeName,
+      startDate: newLeave.startDate,
+      endDate: newLeave.endDate,
+      timeOffType: newLeave.timeOffType,
+      status: 'Pending'
+    }
+    setTimeOffRequests([created, ...timeOffRequests])
+    setIsTimeOffModalOpen(false)
+  }
+
   // Filter employees
   const filteredEmployees = employees.filter(emp => {
     const matchesSearch = emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -273,6 +361,12 @@ function App() {
     const matchesStatus = statusFilter === 'All' || emp.status === statusFilter
     return matchesSearch && matchesDept && matchesStatus
   })
+
+  // Filter time off requests
+  const filteredTimeOffRequests = timeOffRequests.filter(req => 
+    req.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    req.timeOffType.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   if (!isAuthenticated) {
     return (
@@ -388,15 +482,14 @@ function App() {
         </div>
       </header>
 
-      {/* Sub Header Title Bar (for non-attendance tabs) */}
-      {activeTab !== 'Attendance' && (
+      {/* Sub Header Title Bar (for Employees tab) */}
+      {activeTab === 'Employees' && (
         <div className="wireframe-subheader">
           <div className="subheader-title-group">
             <h1 className="subheader-title">
-              {activeTab === 'Time Off' ? 'Time Off & Leave Requests' :
-               selectedEmployee ? 'My Profile' : 'Employees Directory'}
+              {selectedEmployee ? 'My Profile' : 'Employees Directory'}
             </h1>
-            {activeTab === 'Employees' && selectedEmployee && (
+            {selectedEmployee && (
               <button className="btn-back-directory" onClick={() => setSelectedEmployee(null)}>
                 ← Back to Directory
               </button>
@@ -404,16 +497,9 @@ function App() {
           </div>
 
           <div className="subheader-actions">
-            {activeTab === 'Employees' && (
-              <button className="btn-add-new-emp" onClick={() => setIsModalOpen(true)}>
-                + Add Employee
-              </button>
-            )}
-            {activeTab === 'Time Off' && (
-              <button className="btn-add-new-emp">
-                + New Leave Request
-              </button>
-            )}
+            <button className="btn-add-new-emp" onClick={() => setIsModalOpen(true)}>
+              + Add Employee
+            </button>
           </div>
         </div>
       )}
@@ -953,88 +1039,175 @@ function App() {
           </div>
         )}
 
-        {/* ==================== TAB 3: TIME OFF ==================== */}
+        {/* ==================== TAB 3: TIME OFF (MATCHING EXACT WIREFRAME) ==================== */}
         {activeTab === 'Time Off' && (
-          <div className="timeoff-tab-container">
-            <div className="attendance-overview-section">
-              <div className="attendance-overview-header">
-                <div>
-                  <h3 className="attendance-section-title">Time Off & Leave Summary</h3>
-                  <p className="attendance-section-sub">Overview of employee leave requests, balances, and scheduled absences</p>
-                </div>
-                <span className="attendance-date-badge">22 Aug 2026</span>
-              </div>
+          <div className="timeoff-wireframe-layout">
+            {/* Sub Nav Bar: Time Off | Allocation */}
+            <div className="timeoff-subnav-bar">
+              <button 
+                className={`timeoff-subnav-btn ${timeOffSubTab === 'Time Off' ? 'active' : ''}`}
+                onClick={() => setTimeOffSubTab('Time Off')}
+              >
+                Time Off
+              </button>
+              <button 
+                className={`timeoff-subnav-btn ${timeOffSubTab === 'Allocation' ? 'active' : ''}`}
+                onClick={() => setTimeOffSubTab('Allocation')}
+              >
+                Allocation
+              </button>
+            </div>
 
-              <div className="attendance-metrics-grid">
-                <div className="metric-card metric-on-leave">
-                  <div className="metric-icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  </div>
-                  <div className="metric-info">
-                    <span className="metric-value">1</span>
-                    <span className="metric-label">Approved Leave Today</span>
-                  </div>
-                </div>
+            {/* Action Bar: NEW Button + Searchbar */}
+            <div className="timeoff-action-bar">
+              <button 
+                className="btn-timeoff-new"
+                onClick={() => setIsTimeOffModalOpen(true)}
+              >
+                NEW
+              </button>
 
-                <div className="metric-card metric-sick">
-                  <div className="metric-icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                  </div>
-                  <div className="metric-info">
-                    <span className="metric-value">1</span>
-                    <span className="metric-label">Sick Leave Today</span>
-                  </div>
-                </div>
-
-                <div className="metric-card metric-late">
-                  <div className="metric-icon-box">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  </div>
-                  <div className="metric-info">
-                    <span className="metric-value">3</span>
-                    <span className="metric-label">Pending Requests</span>
-                  </div>
-                </div>
+              <div className="timeoff-searchbar">
+                <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input 
+                  type="text"
+                  placeholder="Searchbar"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
             </div>
 
-            <div className="attendance-table-card">
-              <table className="attendance-table">
+            {/* Leave Balance Available Cards (Paid time Off: 24 Days, Sick time off: 07 Days) */}
+            <div className="timeoff-balance-cards-grid">
+              <div className="balance-card balance-paid">
+                <span className="balance-title">Paid time Off</span>
+                <span className="balance-days">24 Days Available</span>
+              </div>
+              <div className="balance-card balance-sick">
+                <span className="balance-title">Sick time off</span>
+                <span className="balance-days">07 Days Available</span>
+              </div>
+            </div>
+
+            {/* Time Off Wireframe Data Table */}
+            <div className="timeoff-wireframe-card">
+              <table className="timeoff-wireframe-table">
                 <thead>
                   <tr>
-                    <th>Employee</th>
-                    <th>Leave Type</th>
-                    <th>Duration</th>
-                    <th>Dates</th>
-                    <th>Reason</th>
+                    <th>Name</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Time off Type</th>
                     <th>Status</th>
-                    <th>Action</th>
+                    <th style={{ textAlign: 'center' }}>Approval Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>
-                      <div className="table-emp-user">
-                        <div className="table-avatar-initials">AW</div>
-                        <div className="table-emp-text">
-                          <span className="table-emp-name">Alice Wong</span>
-                          <span className="table-emp-id">EMP-1089</span>
+                  {filteredTimeOffRequests.map(req => (
+                    <tr key={req.id}>
+                      <td className="emp-name-cell">[{req.employeeName}]</td>
+                      <td>{req.startDate}</td>
+                      <td>{req.endDate}</td>
+                      <td className="type-blue-cell">{req.timeOffType}</td>
+                      <td>
+                        <span className={`timeoff-status-badge status-${req.status.toLowerCase()}`}>
+                          {req.status}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <div className="approval-action-boxes">
+                          <button 
+                            className="box-btn-reject"
+                            title="Refuse Request"
+                            onClick={() => handleRejectLeave(req.id)}
+                          >
+                            ✖
+                          </button>
+                          <button 
+                            className="box-btn-approve"
+                            title="Approve Request"
+                            onClick={() => handleApproveLeave(req.id)}
+                          >
+                            ✔
+                          </button>
                         </div>
-                      </div>
-                    </td>
-                    <td>Annual Paid Leave</td>
-                    <td>3 Days</td>
-                    <td>22 Aug - 24 Aug</td>
-                    <td>Personal Vacation</td>
-                    <td><span className="status-pill status-on-leave">Approved</span></td>
-                    <td><button className="btn-table-action">Details</button></td>
-                  </tr>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
         )}
       </main>
+
+      {/* New Time Off Request Modal */}
+      {isTimeOffModalOpen && (
+        <div className="modal-backdrop" onClick={() => setIsTimeOffModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>New Time Off Request</h2>
+              <button className="close-btn" onClick={() => setIsTimeOffModalOpen(false)}>✕</button>
+            </div>
+            <form onSubmit={handleCreateLeaveRequest} className="modal-form">
+              <div className="modal-field">
+                <label>Employee Name</label>
+                <select 
+                  value={newLeave.employeeName}
+                  onChange={(e) => setNewLeave({ ...newLeave, employeeName: e.target.value })}
+                >
+                  {employees.map(emp => (
+                    <option key={emp.id} value={emp.name}>{emp.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="modal-field">
+                <label>Start Date</label>
+                <input 
+                  type="text" 
+                  required 
+                  placeholder="e.g. 28/10/2025"
+                  value={newLeave.startDate}
+                  onChange={(e) => setNewLeave({ ...newLeave, startDate: e.target.value })}
+                />
+              </div>
+
+              <div className="modal-field">
+                <label>End Date</label>
+                <input 
+                  type="text" 
+                  required 
+                  placeholder="e.g. 28/10/2025"
+                  value={newLeave.endDate}
+                  onChange={(e) => setNewLeave({ ...newLeave, endDate: e.target.value })}
+                />
+              </div>
+
+              <div className="modal-field">
+                <label>Time Off Type</label>
+                <select 
+                  value={newLeave.timeOffType}
+                  onChange={(e) => setNewLeave({ ...newLeave, timeOffType: e.target.value as TimeOffRequest['timeOffType'] })}
+                >
+                  <option value="Paid Time Off">Paid Time Off</option>
+                  <option value="Sick Time Off">Sick Time Off</option>
+                  <option value="Casual Leave">Casual Leave</option>
+                </select>
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setIsTimeOffModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn-primary">Submit Request</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* New Employee Modal */}
       {isModalOpen && (
