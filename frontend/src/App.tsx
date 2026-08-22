@@ -10,7 +10,7 @@ interface Employee {
   title: string
   empId: string
   dept: string
-  status: 'Active' | 'On Leave' | 'Inactive' | 'Present'
+  status: 'Present' | 'Absent' | 'On Leave' | 'Late' | 'Sick Leave'
   email: string
   phone: string
   company: string
@@ -51,7 +51,7 @@ const INITIAL_EMPLOYEES: Employee[] = [
     title: 'Senior Developer',
     empId: 'EMP-1042',
     dept: 'Engineering',
-    status: 'Active',
+    status: 'Late',
     email: 'alex.mercer@dayflow.com',
     phone: '+91 9876543210',
     company: 'DayFlow Technologies',
@@ -89,7 +89,7 @@ const INITIAL_EMPLOYEES: Employee[] = [
     title: 'Marketing Manager',
     empId: 'EMP-1102',
     dept: 'Marketing',
-    status: 'Active',
+    status: 'Sick Leave',
     email: 'taylor.cruz@dayflow.com',
     phone: '+91 9988776655',
     company: 'DayFlow Technologies',
@@ -108,7 +108,7 @@ const INITIAL_EMPLOYEES: Employee[] = [
     title: 'HR Director',
     empId: 'EMP-0012',
     dept: 'Human Resources',
-    status: 'Active',
+    status: 'Present',
     email: 'michael.chang@dayflow.com',
     phone: '+91 9811223344',
     company: 'DayFlow Technologies',
@@ -120,6 +120,44 @@ const INITIAL_EMPLOYEES: Employee[] = [
     skills: ['Talent Management', 'HR Policy', 'Conflict Resolution'],
     certifications: ['SHRM-SCP Senior Certified', 'SPHR Professional'],
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'
+  },
+  {
+    id: '6',
+    name: 'Sarah Jenkins',
+    title: 'Senior UX Engineer',
+    empId: 'EMP-1044',
+    dept: 'Design',
+    status: 'Present',
+    email: 'sarah.jenkins@dayflow.com',
+    phone: '+91 9871122334',
+    company: 'DayFlow Technologies',
+    manager: 'Jordan Lee',
+    location: 'Goa, India',
+    about: 'UX engineer bridging the gap between interface aesthetics and frontend architecture.',
+    jobLove: 'Crafting responsive accessibility tools.',
+    hobbies: 'Sketching, hiking, and acoustic guitar.',
+    skills: ['Figma', 'Accessibility', 'React', 'CSS Architecture'],
+    certifications: ['CPACC Accessibility Certification'],
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'
+  },
+  {
+    id: '7',
+    name: 'David Miller',
+    title: 'Backend Lead',
+    empId: 'EMP-1055',
+    dept: 'Engineering',
+    status: 'Absent',
+    email: 'david.miller@dayflow.com',
+    phone: '+91 9776655443',
+    company: 'DayFlow Technologies',
+    manager: 'Michael Chang',
+    location: 'Pune, India',
+    about: 'Distributed database specialist optimizing high-concurrency microservices.',
+    jobLove: 'Tuning query response times under high loads.',
+    hobbies: 'Chess engine programming and cycling.',
+    skills: ['Python', 'PostgreSQL', 'Redis', 'Kubernetes'],
+    certifications: ['AWS Certified DevOps Engineer'],
+    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80'
   }
 ]
 
@@ -128,10 +166,10 @@ function App() {
   const [mode, setMode] = useState<Mode>('login')
   const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' })
   
-  // Dashboard state
+  // Dashboard state (default selectedEmployee is null so clicking employee page shows directory dashboard)
   const [activeTab, setActiveTab] = useState<'Employees' | 'Attendance' | 'Time Off'>('Employees')
   const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES)
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(INITIAL_EMPLOYEES[0])
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [detailTab, setDetailTab] = useState<'Resume' | 'Private Info' | 'Salary Info'>('Private Info')
   
   const [searchQuery, setSearchQuery] = useState('')
@@ -144,12 +182,18 @@ function App() {
   const [isAddingCert, setIsAddingCert] = useState(false)
 
   // New Employee form state
-  const [newEmp, setNewEmp] = useState({
+  const [newEmp, setNewEmp] = useState<{
+    name: string
+    title: string
+    empId: string
+    dept: string
+    status: Employee['status']
+  }>({
     name: '',
     title: '',
     empId: '',
     dept: 'Engineering',
-    status: 'Active' as const
+    status: 'Present'
   })
 
   // Sign in handler
@@ -182,7 +226,7 @@ function App() {
     }
     setEmployees([created, ...employees])
     setSelectedEmployee(created)
-    setNewEmp({ name: '', title: '', empId: '', dept: 'Engineering', status: 'Active' })
+    setNewEmp({ name: '', title: '', empId: '', dept: 'Engineering', status: 'Present' })
     setIsModalOpen(false)
   }
 
@@ -216,7 +260,7 @@ function App() {
                           emp.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           emp.empId.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesDept = deptFilter === 'All' || emp.dept === deptFilter
-    const matchesStatus = statusFilter === 'All' || emp.status === statusFilter || (statusFilter === 'Active' && emp.status === 'Present')
+    const matchesStatus = statusFilter === 'All' || emp.status === statusFilter
     return matchesSearch && matchesDept && matchesStatus
   })
 
@@ -287,7 +331,7 @@ function App() {
     )
   }
 
-  // Admin Portal Layout matching exact requested wireframe layout
+  // Admin Portal Layout
   return (
     <div className="wireframe-app-container">
       {/* Top Navbar */}
@@ -301,19 +345,19 @@ function App() {
           <nav className="nav-links-bar">
             <button 
               className={`nav-link-btn ${activeTab === 'Employees' ? 'active' : ''}`}
-              onClick={() => setActiveTab('Employees')}
+              onClick={() => { setActiveTab('Employees'); setSelectedEmployee(null); }}
             >
               Employees
             </button>
             <button 
               className={`nav-link-btn ${activeTab === 'Attendance' ? 'active' : ''}`}
-              onClick={() => setActiveTab('Attendance')}
+              onClick={() => { setActiveTab('Attendance'); setSelectedEmployee(null); }}
             >
               Attendance
             </button>
             <button 
               className={`nav-link-btn ${activeTab === 'Time Off' ? 'active' : ''}`}
-              onClick={() => setActiveTab('Time Off')}
+              onClick={() => { setActiveTab('Time Off'); setSelectedEmployee(null); }}
             >
               Time Off
             </button>
@@ -357,7 +401,7 @@ function App() {
       {/* Main App Content View */}
       <main className="wireframe-main-content">
         {selectedEmployee ? (
-          /* Profile Details View (Matching Wireframe Image) */
+          /* Profile Details View */
           <div className="profile-format-view">
             {/* Banner Header Card */}
             <div className="profile-banner-box">
@@ -589,8 +633,84 @@ function App() {
             )}
           </div>
         ) : (
-          /* Directory Grid View */
+          /* Directory Grid View / Employee Dashboard */
           <div className="directory-format-view">
+            {/* Today's Attendance Overview Bar */}
+            <div className="attendance-overview-section">
+              <div className="attendance-overview-header">
+                <h3 className="attendance-section-title">Today's Attendance Overview</h3>
+                <span className="attendance-date-badge">22 Aug 2026</span>
+              </div>
+
+              <div className="attendance-metrics-grid">
+                <div 
+                  className={`metric-card metric-present ${statusFilter === 'Present' ? 'active-metric' : ''}`} 
+                  onClick={() => setStatusFilter(statusFilter === 'Present' ? 'All' : 'Present')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  </div>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'Present').length}</span>
+                    <span className="metric-label">Present</span>
+                  </div>
+                </div>
+
+                <div 
+                  className={`metric-card metric-absent ${statusFilter === 'Absent' ? 'active-metric' : ''}`} 
+                  onClick={() => setStatusFilter(statusFilter === 'Absent' ? 'All' : 'Absent')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </div>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'Absent').length}</span>
+                    <span className="metric-label">Absent</span>
+                  </div>
+                </div>
+
+                <div 
+                  className={`metric-card metric-on-leave ${statusFilter === 'On Leave' ? 'active-metric' : ''}`} 
+                  onClick={() => setStatusFilter(statusFilter === 'On Leave' ? 'All' : 'On Leave')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  </div>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'On Leave').length}</span>
+                    <span className="metric-label">On Leave</span>
+                  </div>
+                </div>
+
+                <div 
+                  className={`metric-card metric-late ${statusFilter === 'Late' ? 'active-metric' : ''}`} 
+                  onClick={() => setStatusFilter(statusFilter === 'Late' ? 'All' : 'Late')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'Late').length}</span>
+                    <span className="metric-label">Late Arrival</span>
+                  </div>
+                </div>
+
+                <div 
+                  className={`metric-card metric-sick ${statusFilter === 'Sick Leave' ? 'active-metric' : ''}`} 
+                  onClick={() => setStatusFilter(statusFilter === 'Sick Leave' ? 'All' : 'Sick Leave')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                  </div>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'Sick Leave').length}</span>
+                    <span className="metric-label">Sick Leave</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter Bar */}
             <div className="directory-filter-bar">
               <div className="filter-selects">
                 <select 
@@ -610,24 +730,30 @@ function App() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="filter-select"
                 >
-                  <option value="All">All Statuses</option>
-                  <option value="Active">Active</option>
+                  <option value="All">All Attendance Statuses</option>
+                  <option value="Present">Present</option>
+                  <option value="Absent">Absent</option>
                   <option value="On Leave">On Leave</option>
-                  <option value="Inactive">Inactive</option>
+                  <option value="Late">Late Arrival</option>
+                  <option value="Sick Leave">Sick Leave</option>
                 </select>
               </div>
 
               <div className="filter-search-box">
-                <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
                 <input 
                   type="text" 
-                  placeholder="Filter by name..." 
+                  placeholder="Search by name, ID, title..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
 
+            {/* Cards Grid */}
             <div className="directory-cards-grid">
               {filteredEmployees.map(emp => (
                 <div 
@@ -650,7 +776,7 @@ function App() {
                     
                     <div className="dir-emp-footer">
                       <span className="dir-emp-id">ID: {emp.empId}</span>
-                      <span className={`status-pill status-${emp.status.toLowerCase().replace(' ', '-')}`}>
+                      <span className={`status-pill status-${emp.status.toLowerCase().replace(/\s+/g, '-')}`}>
                         {emp.status}
                       </span>
                     </div>
@@ -712,6 +838,20 @@ function App() {
                   <option value="Design">Design</option>
                   <option value="Marketing">Marketing</option>
                   <option value="Human Resources">Human Resources</option>
+                </select>
+              </div>
+
+              <div className="modal-field">
+                <label>Attendance Status</label>
+                <select 
+                  value={newEmp.status}
+                  onChange={(e) => setNewEmp({ ...newEmp, status: e.target.value as Employee['status'] })}
+                >
+                  <option value="Present">Present</option>
+                  <option value="Absent">Absent</option>
+                  <option value="On Leave">On Leave</option>
+                  <option value="Late">Late</option>
+                  <option value="Sick Leave">Sick Leave</option>
                 </select>
               </div>
 

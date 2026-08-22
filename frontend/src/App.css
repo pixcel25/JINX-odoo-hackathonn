@@ -1,5 +1,9 @@
 /* Solid #197344 Theme - No Gradients */
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 .auth-shell {
   min-height: 100vh;
   display: grid;
@@ -230,12 +234,8 @@ input:focus {
 }
 
 /* ==========================================================================
-   WIREFRAME FORMAT DASHBOARD LAYOUT (Matching Requested Wireframe Image)
+   WIREFRAME FORMAT DASHBOARD LAYOUT
    ========================================================================== */
-
-*, *::before, *::after {
-  box-sizing: border-box;
-}
 
 .wireframe-app-container {
   min-height: 100vh;
@@ -450,7 +450,156 @@ input:focus {
   margin: 0 auto;
 }
 
-/* Profile Format View (Matching Wireframe Image) */
+/* Attendance Overview Section on Dashboard */
+.attendance-overview-section {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.attendance-overview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.attendance-section-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.attendance-date-badge {
+  font-size: 13px;
+  font-weight: 600;
+  color: #197344;
+  background-color: #eef7f2;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #cce8d8;
+}
+
+.attendance-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metric-card:hover, .metric-card.active-metric {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.metric-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.metric-icon-box svg {
+  width: 20px;
+  height: 20px;
+}
+
+.metric-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.metric-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Metric Colors */
+.metric-present {
+  background-color: #eef7f2;
+  border-color: #cce8d8;
+}
+.metric-present .metric-icon-box {
+  background-color: #197344;
+  color: #ffffff;
+}
+.metric-present .metric-value {
+  color: #197344;
+}
+
+.metric-absent {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+}
+.metric-absent .metric-icon-box {
+  background-color: #dc2626;
+  color: #ffffff;
+}
+.metric-absent .metric-value {
+  color: #dc2626;
+}
+
+.metric-on-leave {
+  background-color: #fffbeb;
+  border-color: #fef3c7;
+}
+.metric-on-leave .metric-icon-box {
+  background-color: #d97706;
+  color: #ffffff;
+}
+.metric-on-leave .metric-value {
+  color: #d97706;
+}
+
+.metric-late {
+  background-color: #fff7ed;
+  border-color: #ffedd5;
+}
+.metric-late .metric-icon-box {
+  background-color: #ea580c;
+  color: #ffffff;
+}
+.metric-late .metric-value {
+  color: #ea580c;
+}
+
+.metric-sick {
+  background-color: #faf5ff;
+  border-color: #e9d5ff;
+}
+.metric-sick .metric-icon-box {
+  background-color: #7e22ce;
+  color: #ffffff;
+}
+.metric-sick .metric-value {
+  color: #7e22ce;
+}
+
+/* Profile Format View */
 .profile-format-view {
   display: flex;
   flex-direction: column;
@@ -612,7 +761,7 @@ input:focus {
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.02);
 }
 
-/* Wireframe Content Grid */
+/* Content Grid */
 .wireframe-tab-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -756,65 +905,6 @@ input:focus {
   cursor: pointer;
 }
 
-/* Resume & Salary Cards */
-.wireframe-single-card {
-  width: 100%;
-}
-
-.resume-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-top: 16px;
-}
-
-.resume-item h4 {
-  margin: 0;
-  font-size: 16px;
-  color: #0f172a;
-}
-
-.resume-period {
-  font-size: 12px;
-  color: #94a3b8;
-  font-weight: 600;
-}
-
-.resume-item p {
-  margin: 6px 0 0;
-  font-size: 14px;
-  color: #475569;
-}
-
-.salary-info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.salary-box {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background-color: #f8fafc;
-}
-
-.salary-label {
-  font-size: 13px;
-  color: #64748b;
-  font-weight: 600;
-}
-
-.salary-val {
-  font-size: 16px;
-  font-weight: 700;
-  color: #197344;
-}
-
 /* Directory Format View */
 .directory-format-view {
   display: flex;
@@ -858,12 +948,25 @@ input:focus {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 260px;
+  width: 280px;
   height: 40px;
   padding: 0 14px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   background-color: #ffffff;
+  transition: border-color 0.2s;
+}
+
+.filter-search-box:focus-within {
+  border-color: #197344;
+  box-shadow: 0 0 0 3px rgba(25, 115, 68, 0.12);
+}
+
+.search-icon {
+  width: 18px;
+  height: 18px;
+  color: #197344;
+  flex-shrink: 0;
 }
 
 .filter-search-box input {
@@ -968,6 +1071,44 @@ input:focus {
   font-weight: 600;
 }
 
+.status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: capitalize;
+}
+
+.status-present {
+  background-color: #eef7f2;
+  color: #197344;
+  border: 1px solid #cce8d8;
+}
+
+.status-absent {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.status-on-leave {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fef3c7;
+}
+
+.status-late {
+  background-color: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #ffedd5;
+}
+
+.status-sick-leave {
+  background-color: #faf5ff;
+  color: #7e22ce;
+  border: 1px solid #e9d5ff;
+}
+
 /* Modal */
 .modal-backdrop {
   position: fixed;
@@ -1058,6 +1199,23 @@ input:focus {
   color: #475569;
   font-weight: 600;
   cursor: pointer;
+}
+
+.btn-primary {
+  height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  background-color: #197344;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  .attendance-metrics-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
 }
 
 @media (max-width: 900px) {
