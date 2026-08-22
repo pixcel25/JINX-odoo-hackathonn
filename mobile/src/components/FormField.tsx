@@ -4,7 +4,9 @@ import { Pressable, StyleSheet, Text, TextInput, TextInputProps, View } from 're
 type FormFieldProps = TextInputProps & {
   label: string;
   error?: string;
+  
   secure?: boolean;
+
 };
 
 export function FormField({ label, error, secure = false, style, ...inputProps }: FormFieldProps) {
