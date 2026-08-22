@@ -1,47 +1,76 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { LeaveRequestForm } from "./LeaveRequestForm";
 import { ExistingLeave, LeaveRequest } from "../models";
+import { getLeaveRequests } from "../services/leaveService";
+import { Employee } from "../../../auth/authService";
 
-const initialLeaves: ExistingLeave[] = [
-  { id: "approved-1", startDate: "2026-08-26", endDate: "2026-08-27", status: "approved" },
-  { id: "pending-1", startDate: "2026-09-03", endDate: "2026-09-03", status: "pending" },
-];
+export function LeaveScreen({ employee }: { employee: Employee }) {
+  const [requests, setRequests] = useState<LeaveRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-export function LeaveScreen() {
-  const [leaves, setLeaves] = useState<ExistingLeave[]>(initialLeaves);
+  useEffect(() => {
+    let isMounted = true;
+    getLeaveRequests(employee.token)
+      .then((loadedRequests) => {
+        if (isMounted) {
+          setRequests(loadedRequests);
+          setError("");
+        }
+      })
+      .catch((requestError: unknown) => {
+        if (isMounted) {
+          setError(requestError instanceof Error ? requestError.message : "We could not load your leave requests.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [employee.token]);
 
   const handleSubmitted = (request: LeaveRequest) => {
-    setLeaves((currentLeaves) => [
-      ...currentLeaves,
-      {
-        id: request.id,
-        startDate: request.startDate,
-        endDate: request.endDate,
-        status: request.status,
-      },
-    ]);
+    setRequests((currentRequests) => [request, ...currentRequests]);
   };
+
+  const existingLeaves: ExistingLeave[] = requests.map((request) => ({
+    id: request.id,
+    startDate: request.startDate,
+    endDate: request.endDate,
+    status: request.status,
+  }));
 
   return (
     <View>
       <Text style={styles.title}>Leave requests</Text>
       <Text style={styles.subtitle}>Plan time away with confidence.</Text>
+      {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <Text style={styles.sectionTitle}>New request</Text>
-      <LeaveRequestForm existingLeaves={leaves} onSubmitted={handleSubmitted} />
+      <LeaveRequestForm
+        email={employee.email}
+        existingLeaves={existingLeaves}
+        onSubmitted={handleSubmitted}
+        token={employee.token}
+      />
 
       <Text style={styles.sectionTitle}>Your requests</Text>
       <View style={styles.requestCard}>
-        {leaves.map((leave) => (
-          <View key={leave.id} style={styles.requestRow}>
+        {isLoading ? <Text style={styles.emptyText}>Loading requests...</Text> : null}
+        {!isLoading && requests.length === 0 ? <Text style={styles.emptyText}>No leave requests yet.</Text> : null}
+        {requests.map((request) => (
+          <View key={request.id} style={styles.requestRow}>
             <View>
-              <Text style={styles.requestDates}>{leave.startDate} to {leave.endDate}</Text>
-              <Text style={styles.requestMeta}>Leave request</Text>
+              <Text style={styles.requestDates}>{request.startDate} to {request.endDate}</Text>
+              <Text style={styles.requestMeta}>{request.timeOffType ?? request.leaveType} {request.reason ? `- ${request.reason}` : ""}</Text>
             </View>
-            <Text style={[styles.requestStatus, leave.status === "approved" ? styles.approved : styles.pending]}>
-              {leave.status}
+            <Text style={[styles.requestStatus, request.status === "approved" ? styles.approved : styles.pending]}>
+              {request.status}
             </Text>
           </View>
         ))}
@@ -60,6 +89,11 @@ const styles = StyleSheet.create({
     marginTop: 6,
     color: "#65737a",
     fontSize: 16,
+  },
+  error: {
+    marginTop: 12,
+    color: "#b4232b",
+    fontSize: 13,
   },
   sectionTitle: {
     marginTop: 30,
@@ -101,6 +135,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     textTransform: "capitalize",
+  },
+  emptyText: {
+    padding: 18,
+    color: "#748087",
+    fontSize: 13,
   },
   approved: {
     color: "#087451",

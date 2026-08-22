@@ -2,7 +2,7 @@ import json
 import re
 
 from django.conf import settings
-from django.contrib.auth import authenticate, get_user_model, login
+from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -74,7 +74,9 @@ def login_view(request):
     if not values:
         return error('Enter a valid email and password.')
     email, password, role = values
-    user = authenticate(request, username=email, password=password)
+    user = User.objects.filter(email__iexact=email).first() or User.objects.filter(username__iexact=email).first()
+    if user is not None and not user.check_password(password):
+        user = None
     if not user or not user.is_active:
         return error('Invalid credentials.', 401)
     if role == 'admin' and not user.is_staff:
@@ -171,6 +173,13 @@ def me_view(request):
         return error('Authentication required.', 401)
     user_role = 'admin' if request.user.is_staff else 'employee'
     return JsonResponse({'id': request.user.id, 'email': request.user.email, 'role': user_role})
+
+
+@csrf_exempt
+@require_POST
+def logout_view(request):
+    logout(request)
+    return JsonResponse({'message': 'Signed out.'})
 def employee_code(value, length):
     letters = re.sub(r'[^A-Za-z]', '', value).upper()
     return letters[:length].ljust(length, 'X')

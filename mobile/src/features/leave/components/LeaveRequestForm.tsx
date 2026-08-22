@@ -26,8 +26,10 @@ import {
 import { FeedbackBanner } from "../../../shared/components/FeedbackBanner";
 
 type LeaveRequestFormProps = {
+  email: string;
   existingLeaves: ExistingLeave[];
   onSubmitted: (request: LeaveRequest) => void;
+  token: string;
 };
 
 const leaveTypes: Array<{ value: LeaveType; label: string }> = [
@@ -38,15 +40,15 @@ const leaveTypes: Array<{ value: LeaveType; label: string }> = [
 ];
 
 const initialValues: LeaveRequestFormValues = {
-  email: "ashvek@dayflow.com",
+  email: "",
   leaveType: "annual",
   startDate: "",
   endDate: "",
   reason: "",
 };
 
-export function LeaveRequestForm({ existingLeaves, onSubmitted }: LeaveRequestFormProps) {
-  const [values, setValues] = useState(initialValues);
+export function LeaveRequestForm({ email, existingLeaves, onSubmitted, token }: LeaveRequestFormProps) {
+  const [values, setValues] = useState({ ...initialValues, email });
   const [errors, setErrors] = useState<LeaveValidationErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
@@ -77,9 +79,9 @@ export function LeaveRequestForm({ existingLeaves, onSubmitted }: LeaveRequestFo
     setIsSubmitting(true);
 
     try {
-      const request = await createLeaveRequest(values, existingLeaves);
+      const request = await createLeaveRequest(values, existingLeaves, token);
       onSubmitted(request);
-      setValues(initialValues);
+      setValues({ ...initialValues, email });
       setErrors({});
       setFeedback({ kind: "success", message: "Your leave request was submitted for review." });
     } catch (error) {

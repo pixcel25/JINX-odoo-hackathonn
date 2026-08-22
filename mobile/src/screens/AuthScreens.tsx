@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -9,11 +9,11 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import type { StyleProp, ViewStyle } from 'react-native';
-import { AuthServiceError, changePassword, login } from '../auth/authService';
-import type { Employee } from '../auth/authService';
-import { FormField } from '../components/FormField';
+} from "react-native";
+import type { StyleProp, ViewStyle } from "react-native";
+import { AuthServiceError, changePassword, login } from "../auth/authService";
+import type { Employee } from "../auth/authService";
+import { FormField } from "../components/FormField";
 
 type LandingScreenProps = {
   onContinue: () => void;
@@ -39,7 +39,7 @@ type PressableStyleState = {
 };
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-const employeeIdPattern = /^[A-Z]{6}\d{8}$/i;
+const employeeIdPattern = /^[A-Z0-9-]{3,50}$/i;
 
 /**
  * Validates the login identifier and password before an authentication request.
@@ -47,12 +47,18 @@ const employeeIdPattern = /^[A-Z]{6}\d{8}$/i;
  * @param password - The password entered in the login form.
  * @returns Field-level validation messages, using an empty string for valid fields.
  */
-function validateLogin(loginId: string, password: string): LoginValidationErrors {
+function validateLogin(
+  loginId: string,
+  password: string,
+): LoginValidationErrors {
   return {
-    loginId: emailPattern.test(loginId.trim()) || employeeIdPattern.test(loginId.trim())
-      ? ''
-      : 'Enter the employee ID or email provided by your admin.',
-    password: password.length >= 8 ? '' : 'Password must be at least 8 characters.',
+    loginId:
+      emailPattern.test(loginId.trim()) ||
+      employeeIdPattern.test(loginId.trim())
+        ? ""
+        : "Enter the employee ID or email provided by your admin.",
+    password:
+      password.length >= 8 ? "" : "Password must be at least 8 characters.",
   };
 }
 
@@ -67,23 +73,23 @@ function validateNewPassword(
   confirmation: string,
 ): NewPasswordValidationErrors {
   const errors: NewPasswordValidationErrors = {
-    password: '',
-    confirmation: '',
+    password: "",
+    confirmation: "",
   };
 
   if (password.length < 8) {
-    errors.password = 'Use at least 8 characters.';
+    errors.password = "Use at least 8 characters.";
   } else if (
     !/[A-Z]/.test(password) ||
     !/[a-z]/.test(password) ||
     !/\d/.test(password) ||
     !/[^A-Za-z0-9]/.test(password)
   ) {
-    errors.password = 'Use uppercase, lowercase, a number, and a symbol.';
+    errors.password = "Use uppercase, lowercase, a number, and a symbol.";
   }
 
   if (confirmation !== password) {
-    errors.confirmation = 'Passwords do not match.';
+    errors.confirmation = "Passwords do not match.";
   }
 
   return errors;
@@ -104,7 +110,9 @@ function getRequestErrorMessage(error: unknown, fallback: string): string {
  * @param pressed - Whether the employee is currently pressing the action.
  * @returns The base and pressed-state styles for the action button.
  */
-function getPrimaryButtonStyle({ pressed }: PressableStyleState): StyleProp<ViewStyle> {
+function getPrimaryButtonStyle({
+  pressed,
+}: PressableStyleState): StyleProp<ViewStyle> {
   return [styles.primaryButton, pressed ? styles.buttonPressed : undefined];
 }
 
@@ -148,10 +156,13 @@ export function LandingScreen({ onContinue }: LandingScreenProps) {
  * @returns The login screen React element.
  */
 export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
-  const [loginId, setLoginId] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState<LoginValidationErrors>({ loginId: '', password: '' });
-  const [requestError, setRequestError] = useState('');
+  const [loginId, setLoginId] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<LoginValidationErrors>({
+    loginId: "",
+    password: "",
+  });
+  const [requestError, setRequestError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [pendingEmployee, setPendingEmployee] = useState<Employee | null>(null);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -163,7 +174,7 @@ export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
   async function handleLogin(): Promise<void> {
     const validationErrors = validateLogin(loginId, password);
     setErrors(validationErrors);
-    setRequestError('');
+    setRequestError("");
 
     if (validationErrors.loginId || validationErrors.password) {
       return;
@@ -172,13 +183,18 @@ export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
     setIsLoading(true);
     try {
       const result = await login(loginId, password);
-      if (result.status === 'password-change-required') {
+      if (result.status === "password-change-required") {
         setPendingEmployee(result.employee);
       } else {
         onAuthenticated(result.employee);
       }
     } catch (error) {
-      setRequestError(getRequestErrorMessage(error, 'We could not sign you in. Please try again.'));
+      setRequestError(
+        getRequestErrorMessage(
+          error,
+          "We could not sign you in. Please try again.",
+        ),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -196,11 +212,19 @@ export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
 
     setIsChangingPassword(true);
     try {
-      const employee = await changePassword(pendingEmployee.loginId, nextPassword);
+      const employee = await changePassword(
+        pendingEmployee.loginId,
+        nextPassword,
+      );
       setPendingEmployee(null);
       onAuthenticated(employee);
     } catch (error) {
-      setRequestError(getRequestErrorMessage(error, 'We could not save your new password. Please try again.'));
+      setRequestError(
+        getRequestErrorMessage(
+          error,
+          "We could not save your new password. Please try again.",
+        ),
+      );
     } finally {
       setIsChangingPassword(false);
     }
@@ -213,7 +237,7 @@ export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
    */
   function handleLoginIdChange(value: string): void {
     setLoginId(value);
-    if (errors.loginId) setErrors({ ...errors, loginId: '' });
+    if (errors.loginId) setErrors({ ...errors, loginId: "" });
   }
 
   /**
@@ -223,7 +247,7 @@ export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
    */
   function handleLoginPasswordChange(value: string): void {
     setPassword(value);
-    if (errors.password) setErrors({ ...errors, password: '' });
+    if (errors.password) setErrors({ ...errors, password: "" });
   }
 
   /**
@@ -231,7 +255,9 @@ export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
    * @param pressed - The current press state supplied by React Native.
    * @returns The base, pressed, and optional disabled styles for the login button.
    */
-  function getLoginButtonStyle({ pressed }: PressableStyleState): StyleProp<ViewStyle> {
+  function getLoginButtonStyle({
+    pressed,
+  }: PressableStyleState): StyleProp<ViewStyle> {
     return [
       styles.primaryButton,
       pressed ? styles.buttonPressed : undefined,
@@ -241,7 +267,7 @@ export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={styles.page}
     >
       <ScrollView
@@ -249,13 +275,20 @@ export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Pressable accessibilityRole="button" accessibilityLabel="Back to landing page" onPress={onBack} style={styles.backButton}>
-          <Text style={styles.backText}>{'<  Back'}</Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Back to landing page"
+          onPress={onBack}
+          style={styles.backButton}
+        >
+          <Text style={styles.backText}>{"<  Back"}</Text>
         </Pressable>
         <View style={styles.loginPanel}>
           <Text style={styles.eyebrow}>EMPLOYEE ACCESS</Text>
           <Text style={styles.loginTitle}>Welcome back.</Text>
-          <Text style={styles.loginSubtitle}>Sign in with the details provided by your admin.</Text>
+          <Text style={styles.loginSubtitle}>
+            Sign in with the details provided by your admin.
+          </Text>
 
           <View style={styles.form}>
             <FormField
@@ -279,7 +312,10 @@ export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
             />
 
             {requestError ? (
-              <View accessibilityLiveRegion="polite" style={styles.requestErrorBox}>
+              <View
+                accessibilityLiveRegion="polite"
+                style={styles.requestErrorBox}
+              >
                 <Text style={styles.requestError}>{requestError}</Text>
               </View>
             ) : null}
@@ -291,11 +327,17 @@ export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
               onPress={handleLogin}
               style={getLoginButtonStyle}
             >
-              {isLoading ? <ActivityIndicator color="#111313" /> : <Text style={styles.primaryButtonText}>Sign in</Text>}
+              {isLoading ? (
+                <ActivityIndicator color="#111313" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Sign in</Text>
+              )}
             </Pressable>
           </View>
         </View>
-        <Text style={styles.loginFooter}>Need access? Contact your administrator.</Text>
+        <Text style={styles.loginFooter}>
+          Need access? Contact your administrator.
+        </Text>
       </ScrollView>
       <PasswordChangeModal
         error={requestError}
@@ -322,10 +364,18 @@ type PasswordChangeModalProps = {
  * @param visible - Whether the dialog is currently shown.
  * @returns The password change modal React element.
  */
-function PasswordChangeModal({ error, isLoading, onSubmit, visible }: PasswordChangeModalProps) {
-  const [password, setPassword] = useState('');
-  const [confirmation, setConfirmation] = useState('');
-  const [errors, setErrors] = useState<NewPasswordValidationErrors>({ password: '', confirmation: '' });
+function PasswordChangeModal({
+  error,
+  isLoading,
+  onSubmit,
+  visible,
+}: PasswordChangeModalProps) {
+  const [password, setPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const [errors, setErrors] = useState<NewPasswordValidationErrors>({
+    password: "",
+    confirmation: "",
+  });
 
   /**
    * Validates both new-password fields and submits them when valid.
@@ -346,7 +396,7 @@ function PasswordChangeModal({ error, isLoading, onSubmit, visible }: PasswordCh
    */
   function handleNewPasswordChange(value: string): void {
     setPassword(value);
-    if (errors.password) setErrors({ ...errors, password: '' });
+    if (errors.password) setErrors({ ...errors, password: "" });
   }
 
   /**
@@ -356,7 +406,7 @@ function PasswordChangeModal({ error, isLoading, onSubmit, visible }: PasswordCh
    */
   function handleConfirmationChange(value: string): void {
     setConfirmation(value);
-    if (errors.confirmation) setErrors({ ...errors, confirmation: '' });
+    if (errors.confirmation) setErrors({ ...errors, confirmation: "" });
   }
 
   /**
@@ -368,12 +418,20 @@ function PasswordChangeModal({ error, isLoading, onSubmit, visible }: PasswordCh
   }
 
   return (
-    <Modal animationType="fade" onRequestClose={preventModalDismiss} transparent visible={visible}>
+    <Modal
+      animationType="fade"
+      onRequestClose={preventModalDismiss}
+      transparent
+      visible={visible}
+    >
       <View style={styles.modalBackdrop}>
         <View style={styles.modalCard}>
           <Text style={styles.modalEyebrow}>FIRST SIGN IN</Text>
           <Text style={styles.modalTitle}>Make it yours.</Text>
-          <Text style={styles.modalCopy}>Your admin gave you a temporary password. Create a new one to continue.</Text>
+          <Text style={styles.modalCopy}>
+            Your admin gave you a temporary password. Create a new one to
+            continue.
+          </Text>
           <FormField
             label="New password"
             onChangeText={handleNewPasswordChange}
@@ -394,9 +452,16 @@ function PasswordChangeModal({ error, isLoading, onSubmit, visible }: PasswordCh
             accessibilityLabel="Save new password"
             disabled={isLoading}
             onPress={handleSubmit}
-            style={[styles.primaryButton, isLoading ? styles.buttonDisabled : undefined]}
+            style={[
+              styles.primaryButton,
+              isLoading ? styles.buttonDisabled : undefined,
+            ]}
           >
-            {isLoading ? <ActivityIndicator color="#111313" /> : <Text style={styles.primaryButtonText}>Save password</Text>}
+            {isLoading ? (
+              <ActivityIndicator color="#111313" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Save password</Text>
+            )}
           </Pressable>
         </View>
       </View>
@@ -410,14 +475,27 @@ function PasswordChangeModal({ error, isLoading, onSubmit, visible }: PasswordCh
  * @param onSignOut - Callback invoked when the employee ends the session.
  * @returns The authenticated home screen React element.
  */
-export function HomeScreen({ employee, onSignOut }: { employee: Employee; onSignOut: () => void }) {
+export function HomeScreen({
+  employee,
+  onSignOut,
+}: {
+  employee: Employee;
+  onSignOut: () => void;
+}) {
   return (
     <View style={[styles.page, styles.homePage]}>
       <Text style={styles.eyebrow}>DAYFLOW / EMPLOYEE</Text>
       <Text style={styles.homeTitle}>Good to see you,</Text>
       <Text style={styles.homeName}>{employee.displayName}.</Text>
-      <Text style={styles.homeCopy}>Your account is ready. More of your workday will live here soon.</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel="Sign out" onPress={onSignOut} style={styles.secondaryButton}>
+      <Text style={styles.homeCopy}>
+        Your account is ready. More of your workday will live here soon.
+      </Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Sign out"
+        onPress={onSignOut}
+        style={styles.secondaryButton}
+      >
         <Text style={styles.secondaryButtonText}>Sign out</Text>
       </Pressable>
     </View>
@@ -426,29 +504,29 @@ export function HomeScreen({ employee, onSignOut }: { employee: Employee; onSign
 
 const styles = StyleSheet.create({
   page: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     flex: 1,
   },
   landingDecoration: {
-    borderColor: '#dceee2',
+    borderColor: "#dceee2",
     borderLeftWidth: 1,
     borderTopWidth: 1,
     height: 240,
     left: 25,
     opacity: 0.75,
-    position: 'absolute',
+    position: "absolute",
     top: 42,
-    transform: [{ rotate: '-12deg' }],
+    transform: [{ rotate: "-12deg" }],
     width: 145,
   },
   landingContent: {
-    alignItems: 'center',
-    backgroundColor: '#f8fcf9',
-    borderColor: '#dceee2',
+    alignItems: "center",
+    backgroundColor: "#f8fcf9",
+    borderColor: "#dceee2",
     borderWidth: 1,
     borderRadius: 13,
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     marginBottom: 52,
     marginHorizontal: 20,
     marginTop: 70,
@@ -460,63 +538,63 @@ const styles = StyleSheet.create({
     width: 48,
   },
   brandLeaf: {
-    backgroundColor: '#43bd70',
+    backgroundColor: "#43bd70",
     borderBottomLeftRadius: 22,
     borderTopRightRadius: 22,
     height: 28,
     left: 13,
-    position: 'absolute',
+    position: "absolute",
     top: 0,
-    transform: [{ rotate: '-18deg' }],
+    transform: [{ rotate: "-18deg" }],
     width: 24,
   },
   brandStem: {
-    backgroundColor: '#43bd70',
+    backgroundColor: "#43bd70",
     height: 29,
     left: 25,
-    position: 'absolute',
+    position: "absolute",
     top: 20,
-    transform: [{ rotate: '17deg' }],
+    transform: [{ rotate: "17deg" }],
     width: 2,
   },
   brandName: {
-    color: '#128a4f',
-    fontFamily: 'serif',
+    color: "#128a4f",
+    fontFamily: "serif",
     fontSize: 48,
     letterSpacing: 0,
-    textAlign: 'center',
+    textAlign: "center",
   },
   tagline: {
-    color: '#2c4034',
-    fontFamily: 'serif',
+    color: "#2c4034",
+    fontFamily: "serif",
     fontSize: 18,
     marginTop: 4,
-    textAlign: 'center',
+    textAlign: "center",
   },
   landingCopy: {
-    color: '#647069',
-    fontFamily: 'serif',
+    color: "#647069",
+    fontFamily: "serif",
     fontSize: 16,
     lineHeight: 24,
     marginTop: 23,
     maxWidth: 265,
-    textAlign: 'center',
+    textAlign: "center",
   },
   primaryButton: {
-    alignItems: 'center',
-    backgroundColor: '#0b9253',
+    alignItems: "center",
+    backgroundColor: "#0b9253",
     borderRadius: 7,
-    justifyContent: 'center',
+    justifyContent: "center",
     marginTop: 31,
     minHeight: 48,
     paddingHorizontal: 20,
-    width: '100%',
+    width: "100%",
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontFamily: 'serif',
+    color: "#ffffff",
+    fontFamily: "serif",
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   buttonPressed: {
     opacity: 0.8,
@@ -527,12 +605,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     bottom: 28,
-    color: '#87918a',
-    fontFamily: 'serif',
+    color: "#87918a",
+    fontFamily: "serif",
     fontSize: 11,
     left: 40,
     letterSpacing: 2,
-    position: 'absolute',
+    position: "absolute",
   },
   loginScroll: {
     flexGrow: 1,
@@ -541,39 +619,39 @@ const styles = StyleSheet.create({
     paddingTop: 30,
   },
   backButton: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     paddingVertical: 7,
   },
   backText: {
-    color: '#45b86d',
-    fontFamily: 'serif',
+    color: "#45b86d",
+    fontFamily: "serif",
     fontSize: 15,
   },
   loginPanel: {
-    backgroundColor: '#ffffff',
-    borderColor: '#e3ebe6',
+    backgroundColor: "#ffffff",
+    borderColor: "#e3ebe6",
     borderRadius: 13,
     borderWidth: 1,
-    alignSelf: 'center',
+    alignSelf: "center",
     marginTop: 33,
     paddingHorizontal: 23,
     paddingVertical: 27,
   },
   eyebrow: {
-    color: '#168a51',
-    fontFamily: 'serif',
+    color: "#168a51",
+    fontFamily: "serif",
     fontSize: 11,
     letterSpacing: 2,
   },
   loginTitle: {
-    color: '#15231b',
-    fontFamily: 'serif',
+    color: "#15231b",
+    fontFamily: "serif",
     fontSize: 36,
     marginTop: 10,
   },
   loginSubtitle: {
-    color: '#6c766f',
-    fontFamily: 'serif',
+    color: "#6c766f",
+    fontFamily: "serif",
     fontSize: 15,
     lineHeight: 22,
     marginTop: 9,
@@ -582,102 +660,102 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   requestErrorBox: {
-    backgroundColor: '#fff1f2',
-    borderColor: '#e7a8ae',
+    backgroundColor: "#fff1f2",
+    borderColor: "#e7a8ae",
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   requestError: {
-    color: '#a53e4a',
-    fontFamily: 'serif',
+    color: "#a53e4a",
+    fontFamily: "serif",
     fontSize: 13,
     lineHeight: 19,
   },
   loginFooter: {
-    color: '#87918a',
-    fontFamily: 'serif',
+    color: "#87918a",
+    fontFamily: "serif",
     fontSize: 13,
     marginTop: 25,
-    textAlign: 'center',
+    textAlign: "center",
   },
   modalBackdrop: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(7, 8, 8, 0.84)',
+    alignItems: "center",
+    backgroundColor: "rgba(7, 8, 8, 0.84)",
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 22,
   },
   modalCard: {
-    backgroundColor: '#ffffff',
-    borderColor: '#dbe6df',
+    backgroundColor: "#ffffff",
+    borderColor: "#dbe6df",
     borderRadius: 13,
     borderWidth: 1,
     padding: 24,
-    width: '100%',
+    width: "100%",
   },
   modalEyebrow: {
-    color: '#168a51',
-    fontFamily: 'serif',
+    color: "#168a51",
+    fontFamily: "serif",
     fontSize: 11,
     letterSpacing: 2,
   },
   modalTitle: {
-    color: '#15231b',
-    fontFamily: 'serif',
+    color: "#15231b",
+    fontFamily: "serif",
     fontSize: 29,
     marginTop: 9,
   },
   modalCopy: {
-    color: '#6c766f',
-    fontFamily: 'serif',
+    color: "#6c766f",
+    fontFamily: "serif",
     fontSize: 14,
     lineHeight: 21,
     marginBottom: 22,
     marginTop: 8,
   },
   modalError: {
-    color: '#a53e4a',
-    fontFamily: 'serif',
+    color: "#a53e4a",
+    fontFamily: "serif",
     fontSize: 13,
     lineHeight: 19,
     marginBottom: 8,
   },
   homePage: {
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingHorizontal: 31,
   },
   homeTitle: {
-    color: '#15231b',
-    fontFamily: 'serif',
+    color: "#15231b",
+    fontFamily: "serif",
     fontSize: 38,
     marginTop: 22,
   },
   homeName: {
-    color: '#55c27a',
-    fontFamily: 'serif',
+    color: "#55c27a",
+    fontFamily: "serif",
     fontSize: 38,
   },
   homeCopy: {
-    color: '#6c766f',
-    fontFamily: 'serif',
+    color: "#6c766f",
+    fontFamily: "serif",
     fontSize: 16,
     lineHeight: 24,
     marginTop: 20,
     maxWidth: 290,
   },
   secondaryButton: {
-    alignItems: 'center',
-    borderColor: '#43bd70',
+    alignItems: "center",
+    borderColor: "#43bd70",
     borderRadius: 7,
     borderWidth: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     marginTop: 32,
     minHeight: 47,
   },
   secondaryButtonText: {
-    color: '#168a51',
-    fontFamily: 'serif',
+    color: "#168a51",
+    fontFamily: "serif",
     fontSize: 15,
   },
 });
