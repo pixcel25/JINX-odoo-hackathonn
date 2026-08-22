@@ -272,6 +272,31 @@ interface TimeOffRequest {
 
 const INITIAL_EMPLOYEES = employeeData as Employee[]
 const INITIAL_TIME_OFF_REQUESTS = timeOffRequestData as TimeOffRequest[]
+const ADMIN_PROFILE: Employee = {
+  id: 'admin-profile',
+  name: 'Admin User',
+  title: 'HR Administrator',
+  empId: 'ADMIN-001',
+  dept: 'Administration',
+  status: 'Present',
+  email: 'admin@dayflow.com',
+  phone: '+91 9876543210',
+  company: 'DayFlow Technologies',
+  manager: 'Executive Team',
+  location: 'Goa, India',
+  about: 'Administrator responsible for managing employee records, attendance, and time off workflows.',
+  jobLove: 'Helping teams work smoothly through simple and reliable HR processes.',
+  hobbies: 'Reading, planning, and exploring new productivity tools.',
+  skills: ['HR Management', 'Team Leadership', 'Reporting', 'Administration'],
+  certifications: ['DayFlow Admin Access'],
+  avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+  initials: 'AU',
+  paidLeaveAvailable: 24,
+  sickLeaveAvailable: 7,
+  casualLeaveAvailable: 5,
+  attendanceHistory: [],
+  leaveHistory: []
+}
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -536,10 +561,10 @@ function App() {
           </button>
           <div 
             className="nav-user-box blue-badge" 
-            title="Sign Out"
-            onClick={() => setIsAuthenticated(false)}
+            title="View Admin Profile"
+            onClick={() => openEmployeePopup(ADMIN_PROFILE)}
           >
-            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80" alt="User Avatar" />
+            <img src={ADMIN_PROFILE.avatarUrl} alt="Admin profile" />
           </div>
         </div>
       </header>
