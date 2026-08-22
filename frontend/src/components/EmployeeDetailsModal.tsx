@@ -74,7 +74,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   const [activeTab, setActiveTab] = useState<
     'Attendance History' | 'Leave & Time Off' | 'Private Info' | 'Resume' | 'Salary Info'
   >(initialActiveTab)
-  const [editedSalary, setEditedSalary] = useState<SalaryStructure>(salary)
+  const [editedSalary, setEditedSalary] = useState<SalaryStructure>({ ...DEFAULT_SALARY_STRUCTURE, ...salary })
   const [isEditingSalary, setIsEditingSalary] = useState(false)
 
   const handleSalarySave = async () => {
@@ -209,6 +209,7 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                 >
                   Salary Info
                 </button>
+
               </>
             )}
           </div>
@@ -440,27 +441,45 @@ export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
                   )}
                 </div>
                 {salaryError && <div className="alert error salary-save-error" role="alert">{salaryError}</div>}
-                <div className="salary-info-grid">
-                  <div className="salary-box">
-                    <span className="salary-label">Pay Grade</span>
-                    <input className="salary-input" value={editedSalary.payGrade} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, payGrade: event.target.value })} />
-                  </div>
-                  <div className="salary-box">
-                    <span className="salary-label">Base Salary</span>
-                    <input className="salary-input" value={editedSalary.baseSalary} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, baseSalary: event.target.value })} />
-                  </div>
-                  <div className="salary-box">
-                    <span className="salary-label">HRA & Allowances</span>
-                    <input className="salary-input" value={editedSalary.allowances} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, allowances: event.target.value })} />
-                  </div>
-                  <div className="salary-box">
-                    <span className="salary-label">Tax Deduction</span>
-                    <input className="salary-input" value={editedSalary.taxDeduction} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, taxDeduction: event.target.value })} />
-                  </div>
+                <div className="salary-overview-grid">
+                  <div className="salary-overview-field"><span>Month Wage</span><input value={editedSalary.monthWage ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, monthWage: event.target.value })} /><small>/ Month</small></div>
+                  <div className="salary-overview-field"><span>Yearly Wage</span><input value={editedSalary.yearlyWage ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, yearlyWage: event.target.value })} /><small>/ Yearly</small></div>
+                  <div className="salary-overview-field"><span>No. of working days in a week</span><input value={editedSalary.workingDays ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, workingDays: event.target.value })} /></div>
+                  <div className="salary-overview-field"><span>Break Time / Hours</span><input value={editedSalary.workingHours ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, workingHours: event.target.value })} /><small>/ Hrs</small></div>
+                </div>
+
+                <div className="salary-sections-grid">
+                  <section className="salary-section">
+                    <h4>Salary Components</h4>
+                    <div className="salary-component-row"><span>Basic Salary</span><input value={editedSalary.basicSalary ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, basicSalary: event.target.value })} /><small>₹ / month</small><b>50.00%</b></div>
+                    <p>Define Basic salary from company cost based on monthly wages</p>
+                    <div className="salary-component-row"><span>House Rent Allowance</span><input value={editedSalary.houseRentAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, houseRentAllowance: event.target.value })} /><small>₹ / month</small><b>50.00%</b></div>
+                    <p>HRA provided to employees 50% of the basic salary</p>
+                    <div className="salary-component-row"><span>Standard Allowance</span><input value={editedSalary.standardAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, standardAllowance: event.target.value })} /><small>₹ / month</small><b>16.67%</b></div>
+                    <p>A standard allowance is a predetermined, fixed amount provided to employees.</p>
+                    <div className="salary-component-row"><span>Performance Bonus</span><input value={editedSalary.performanceBonus ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, performanceBonus: event.target.value })} /><small>₹ / month</small><b>8.33%</b></div>
+                    <p>Variable amount paid during payroll based on performance.</p>
+                    <div className="salary-component-row"><span>Leave Travel Allowance</span><input value={editedSalary.leaveTravelAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, leaveTravelAllowance: event.target.value })} /><small>₹ / month</small><b>8.33%</b></div>
+                    <p>LTA is paid by the company to cover travel expenses.</p>
+                    <div className="salary-component-row"><span>Fixed Allowance</span><input value={editedSalary.fixedAllowance ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, fixedAllowance: event.target.value })} /><small>₹ / month</small><b>11.67%</b></div>
+                    <p>Fixed allowance portion of wages determined after calculating all salary components.</p>
+                  </section>
+
+                  <section className="salary-section">
+                    <h4>Provident Fund (PF) Contribution</h4>
+                    <div className="salary-component-row"><span>Employee</span><input value={editedSalary.providentFundEmployee ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, providentFundEmployee: event.target.value })} /><small>₹ / month</small><b>12.00%</b></div>
+                    <p>PF is calculated based on the basic salary.</p>
+                    <div className="salary-component-row"><span>Employer</span><input value={editedSalary.providentFundEmployer ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, providentFundEmployer: event.target.value })} /><small>₹ / month</small><b>12.00%</b></div>
+                    <p>PF is calculated based on the basic salary.</p>
+                    <h4>Tax Deductions</h4>
+                    <div className="salary-component-row"><span>Professional Tax</span><input value={editedSalary.professionalTax ?? ''} readOnly={!isEditingSalary} onChange={(event) => setEditedSalary({ ...editedSalary, professionalTax: event.target.value })} /><small>₹ / month</small></div>
+                    <p>Professional Tax deducted from the Gross salary.</p>
+                  </section>
                 </div>
               </div>
             </div>
           )}
+
         </div>
       </div>
     </div>

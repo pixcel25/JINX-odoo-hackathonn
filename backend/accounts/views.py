@@ -102,6 +102,19 @@ def salary_change_view(request):
             ('baseSalary', 'Base Salary'),
             ('allowances', 'HRA & Allowances'),
             ('taxDeduction', 'Tax Deduction'),
+            ('monthWage', 'Month Wage'),
+            ('yearlyWage', 'Yearly Wage'),
+            ('workingDays', 'Working Days'),
+            ('workingHours', 'Working Hours'),
+            ('basicSalary', 'Basic Salary'),
+            ('houseRentAllowance', 'House Rent Allowance'),
+            ('standardAllowance', 'Standard Allowance'),
+            ('performanceBonus', 'Performance Bonus'),
+            ('leaveTravelAllowance', 'Leave Travel Allowance'),
+            ('fixedAllowance', 'Fixed Allowance'),
+            ('providentFundEmployee', 'Employee PF'),
+            ('providentFundEmployer', 'Employer PF'),
+            ('professionalTax', 'Professional Tax'),
         ))
 
     message = (

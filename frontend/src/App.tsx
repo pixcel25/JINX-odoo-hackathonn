@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import './App.css'
 import { EmployeeDetailsModal } from './components/EmployeeDetailsModal'
 import type { Employee } from './components/EmployeeDetailsModal'
 import { DEFAULT_SALARY_STRUCTURE } from './data/salary'
-import type { SalaryStructure } from './data/salary'
+import type { SalaryLog, SalaryStructure } from './data/salary'
 import { LeaveApplicationModal } from './components/LeaveApplicationModal'
 import employeeData from './data/employees.json'
 import timeOffRequestData from './data/timeOffRequests.json'
@@ -311,14 +311,35 @@ function App() {
   const [authLoading, setAuthLoading] = useState(false)
   
   // Navigation state
-  const [activeTab, setActiveTab] = useState<'Employees' | 'Attendance' | 'Time Off'>('Employees')
+  const [activeTab, setActiveTab] = useState<'Employees' | 'Attendance' | 'Time Off' | 'Salary Logs'>('Employees')
   const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES)
   
   // Employee Popup Modal State
   const [profileModalEmployee, setProfileModalEmployee] = useState<Employee | null>(null)
-  const [salaryByEmployee, setSalaryByEmployee] = useState<Record<string, SalaryStructure>>({})
+  const [salaryByEmployee, setSalaryByEmployee] = useState<Record<string, SalaryStructure>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('dayflow-salary-structures') ?? '{}') as Record<string, SalaryStructure>
+    } catch {
+      return {}
+    }
+  })
+  const [salaryLogsByEmployee, setSalaryLogsByEmployee] = useState<Record<string, SalaryLog[]>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('dayflow-salary-logs') ?? '{}') as Record<string, SalaryLog[]>
+    } catch {
+      return {}
+    }
+  })
   const [salarySaving, setSalarySaving] = useState(false)
   const [salaryError, setSalaryError] = useState('')
+
+  useEffect(() => {
+    localStorage.setItem('dayflow-salary-structures', JSON.stringify(salaryByEmployee))
+  }, [salaryByEmployee])
+
+  useEffect(() => {
+    localStorage.setItem('dayflow-salary-logs', JSON.stringify(salaryLogsByEmployee))
+  }, [salaryLogsByEmployee])
   const [selectedLeaveApplication, setSelectedLeaveApplication] = useState<TimeOffRequest | null>(null)
 
   // Time Off view state & requests
@@ -333,12 +354,14 @@ function App() {
   // New Employee form state
   const [newEmp, setNewEmp] = useState<{
     name: string
+    email: string
     title: string
     empId: string
     dept: string
     status: Employee['status']
   }>({
     name: '',
+    email: '',
     title: '',
     empId: '',
     dept: dashboardData.defaultDepartment,
@@ -371,6 +394,15 @@ function App() {
       const data = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(data.error ?? 'Unable to send the salary update email.')
       setSalaryByEmployee((current) => ({ ...current, [employee.id]: nextSalary }))
+      setSalaryLogsByEmployee((current) => ({
+        ...current,
+        [employee.id]: [...(current[employee.id] ?? []), {
+          id: `${employee.id}-${Date.now()}`,
+          changedAt: new Date().toISOString(),
+          oldSalary: previousSalary,
+          newSalary: nextSalary
+        }]
+      }))
     } catch (error) {
       setSalaryError(error instanceof Error ? error.message : 'Unable to save the salary update.')
     } finally {
@@ -430,7 +462,7 @@ function App() {
       checkIn: newEmp.status === 'Present' ? '10:00 AM' : '-:-',
       checkOut: newEmp.status === 'Present' ? '19:00 PM' : '-:-',
       workHours: newEmp.status === 'Present' ? '09:00' : '00:00',
-      email: `${newEmp.name.toLowerCase().replace(/\s+/g, '.')}@dayflow.com`,
+      email: newEmp.email,
       phone: '+91 9876543210',
       company: 'DayFlow Technologies',
       manager: 'Michael Chang',
@@ -451,7 +483,7 @@ function App() {
     }
     setEmployees([created, ...employees])
     openEmployeePopup(created)
-    setNewEmp({ name: '', title: '', empId: '', dept: dashboardData.defaultDepartment, status: dashboardData.defaultAttendanceStatus as Employee['status'] })
+    setNewEmp({ name: '', email: '', title: '', empId: '', dept: dashboardData.defaultDepartment, status: dashboardData.defaultAttendanceStatus as Employee['status'] })
     setIsModalOpen(false)
   }
 
@@ -590,6 +622,12 @@ function App() {
             >
               Time Off
             </button>
+            <button
+              className={`nav-link-btn ${activeTab === 'Salary Logs' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('Salary Logs'); setStatusFilter('All'); }}
+            >
+              Salary Logs
+            </button>
           </nav>
         </div>
 
@@ -618,6 +656,13 @@ function App() {
             <button className="btn-add-new-emp" onClick={() => setIsModalOpen(true)}>
               + Add Employee
             </button>
+          </div>
+        </div>
+      )}
+      {activeTab === 'Salary Logs' && (
+        <div className="wireframe-subheader">
+          <div className="subheader-title-group">
+            <h1 className="subheader-title">Salary Logs</h1>
           </div>
         </div>
       )}
@@ -1018,6 +1063,39 @@ function App() {
             </div>
           </div>
         )}
+
+        {activeTab === 'Salary Logs' && (
+          <div className="salary-logs-page">
+            <div className="salary-logs-page-header">
+              <div>
+                <h2 className="salary-logs-page-title">Salary Change History</h2>
+                <p className="salary-logs-page-subtitle">Review previous and current salary structures for every employee.</p>
+              </div>
+              <span className="overview-badge">Audit Log</span>
+            </div>
+            {Object.entries(salaryLogsByEmployee).some(([, logs]) => logs.length > 0) ? (
+              <div className="salary-logs-list">
+                {Object.entries(salaryLogsByEmployee).flatMap(([employeeId, logs]) => {
+                  const employee = employees.find((item) => item.id === employeeId)
+                  return employee ? [...logs].reverse().map((log) => (
+                    <div className="salary-log-entry" key={log.id}>
+                      <div className="salary-log-header">
+                        <strong>{employee.name}</strong>
+                        <span>{new Date(log.changedAt).toLocaleString()}</span>
+                      </div>
+                      <div className="salary-log-structures">
+                        <div><span className="salary-log-label">Previous</span><span>{log.oldSalary.payGrade} | {log.oldSalary.baseSalary} | {log.oldSalary.allowances} | {log.oldSalary.taxDeduction}</span></div>
+                        <div><span className="salary-log-label">New</span><span>{log.newSalary.payGrade} | {log.newSalary.baseSalary} | {log.newSalary.allowances} | {log.newSalary.taxDeduction}</span></div>
+                      </div>
+                    </div>
+                  )) : []
+                })}
+              </div>
+            ) : (
+              <p className="salary-logs-empty">No salary changes have been recorded.</p>
+            )}
+          </div>
+        )}
       </main>
 
       {/* Employee Details Popup Modal Overlay Component */}
@@ -1068,6 +1146,18 @@ function App() {
                   placeholder="e.g. UX Designer"
                   value={newEmp.title}
                   onChange={(e) => setNewEmp({ ...newEmp, title: e.target.value })}
+                />
+              </div>
+
+              <div className="modal-field">
+                <label htmlFor="employee-email">Email</label>
+                <input
+                  id="employee-email"
+                  type="email"
+                  required
+                  placeholder="e.g. employee@dayflow.com"
+                  value={newEmp.email}
+                  onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })}
                 />
               </div>
 
