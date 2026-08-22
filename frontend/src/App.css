@@ -1174,34 +1174,44 @@ input:focus {
 .wireframe-tabs-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  background-color: #f1f5f9;
+  padding: 5px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.wireframe-tabs-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .wireframe-tab-btn {
-  height: 44px;
-  padding: 0 24px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px 8px 0 0;
-  background-color: #f1f5f9;
-  color: #475569;
-  font-size: 15px;
+  height: 38px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: #64748b;
+  font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease-in-out;
 }
 
 .wireframe-tab-btn:hover {
   background-color: #e2e8f0;
-  color: #197344;
+  color: #1e293b;
 }
 
 .wireframe-tab-btn.active {
-  background-color: #ffffff;
-  color: #197344;
-  border-color: #197344;
-  border-bottom-color: #ffffff;
+  background-color: #197344;
+  color: #ffffff;
   font-weight: 700;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 2px 8px rgba(25, 115, 68, 0.25);
 }
 
 /* Content Grid */
@@ -2159,18 +2169,45 @@ input:focus {
 
 .profile-popup-modal .wireframe-tabs-bar {
   background-color: #ffffff;
-  padding: 6px 12px;
-  border-radius: 10px;
+  padding: 6px;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
+  scrollbar-width: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.profile-popup-modal .wireframe-tabs-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .profile-popup-modal .wireframe-tab-btn {
   white-space: nowrap;
   flex-shrink: 0;
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  background-color: transparent;
+  color: #64748b;
+  transition: all 0.15s ease-in-out;
+}
+
+.profile-popup-modal .wireframe-tab-btn:hover {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+.profile-popup-modal .wireframe-tab-btn.active {
+  background-color: #197344;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(25, 115, 68, 0.25);
 }
 
 
