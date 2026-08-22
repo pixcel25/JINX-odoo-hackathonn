@@ -1870,44 +1870,58 @@ input:focus {
 }
 
 /* Approval Actions: Red & Green Blocks */
+.timeoff-status-cell-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .approval-action-boxes {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .box-btn-reject {
-  width: 32px;
-  height: 26px;
-  border-radius: 6px;
+  width: 28px;
+  height: 24px;
+  border-radius: 5px;
   border: none;
   background-color: #ef4444;
   color: #ffffff;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: bold;
   cursor: pointer;
-  transition: opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s, transform 0.15s;
 }
 
 .box-btn-reject:hover {
-  opacity: 0.85;
+  opacity: 0.88;
+  transform: scale(1.05);
 }
 
 .box-btn-approve {
-  width: 32px;
-  height: 26px;
-  border-radius: 6px;
+  width: 28px;
+  height: 24px;
+  border-radius: 5px;
   border: none;
   background-color: #197344;
   color: #ffffff;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: bold;
   cursor: pointer;
-  transition: opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s, transform 0.15s;
 }
 
 .box-btn-approve:hover {
-  opacity: 0.85;
+  opacity: 0.88;
+  transform: scale(1.05);
 }
+
 

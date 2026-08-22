@@ -1103,7 +1103,6 @@ function App() {
                     <th>End Date</th>
                     <th>Time off Type</th>
                     <th>Status</th>
-                    <th style={{ textAlign: 'center' }}>Approval Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1114,26 +1113,26 @@ function App() {
                       <td>{req.endDate}</td>
                       <td className="type-blue-cell">{req.timeOffType}</td>
                       <td>
-                        <span className={`timeoff-status-badge status-${req.status.toLowerCase()}`}>
-                          {req.status}
-                        </span>
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <div className="approval-action-boxes">
-                          <button 
-                            className="box-btn-reject"
-                            title="Refuse Request"
-                            onClick={() => handleRejectLeave(req.id)}
-                          >
-                            ✖
-                          </button>
-                          <button 
-                            className="box-btn-approve"
-                            title="Approve Request"
-                            onClick={() => handleApproveLeave(req.id)}
-                          >
-                            ✔
-                          </button>
+                        <div className="timeoff-status-cell-wrap">
+                          <span className={`timeoff-status-badge status-${req.status.toLowerCase()}`}>
+                            {req.status}
+                          </span>
+                          <div className="approval-action-boxes">
+                            <button 
+                              className="box-btn-reject"
+                              title="Refuse Request"
+                              onClick={() => handleRejectLeave(req.id)}
+                            >
+                              ✖
+                            </button>
+                            <button 
+                              className="box-btn-approve"
+                              title="Approve Request"
+                              onClick={() => handleApproveLeave(req.id)}
+                            >
+                              ✔
+                            </button>
+                          </div>
                         </div>
                       </td>
                     </tr>
