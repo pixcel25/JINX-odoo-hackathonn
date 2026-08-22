@@ -1,14 +1,15 @@
 import { useState } from "react";
 import {
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AttendanceScreen } from "../features/attendance/components/AttendanceScreen";
+import { CheckInVerificationScreen } from "../features/attendance/components/CheckInVerificationScreen";
 import {
   checkInAttendance,
   checkOutAttendance,
@@ -38,15 +39,21 @@ export function HrmsApp() {
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [attendanceError, setAttendanceError] = useState<string | null>(null);
+  const [isVerificationOpen, setIsVerificationOpen] = useState(false);
 
-  const handleCheckIn = async () => {
+  const handleCheckIn = () => {
     setAttendanceError(null);
+    setIsVerificationOpen(true);
+  };
+
+  const handleVerifiedCheckIn = async () => {
     setIsCheckingIn(true);
 
     try {
       await checkInAttendance(hasRegisteredToday);
       setHasRegisteredToday(true);
       setIsCheckedIn(true);
+      setIsVerificationOpen(false);
     } catch (error) {
       setAttendanceError(
         error instanceof Error
@@ -77,6 +84,15 @@ export function HrmsApp() {
   };
 
   const renderActiveScreen = () => {
+    if (isVerificationOpen) {
+      return (
+        <CheckInVerificationScreen
+          onVerified={handleVerifiedCheckIn}
+          onCancel={() => setIsVerificationOpen(false)}
+        />
+      );
+    }
+
     switch (activeTab) {
       case "attendance":
         return <AttendanceScreen />;
@@ -104,8 +120,9 @@ export function HrmsApp() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.app}>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.app}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
@@ -140,8 +157,9 @@ export function HrmsApp() {
             );
           })}
         </View>
-      </View>
-    </SafeAreaView>
+        </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
