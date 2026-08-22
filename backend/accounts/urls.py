@@ -1,5 +1,6 @@
 from django.urls import path
 
+# Routes consumed by the admin web application and employee authentication flow.
 from .views import create_employee_view, csrf_token, employee_login_view, login_view, me_view, signup_view
 from .views import salary_change_view
 

@@ -39,7 +39,7 @@ type PressableStyleState = {
 };
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-const employeeIdPattern = /^[A-Z]{6}\d{8}$/i;
+const employeeIdPattern = /^DF\d{3}$/i;
 
 /**
  * Validates the login identifier and password before an authentication request.
@@ -48,11 +48,14 @@ const employeeIdPattern = /^[A-Z]{6}\d{8}$/i;
  * @returns Field-level validation messages, using an empty string for valid fields.
  */
 function validateLogin(loginId: string, password: string): LoginValidationErrors {
+  const usesEmployeeId = employeeIdPattern.test(loginId.trim());
   return {
     loginId: emailPattern.test(loginId.trim()) || employeeIdPattern.test(loginId.trim())
       ? ''
       : 'Enter the employee ID or email provided by your admin.',
-    password: password.length >= 8 ? '' : 'Password must be at least 8 characters.',
+    password: usesEmployeeId
+      ? emailPattern.test(password.trim()) ? '' : 'Enter the email provided by your admin.'
+      : password.length >= 8 ? '' : 'Password must be at least 8 characters.',
   };
 }
 
@@ -268,12 +271,12 @@ export function LoginScreen({ onAuthenticated, onBack }: LoginScreenProps) {
               value={loginId}
             />
             <FormField
-              autoComplete="password"
-              label="Password"
+               autoComplete={employeeIdPattern.test(loginId.trim()) ? 'email' : 'password'}
+               label={employeeIdPattern.test(loginId.trim()) ? 'Email' : 'Password'}
               onChangeText={handleLoginPasswordChange}
               error={errors.password}
               returnKeyType="done"
-              secure
+               secure={!employeeIdPattern.test(loginId.trim())}
               value={password}
               onSubmitEditing={handleLogin}
             />

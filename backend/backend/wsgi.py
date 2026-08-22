@@ -1,4 +1,5 @@
 """
+WSGI entry point for serving the DayFlow admin backend in production.
 WSGI config for backend project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.

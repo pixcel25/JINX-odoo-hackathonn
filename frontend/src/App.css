@@ -1,3 +1,4 @@
+/* Admin website design system: solid green theme, responsive layouts, and controls. */
 /* Solid #197344 Theme - No Gradients */
 
 *, *::before, *::after {
@@ -791,7 +792,13 @@ input[aria-invalid='true'] {
   color: #197344;
 }
 
+.ctrl-btn-square:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .ctrl-btn-dropdown {
+  position: relative;
   height: 36px;
   padding: 0 14px;
   border: 1px solid #cbd5e1;
@@ -810,6 +817,29 @@ input[aria-invalid='true'] {
   width: 16px;
   height: 16px;
   color: #64748b;
+}
+
+.attendance-date-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background-color: transparent;
+  color: transparent;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.attendance-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+.attendance-date-input:focus {
+  border: 0;
+  box-shadow: none;
 }
 
 .view-mode-toggle-group {
@@ -1262,10 +1292,27 @@ input[aria-invalid='true'] {
 }
 
 .private-info-card {
-  overflow: hidden;
+  max-height: calc(88vh - 170px);
+  overflow-y: auto;
+  overflow-x: hidden;
   background-color: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 transparent;
+}
+
+.private-info-card::-webkit-scrollbar {
+  width: 8px;
+}
+
+.private-info-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.private-info-card::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background-color: #94a3b8;
 }
 
 .private-info-header {
@@ -1392,10 +1439,6 @@ input[aria-invalid='true'] {
   border: 1px solid #197344;
   background-color: #197344;
   color: #ffffff;
-}
-
-.security-card {
-  min-height: 180px;
 }
 
 .skill-pill-tag {
@@ -1711,54 +1754,6 @@ input[aria-invalid='true'] {
 
 .employee-signup-modal .modal-form {
   gap: 15px;
-}
-
-.employee-logo-field {
-  align-items: center;
-  display: flex;
-  gap: 14px;
-  justify-content: center;
-  margin-bottom: 6px;
-}
-
-.logo-placeholder {
-  align-items: center;
-  background-color: #e8f4ec;
-  border-radius: 8px;
-  color: #197344;
-  display: flex;
-  font-size: 27px;
-  font-weight: 800;
-  height: 54px;
-  justify-content: center;
-  width: 54px;
-}
-
-.employee-logo-field strong {
-  display: block;
-  font-size: 14px;
-  margin-bottom: 5px;
-}
-
-.logo-upload {
-  color: #197344;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.employee-logo-field input[type='file'] {
-  display: none;
-}
-
-.logo-file-name {
-  color: #718178;
-  display: block;
-  font-size: 11px;
-  margin-top: 4px;
-  max-width: 190px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .employee-signup-modal .modal-field {
@@ -2413,6 +2408,11 @@ input[aria-invalid='true'] {
   text-align: right;
 }
 
+.salary-component-row input[readonly] {
+  cursor: default;
+  color: #475569;
+}
+
 .salary-section p {
   margin: 4px 0 12px;
   color: #94a3b8;
@@ -2591,6 +2591,70 @@ input[aria-invalid='true'] {
   margin-top: 16px;
 }
 
+.resume-edit-btn,
+.resume-save-btn,
+.resume-add-btn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.resume-edit-btn {
+  border: 1px solid #197344;
+  background-color: #ffffff;
+  color: #197344;
+}
+
+.resume-save-btn,
+.resume-add-btn {
+  border: 1px solid #197344;
+  background-color: #197344;
+  color: #ffffff;
+}
+
+.resume-add-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background-color: #f8fafc;
+}
+
+.resume-add-form input,
+.resume-add-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 13px;
+}
+
+.resume-add-form textarea {
+  grid-column: 1 / -1;
+  min-height: 76px;
+  resize: vertical;
+}
+
+.resume-add-form input:focus,
+.resume-add-form textarea:focus {
+  border-color: #197344;
+  box-shadow: none;
+  outline: none;
+}
+
+.resume-add-btn {
+  justify-self: start;
+}
+
 .resume-item {
   padding: 16px 20px;
   background-color: #f8fafc;
@@ -2656,6 +2720,71 @@ input[aria-invalid='true'] {
   background-color: #f1f5f9;
   padding: 3px 10px;
   border-radius: 12px;
+}
+
+.profile-edit-btn,
+.profile-save-btn {
+  height: 34px;
+  margin-left: auto;
+  padding: 0 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-edit-btn {
+  border: 1px solid #197344;
+  background-color: #ffffff;
+  color: #197344;
+}
+
+.profile-save-btn {
+  border: 1px solid #197344;
+  background-color: #197344;
+  color: #ffffff;
+}
+
+.profile-delete-btn {
+  height: 34px;
+  margin-left: 8px;
+  padding: 0 14px;
+  border: 1px solid #dc2626;
+  border-radius: 7px;
+  background-color: #ffffff;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-delete-btn:hover {
+  background-color: #fef2f2;
+}
+
+.profile-name-edit-input,
+.profile-edit-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  background-color: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.profile-name-edit-input {
+  max-width: 330px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.profile-edit-input:focus,
+.profile-name-edit-input:focus {
+  border-color: #197344;
+  outline: none;
+  box-shadow: none;
 }
 
 .modal-body-scrollable {
@@ -2928,6 +3057,14 @@ input[aria-invalid='true'] {
 
   .private-summary-fields {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .resume-add-form {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-add-form textarea {
+    grid-column: auto;
   }
 }
 

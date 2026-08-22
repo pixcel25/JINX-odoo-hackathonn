@@ -70,7 +70,7 @@ export async function login(loginId: string, password: string): Promise<LoginRes
       response = await fetch(`${API_URL}/auth/employee-login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ loginId: loginId.trim(), password }),
+        body: JSON.stringify({ loginId: loginId.trim(), email: password.trim() }),
       });
     } catch {
       throw new AuthServiceError('We could not reach the employee service. Check that the backend is running.');
@@ -78,7 +78,7 @@ export async function login(loginId: string, password: string): Promise<LoginRes
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new AuthServiceError(data.error ?? 'That employee ID or password is not correct.');
+      throw new AuthServiceError(data.error ?? 'That employee ID and email do not match.');
     }
 
     return {
@@ -90,6 +90,8 @@ export async function login(loginId: string, password: string): Promise<LoginRes
   if (loginId.trim().toLowerCase() !== account.loginId || passwordHash !== account.passwordHash) {
     throw new AuthServiceError('That login ID or password is not correct.');
   }
+
+  throw new AuthServiceError('That login ID or password is not correct.');
 }
 
 export async function changePassword(

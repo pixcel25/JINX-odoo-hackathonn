@@ -1,6 +1,7 @@
 from django.db import models
 
 
+# Core HR entities used by attendance, leave, payroll, and audit features.
 class User(models.Model):
     class Role(models.TextChoices):
         ADMIN = 'admin', 'Admin'

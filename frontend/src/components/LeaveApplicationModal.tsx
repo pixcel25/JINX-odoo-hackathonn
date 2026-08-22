@@ -1,5 +1,7 @@
 import type { Employee } from './EmployeeDetailsModal'
 
+// Focused admin review modal for a leave request and its employee details.
+
 export interface LeaveApplication {
   id: string
   employeeName: string

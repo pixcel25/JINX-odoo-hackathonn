@@ -1,21 +1,30 @@
 import { useEffect, useState } from 'react'
+// Main admin dashboard: authentication, navigation, employee records, and admin actions.
 import type { FormEvent } from 'react'
 import './App.css'
 import { EmployeeDetailsModal } from './components/EmployeeDetailsModal'
-import type { Employee } from './components/EmployeeDetailsModal'
-import { DEFAULT_SALARY_STRUCTURE } from './data/salary'
+import type { Employee, ResumeEntry } from './components/EmployeeDetailsModal'
+import { DEFAULT_SALARY_STRUCTURE, EMPTY_SALARY_STRUCTURE } from './data/salary'
 import type { SalaryLog, SalaryStructure } from './data/salary'
 import { DEFAULT_PRIVATE_INFO } from './data/privateInfo'
 import type { PrivateInfo } from './data/privateInfo'
 import { LeaveApplicationModal } from './components/LeaveApplicationModal'
-import employeeData from './data/employees.json'
-import timeOffRequestData from './data/timeOffRequests.json'
 import dashboardData from './data/dashboard.json'
 
 type Mode = 'login' | 'signup'
 type FormErrors = Record<string, string>
 
 const API_URL = import.meta.env.VITE_API_URL ?? '/api'
+const ATTENDANCE_MIN_DATE = '2026-08-22'
+const ATTENDANCE_MAX_DATE = '2026-08-22'
+
+function formatAttendanceDate(date: string) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+}
 
 function validEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -23,11 +32,6 @@ function validEmail(email: string) {
 
 function validPassword(password: string) {
   return password.length >= 10 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password)
-}
-
-function generateEmployeePassword(company: string) {
-  const companyCode = company.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
-  return companyCode ? `${companyCode}123` : ''
 }
 
 function csrfCookie() {
@@ -244,44 +248,10 @@ interface TimeOffRequest {
 ]
 */
 
-/* const INITIAL_TIME_OFF_REQUESTS: TimeOffRequest[] = [
-  {
-    id: '1',
-    employeeName: 'Jane Doe',
-    startDate: '28/10/2025',
-    endDate: '28/10/2025',
-    timeOffType: 'Paid Time Off',
-    status: 'Pending'
-  },
-  {
-    id: '2',
-    employeeName: 'John Smith',
-    startDate: '01/11/2025',
-    endDate: '03/11/2025',
-    timeOffType: 'Sick Time Off',
-    status: 'Approved'
-  },
-  {
-    id: '3',
-    employeeName: 'Alice Wong',
-    startDate: '12/11/2025',
-    endDate: '15/11/2025',
-    timeOffType: 'Paid Time Off',
-    status: 'Pending'
-  },
-  {
-    id: '4',
-    employeeName: 'Michael Kim',
-    startDate: '20/11/2025',
-    endDate: '20/11/2025',
-    timeOffType: 'Paid Time Off',
-    status: 'Refused'
-  }
-]
-*/
-
-const INITIAL_EMPLOYEES = employeeData as Employee[]
-const INITIAL_TIME_OFF_REQUESTS = timeOffRequestData as TimeOffRequest[]
+// Employees are created through the admin form instead of seeded hardcoded users.
+const INITIAL_EMPLOYEES: Employee[] = []
+// Leave requests are populated from the application workflow, not seeded fixtures.
+const INITIAL_TIME_OFF_REQUESTS: TimeOffRequest[] = []
 const ADMIN_PROFILE: Employee = {
   id: 'admin-profile',
   name: 'Admin User',
@@ -317,8 +287,9 @@ function App() {
   const [authSuccess, setAuthSuccess] = useState('')
   const [authLoading, setAuthLoading] = useState(false)
   
-  // Navigation state
+  // Navigation state controls which admin dashboard section is visible.
   const [activeTab, setActiveTab] = useState<'Employees' | 'Attendance' | 'Time Off' | 'Salary Logs'>('Employees')
+  const [attendanceDate, setAttendanceDate] = useState(ATTENDANCE_MAX_DATE)
   const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES)
   
   // Employee Popup Modal State
@@ -340,6 +311,7 @@ function App() {
   const [salarySaving, setSalarySaving] = useState(false)
   const [salaryError, setSalaryError] = useState('')
   const [privateInfoByEmployee, setPrivateInfoByEmployee] = useState<Record<string, PrivateInfo>>({})
+  const [resumeByEmployee, setResumeByEmployee] = useState<Record<string, ResumeEntry[]>>({})
 
   useEffect(() => {
     localStorage.setItem('dayflow-salary-structures', JSON.stringify(salaryByEmployee))
@@ -359,7 +331,7 @@ function App() {
   const [statusFilter, setStatusFilter] = useState('All')
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  // New Employee form state
+  // New Employee form state is used by the admin employee provisioning dialog.
   const [newEmp, setNewEmp] = useState<{
     company: string
     name: string
@@ -369,8 +341,7 @@ function App() {
     dept: string
     status: Employee['status']
     phone: string
-    password: string
-    confirmPassword: string
+    location: string
   }>({
     company: '',
     name: '',
@@ -380,12 +351,11 @@ function App() {
     dept: dashboardData.defaultDepartment,
     status: dashboardData.defaultAttendanceStatus as Employee['status'],
     phone: '',
-    password: '',
-    confirmPassword: ''
+    location: ''
   })
   const [employeeFormError, setEmployeeFormError] = useState('')
   const [employeeFormSuccess, setEmployeeFormSuccess] = useState('')
-  const [logoFileName, setLogoFileName] = useState('')
+  const [generatedEmployeeId, setGeneratedEmployeeId] = useState('')
   const [employeeFormLoading, setEmployeeFormLoading] = useState(false)
 
   // Open employee details modal popup handler
@@ -434,6 +404,29 @@ function App() {
     setPrivateInfoByEmployee((current) => ({ ...current, [employee.id]: privateInfo }))
   }
 
+  const handleSaveResume = (employee: Employee, resumeEntries: ResumeEntry[]) => {
+    setResumeByEmployee((current) => ({ ...current, [employee.id]: resumeEntries }))
+  }
+
+  const handleSaveEmployee = (updatedEmployee: Employee) => {
+    setEmployees((currentEmployees) => currentEmployees.map((employee) => employee.id === updatedEmployee.id ? updatedEmployee : employee))
+    setProfileModalEmployee(updatedEmployee)
+  }
+
+  const handleDeleteEmployee = (employee: Employee) => {
+    setEmployees((currentEmployees) => currentEmployees.filter((item) => item.id !== employee.id))
+    setProfileModalEmployee(null)
+  }
+
+  const shiftAttendanceDate = (days: number) => {
+    const nextDate = new Date(`${attendanceDate}T00:00:00`)
+    nextDate.setDate(nextDate.getDate() + days)
+    const nextDateValue = nextDate.toISOString().slice(0, 10)
+    if (nextDateValue >= ATTENDANCE_MIN_DATE && nextDateValue <= ATTENDANCE_MAX_DATE) {
+      setAttendanceDate(nextDateValue)
+    }
+  }
+
   const handleAuthSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setAuthError('')
@@ -475,8 +468,20 @@ function App() {
   const handleAddEmployee = async (e: FormEvent) => {
     e.preventDefault()
     setEmployeeFormSuccess('')
-    if (newEmp.password !== newEmp.confirmPassword) {
-      setEmployeeFormError('Passwords do not match.')
+    const missingField = [
+      ['Company Name', newEmp.company],
+      ['Name', newEmp.name],
+      ['Email', newEmp.email],
+      ['Phone', newEmp.phone],
+      ['Department', newEmp.dept],
+      ['Location', newEmp.location]
+    ].find(([, value]) => !value.trim())?.[0]
+    if (missingField) {
+      setEmployeeFormError(`${missingField} is required.`)
+      return
+    }
+    if (!validEmail(newEmp.email.trim())) {
+      setEmployeeFormError('Enter a valid employee email address.')
       return
     }
     setEmployeeFormError('')
@@ -492,8 +497,9 @@ function App() {
           name: newEmp.name,
           email: newEmp.email,
           phone: newEmp.phone,
-          password: newEmp.password,
-        }),
+          department: newEmp.dept,
+          location: newEmp.location,
+          }),
       })
       const data = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(data.error ?? 'Unable to add this employee.')
@@ -504,7 +510,7 @@ function App() {
         name: data.name,
         title: 'Team Member',
         empId: data.employeeId,
-        dept: dashboardData.defaultDepartment,
+        dept: newEmp.dept,
         status: dashboardData.defaultAttendanceStatus as Employee['status'],
         checkIn: '10:00 AM',
         checkOut: '19:00 PM',
@@ -512,8 +518,8 @@ function App() {
         email: data.email,
         phone: data.phone,
         company: data.company,
-        manager: 'Michael Chang',
-        location: 'Goa, India',
+        manager: '',
+        location: newEmp.location,
         about: 'New team member profile.',
         jobLove: 'Excited to contribute to DayFlow development.',
         hobbies: 'Reading and coding.',
@@ -529,8 +535,15 @@ function App() {
         leaveHistory: []
       }
       setEmployees(currentEmployees => [created, ...currentEmployees])
-      setNewEmp({ company: '', name: '', email: '', title: '', empId: '', dept: dashboardData.defaultDepartment, status: dashboardData.defaultAttendanceStatus as Employee['status'], phone: '', password: '', confirmPassword: '' })
-      setLogoFileName('')
+      setSalaryByEmployee((current) => ({ ...current, [created.id]: EMPTY_SALARY_STRUCTURE }))
+      setResumeByEmployee((current) => ({ ...current, [created.id]: [] }))
+      setGeneratedEmployeeId(data.employeeId)
+      setActiveTab('Employees')
+      setSearchQuery('')
+      setDeptFilter('All')
+      setStatusFilter('All')
+      setIsModalOpen(false)
+      setNewEmp({ company: '', name: '', email: '', title: '', empId: '', dept: dashboardData.defaultDepartment, status: dashboardData.defaultAttendanceStatus as Employee['status'], phone: '', location: '' })
       setEmployeeFormSuccess(`Employee added successfully. Login ID: ${data.employeeId}`)
     } catch (error) {
       setEmployeeFormError(error instanceof Error ? error.message : 'A network error occurred. Please try again.')
@@ -563,11 +576,14 @@ function App() {
     return matchesSearch && matchesDept && matchesStatus
   })
 
-  // Filter time off requests
-  const filteredTimeOffRequests = timeOffRequests.filter(req => 
-    req.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    req.timeOffType.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const isAllocationView = timeOffSubTab === 'Allocation'
+  // Pending requests stay in Time Off; decided requests move to Allocation.
+  const filteredTimeOffRequests = timeOffRequests.filter(req => {
+    const matchesSearch = req.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      req.timeOffType.toLowerCase().includes(searchQuery.toLowerCase())
+    const belongsInCurrentQueue = isAllocationView ? req.status !== 'Pending' : req.status === 'Pending'
+    return matchesSearch && belongsInCurrentQueue
+  })
   const leaveApplicationEmployee = selectedLeaveApplication
     ? employees.find(emp => emp.name === selectedLeaveApplication.employeeName) ?? null
     : null
@@ -705,7 +721,7 @@ function App() {
           </div>
 
           <div className="subheader-actions">
-            <button type="button" className="btn-add-new-emp" onClick={() => { setEmployeeFormError(''); setEmployeeFormSuccess(''); setIsModalOpen(true) }}>
+            <button type="button" className="btn-add-new-emp" onClick={() => { setEmployeeFormError(''); setEmployeeFormSuccess(''); setGeneratedEmployeeId(''); setIsModalOpen(true) }}>
               + Add Employee
             </button>
           </div>
@@ -826,20 +842,29 @@ function App() {
             <div className="attendance-control-panel">
               <div className="panel-left-controls">
                 <div className="arrow-btn-group">
-                  <button className="ctrl-btn-square">‹</button>
-                  <button className="ctrl-btn-square">›</button>
+                  <button className="ctrl-btn-square" onClick={() => shiftAttendanceDate(-1)} disabled={attendanceDate <= ATTENDANCE_MIN_DATE} aria-label="Previous date">‹</button>
+                  <button className="ctrl-btn-square" onClick={() => shiftAttendanceDate(1)} disabled={attendanceDate >= ATTENDANCE_MAX_DATE} aria-label="Next date">›</button>
                 </div>
 
-                <button className="ctrl-btn-dropdown">
+                <label className="ctrl-btn-dropdown">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  Date ▾
-                </button>
+                  Date
+                  <input
+                    className="attendance-date-input"
+                    type="date"
+                    min={ATTENDANCE_MIN_DATE}
+                    max={ATTENDANCE_MAX_DATE}
+                    value={attendanceDate}
+                    onChange={(event) => setAttendanceDate(event.target.value)}
+                    aria-label="Select attendance date"
+                  />
+                </label>
               </div>
 
               <div className="panel-center-date">
                 <div className="date-display-pill">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                   <span>{dashboardData.attendanceDate}</span>
+                   <span>{formatAttendanceDate(attendanceDate)}</span>
                 </div>
               </div>
 
@@ -1061,6 +1086,10 @@ function App() {
                 <tbody>
                   {filteredTimeOffRequests.map(req => {
                     const targetEmp = employees.find(e => e.name === req.employeeName)
+                    const displayStatus = isAllocationView
+                      ? req.status === 'Approved' ? 'Accepted' : req.status === 'Refused' ? 'Rejected' : 'Pending'
+                      : 'Pending'
+                    const statusClass = isAllocationView ? req.status.toLowerCase() : 'pending'
                     return (
                       <tr key={req.id}>
                         <td className="emp-name-cell">
@@ -1079,10 +1108,10 @@ function App() {
                         <td className="type-blue-cell">{req.timeOffType}</td>
                         <td>
                           <div className="timeoff-status-cell-wrap">
-                            <span className={`timeoff-status-badge status-${req.status.toLowerCase()}`}>
-                              {req.status}
+                            <span className={`timeoff-status-badge status-${statusClass}`}>
+                              {displayStatus}
                             </span>
-                            <div className="approval-action-boxes">
+                            {!isAllocationView && <div className="approval-action-boxes">
                               <button
                                 className="view-application-btn"
                                 title="View Application"
@@ -1104,7 +1133,7 @@ function App() {
                               >
                                 ✔
                               </button>
-                            </div>
+                            </div>}
                           </div>
                         </td>
                       </tr>
@@ -1163,6 +1192,10 @@ function App() {
         salaryError={salaryError}
         privateInfo={profileModalEmployee ? privateInfoByEmployee[profileModalEmployee.id] ?? DEFAULT_PRIVATE_INFO : undefined}
         onSavePrivateInfo={profileModalEmployee ? (privateInfo) => handleSavePrivateInfo(profileModalEmployee, privateInfo) : undefined}
+        resumeEntries={profileModalEmployee ? resumeByEmployee[profileModalEmployee.id] : undefined}
+        onSaveResume={profileModalEmployee ? (resumeEntries) => handleSaveResume(profileModalEmployee, resumeEntries) : undefined}
+        onSaveEmployee={profileModalEmployee ? handleSaveEmployee : undefined}
+        onDeleteEmployee={profileModalEmployee ? handleDeleteEmployee : undefined}
       />
 
       {selectedLeaveApplication && leaveApplicationEmployee && (
@@ -1182,21 +1215,6 @@ function App() {
               <button className="close-btn" onClick={() => setIsModalOpen(false)}>✕</button>
             </div>
             <form onSubmit={handleAddEmployee} className="modal-form">
-              <div className="employee-logo-field">
-                <div className="logo-placeholder">d</div>
-                <div>
-                  <strong>App/Web Logo</strong>
-                  <label className="logo-upload" htmlFor="employee-logo">⇧ Upload Logo</label>
-                  <input
-                    id="employee-logo"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setLogoFileName(e.target.files?.[0]?.name ?? '')}
-                  />
-                  {logoFileName && <span className="logo-file-name">{logoFileName}</span>}
-                </div>
-              </div>
-
               <div className="modal-field">
                 <label htmlFor="employee-company">Company Name</label>
                 <input
@@ -1207,8 +1225,7 @@ function App() {
                   value={newEmp.company}
                   onChange={(e) => {
                     const company = e.target.value
-                    const password = generateEmployeePassword(company)
-                    setNewEmp({ ...newEmp, company, password, confirmPassword: password })
+                    setNewEmp({ ...newEmp, company })
                   }}
                 />
               </div>
@@ -1250,28 +1267,36 @@ function App() {
               </div>
 
               <div className="modal-field">
-                <label htmlFor="employee-password">Password</label>
-                <input
-                  id="employee-password"
-                  type="password"
+                <label htmlFor="employee-department">Department</label>
+                <select
+                  id="employee-department"
                   required
-                  minLength={8}
-                  placeholder="Generated from company name"
-                  readOnly
-                  value={newEmp.password}
-                />
+                  value={newEmp.dept}
+                  onChange={(e) => setNewEmp({ ...newEmp, dept: e.target.value })}
+                >
+                  {dashboardData.departments.map((department) => <option key={department} value={department}>{department}</option>)}
+                </select>
               </div>
 
               <div className="modal-field">
-                <label htmlFor="employee-confirm-password">Confirm Password</label>
+                <label htmlFor="employee-location">Location</label>
                 <input
-                  id="employee-confirm-password"
-                  type="password"
+                  id="employee-location"
+                  type="text"
                   required
-                  minLength={8}
-                  placeholder="Generated automatically"
+                  placeholder="Enter work location"
+                  value={newEmp.location}
+                  onChange={(e) => setNewEmp({ ...newEmp, location: e.target.value })}
+                />
+              </div>
+
+              <div className="modal-field generated-id-field">
+                <label htmlFor="generated-employee-id">Generated Employee ID</label>
+                <input
+                  id="generated-employee-id"
+                  type="text"
+                  value={generatedEmployeeId || 'Generated after submission'}
                   readOnly
-                  value={newEmp.confirmPassword}
                 />
               </div>
 

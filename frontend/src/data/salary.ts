@@ -1,3 +1,5 @@
+// Salary structures and audit entries used by the admin salary tools.
+
 export interface SalaryStructure {
   payGrade: string
   baseSalary: string
@@ -43,4 +45,24 @@ export const DEFAULT_SALARY_STRUCTURE: SalaryStructure = {
   providentFundEmployee: '3000.00',
   providentFundEmployer: '3000.00',
   professionalTax: '200.00'
+}
+
+export const EMPTY_SALARY_STRUCTURE: SalaryStructure = {
+  payGrade: '',
+  baseSalary: '',
+  allowances: '',
+  taxDeduction: '',
+  monthWage: '',
+  yearlyWage: '',
+  workingDays: '',
+  workingHours: '',
+  basicSalary: '',
+  houseRentAllowance: '',
+  standardAllowance: '',
+  performanceBonus: '',
+  leaveTravelAllowance: '',
+  fixedAllowance: '',
+  providentFundEmployee: '',
+  providentFundEmployer: '',
+  professionalTax: ''
 }
