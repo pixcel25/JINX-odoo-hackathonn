@@ -886,9 +886,11 @@ function App() {
 
       {/* Employee Details Popup Modal Overlay Component */}
       <EmployeeDetailsModal 
+        key={`${profileModalEmployee?.id || 'emp'}-${activeTab}`}
         employee={profileModalEmployee}
         onClose={() => setProfileModalEmployee(null)}
         showAllTabs={activeTab !== 'Time Off'}
+        defaultTab={activeTab === 'Time Off' ? 'Leave & Time Off' : undefined}
       />
 
       {/* New Employee Modal */}

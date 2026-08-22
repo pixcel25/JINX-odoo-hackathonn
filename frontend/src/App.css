@@ -2210,6 +2210,86 @@ input:focus {
   box-shadow: 0 2px 8px rgba(25, 115, 68, 0.25);
 }
 
+/* Leaves & Time Off Modal Styles */
+.profile-popup-modal .timeoff-balance-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+.balance-card.balance-paid {
+  border-left: 4px solid #0284c7;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+}
+
+.balance-card.balance-sick {
+  border-left: 4px solid #e11d48;
+  background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
+}
+
+.balance-card.balance-casual {
+  border-left: 4px solid #8b5cf6;
+  background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%);
+}
+
+.balance-card.balance-paid .balance-title {
+  color: #0284c7;
+}
+
+.balance-card.balance-sick .balance-title {
+  color: #e11d48;
+}
+
+.balance-card.balance-casual .balance-title {
+  color: #8b5cf6;
+}
+
+.section-subheading {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 24px;
+  margin-bottom: 14px;
+}
+
+.margin-bottom-spacer {
+  margin-bottom: 24px;
+}
+
+.type-blue-cell {
+  font-weight: 600;
+  color: #0284c7;
+}
+
+.timeoff-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.timeoff-status-badge.status-approved {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.timeoff-status-badge.status-pending {
+  background-color: #fef9c3;
+  color: #a16207;
+  border: 1px solid #fef08a;
+}
+
+.timeoff-status-badge.status-refused {
+  background-color: #ffe4e6;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+}
+
 
 
 

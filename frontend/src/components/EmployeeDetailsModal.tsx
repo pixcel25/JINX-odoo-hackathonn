@@ -51,16 +51,19 @@ interface EmployeeDetailsModalProps {
   employee: Employee | null
   onClose: () => void
   showAllTabs?: boolean
+  defaultTab?: 'Attendance History' | 'Leave & Time Off' | 'Private Info' | 'Resume' | 'Salary Info'
 }
 
 export const EmployeeDetailsModal: React.FC<EmployeeDetailsModalProps> = ({
   employee,
   onClose,
-  showAllTabs = true
+  showAllTabs = true,
+  defaultTab
 }) => {
+  const initialActiveTab = defaultTab || (showAllTabs ? 'Attendance History' : 'Leave & Time Off')
   const [activeTab, setActiveTab] = useState<
     'Attendance History' | 'Leave & Time Off' | 'Private Info' | 'Resume' | 'Salary Info'
-  >('Attendance History')
+  >(initialActiveTab)
 
   if (!employee) return null
 
