@@ -18,18 +18,23 @@ import { HomeScreen } from "../features/home/components/HomeScreen";
 import { LeaveScreen } from "../features/leave/components/LeaveScreen";
 import { PayrollScreen } from "../features/payroll/components/PayrollScreen";
 import { ProfileScreen } from "../features/profile/components/ProfileScreen";
+import type { Employee } from "../auth/authService";
 
-type AppTab = "home" | "attendance" | "leave" | "payroll" | "more";
+type AppTab = "home" | "attendance" | "leave" | "payroll" | "profile";
+
+type HrmsAppProps = {
+  employee: Employee;
+};
 
 const tabs: Array<{ key: AppTab; label: string; icon: string }> = [
   { key: "home", label: "Home", icon: "⌂" },
   { key: "attendance", label: "Attendance", icon: "□" },
   { key: "leave", label: "Leave", icon: "+" },
   { key: "payroll", label: "Payroll", icon: "$" },
-  { key: "more", label: "More", icon: "•••" },
+  { key: "profile", label: "Profile", icon: "◎" },
 ];
 
-export function HrmsApp() {
+export function HrmsApp({ employee }: HrmsAppProps) {
   const [activeTab, setActiveTab] = useState<AppTab>("home");
   const [hasRegisteredToday, setHasRegisteredToday] = useState(
     todayAttendance !== null,
@@ -84,8 +89,8 @@ export function HrmsApp() {
         return <LeaveScreen />;
       case "payroll":
         return <PayrollScreen />;
-      case "more":
-        return <ProfileScreen />;
+      case "profile":
+        return <ProfileScreen employee={employee} />;
       case "home":
       default:
         return (

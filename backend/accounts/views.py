@@ -162,6 +162,11 @@ def employee_login_view(request):
         'id': employee.id,
         'employeeId': employee.login_id,
         'displayName': employee.name,
+        'name': employee.name,
+        'email': employee.email,
+        'phone': employee.phone,
+        'company': employee.company_name,
+        'joinedAt': employee.joined_at.isoformat(),
     })
 
 
