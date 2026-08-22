@@ -301,7 +301,7 @@ function App() {
   
   // Employee Popup Modal State (opens without redirecting page)
   const [profileModalEmployee, setProfileModalEmployee] = useState<Employee | null>(null)
-  const [modalDetailTab, setModalDetailTab] = useState<'Private Info' | 'Attendance History' | 'Leave & Time Off' | 'Resume' | 'Salary Info'>('Private Info')
+  const [modalDetailTab, setModalDetailTab] = useState<'Attendance History' | 'Leave & Time Off'>('Attendance History')
 
   // Time Off view state & requests
   const [timeOffSubTab, setTimeOffSubTab] = useState<'Time Off' | 'Allocation'>('Time Off')
@@ -311,10 +311,6 @@ function App() {
   const [deptFilter, setDeptFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [newSkillInput, setNewSkillInput] = useState('')
-  const [newCertInput, setNewCertInput] = useState('')
-  const [isAddingSkill, setIsAddingSkill] = useState(false)
-  const [isAddingCert, setIsAddingCert] = useState(false)
 
   // New Employee form state
   const [newEmp, setNewEmp] = useState<{
@@ -334,7 +330,7 @@ function App() {
   // Open employee details modal popup handler
   const openEmployeePopup = (emp: Employee) => {
     setProfileModalEmployee(emp)
-    setModalDetailTab('Private Info')
+    setModalDetailTab('Attendance History')
   }
 
   // Sign in handler
@@ -380,30 +376,6 @@ function App() {
     openEmployeePopup(created)
     setNewEmp({ name: '', title: '', empId: '', dept: 'Engineering', status: 'Present' })
     setIsModalOpen(false)
-  }
-
-  const handleAddSkill = () => {
-    if (!newSkillInput.trim() || !profileModalEmployee) return
-    const updated = {
-      ...profileModalEmployee,
-      skills: [...profileModalEmployee.skills, newSkillInput.trim()]
-    }
-    setProfileModalEmployee(updated)
-    setEmployees(employees.map(e => e.id === updated.id ? updated : e))
-    setNewSkillInput('')
-    setIsAddingSkill(false)
-  }
-
-  const handleAddCert = () => {
-    if (!newCertInput.trim() || !profileModalEmployee) return
-    const updated = {
-      ...profileModalEmployee,
-      certifications: [...profileModalEmployee.certifications, newCertInput.trim()]
-    }
-    setProfileModalEmployee(updated)
-    setEmployees(employees.map(e => e.id === updated.id ? updated : e))
-    setNewCertInput('')
-    setIsAddingCert(false)
   }
 
   // Time off actions
@@ -1034,12 +1006,6 @@ function App() {
               {/* Profile Inner Tabs Bar */}
               <div className="wireframe-tabs-bar">
                 <button 
-                  className={`wireframe-tab-btn ${modalDetailTab === 'Private Info' ? 'active' : ''}`}
-                  onClick={() => setModalDetailTab('Private Info')}
-                >
-                  Private Info
-                </button>
-                <button 
                   className={`wireframe-tab-btn ${modalDetailTab === 'Attendance History' ? 'active' : ''}`}
                   onClick={() => setModalDetailTab('Attendance History')}
                 >
@@ -1051,115 +1017,7 @@ function App() {
                 >
                   Leaves & Time Off
                 </button>
-                <button 
-                  className={`wireframe-tab-btn ${modalDetailTab === 'Resume' ? 'active' : ''}`}
-                  onClick={() => setModalDetailTab('Resume')}
-                >
-                  Resume
-                </button>
-                <button 
-                  className={`wireframe-tab-btn ${modalDetailTab === 'Salary Info' ? 'active' : ''}`}
-                  onClick={() => setModalDetailTab('Salary Info')}
-                >
-                  Salary Info
-                </button>
               </div>
-
-              {/* TAB CONTENT: Private Info */}
-              {modalDetailTab === 'Private Info' && (
-                <div className="wireframe-tab-grid">
-                  <div className="tab-left-col">
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">About</h3>
-                        <button className="card-pencil-btn" title="Edit About">✎</button>
-                      </div>
-                      <p className="box-text-content">{profileModalEmployee.about}</p>
-                    </div>
-
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">What I love about my job</h3>
-                        <button className="card-pencil-btn" title="Edit Job Interest">✎</button>
-                      </div>
-                      <p className="box-text-content">{profileModalEmployee.jobLove}</p>
-                    </div>
-
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">My interests and hobbies</h3>
-                        <button className="card-pencil-btn" title="Edit Hobbies">✎</button>
-                      </div>
-                      <p className="box-text-content">{profileModalEmployee.hobbies}</p>
-                    </div>
-                  </div>
-
-                  <div className="tab-right-col">
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">Skills</h3>
-                      </div>
-                      
-                      <div className="tags-flex-wrap">
-                        {profileModalEmployee.skills.map((skill, index) => (
-                          <span key={index} className="skill-pill-tag">{skill}</span>
-                        ))}
-                      </div>
-
-                      {isAddingSkill ? (
-                        <div className="inline-add-input-wrap">
-                          <input 
-                            type="text" 
-                            placeholder="Enter skill name..." 
-                            value={newSkillInput}
-                            onChange={(e) => setNewSkillInput(e.target.value)}
-                            className="inline-input"
-                          />
-                          <button className="btn-inline-save" onClick={handleAddSkill}>Save</button>
-                          <button className="btn-inline-cancel" onClick={() => setIsAddingSkill(false)}>✕</button>
-                        </div>
-                      ) : (
-                        <button className="btn-add-item-action" onClick={() => setIsAddingSkill(true)}>
-                          + Add Skills
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">Certification</h3>
-                      </div>
-
-                      <div className="cert-list-wrap">
-                        {profileModalEmployee.certifications.map((cert, index) => (
-                          <div key={index} className="cert-item-row">
-                            <span className="cert-badge-dot"></span>
-                            <span className="cert-title">{cert}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {isAddingCert ? (
-                        <div className="inline-add-input-wrap">
-                          <input 
-                            type="text" 
-                            placeholder="Enter certification..." 
-                            value={newCertInput}
-                            onChange={(e) => setNewCertInput(e.target.value)}
-                            className="inline-input"
-                          />
-                          <button className="btn-inline-save" onClick={handleAddCert}>Save</button>
-                          <button className="btn-inline-cancel" onClick={() => setIsAddingCert(false)}>✕</button>
-                        </div>
-                      ) : (
-                        <button className="btn-add-item-action" onClick={() => setIsAddingCert(true)}>
-                          + Add Certification
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* TAB CONTENT: Attendance Track Record */}
               {modalDetailTab === 'Attendance History' && (
@@ -1281,54 +1139,6 @@ function App() {
                           )}
                         </tbody>
                       </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Resume */}
-              {modalDetailTab === 'Resume' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <h3 className="box-title">Work Experience & Education</h3>
-                    <div className="resume-section">
-                      <div className="resume-item">
-                        <h4>Senior Developer — DayFlow Solutions</h4>
-                        <span className="resume-period">2023 - Present</span>
-                        <p>Building high-throughput full-stack enterprise web modules and leading backend API integrations.</p>
-                      </div>
-                      <div className="resume-item">
-                        <h4>{profileModalEmployee.title}</h4>
-                        <span className="resume-period">Graduated 2022</span>
-                        <p>Focused on software architecture, algorithms, database optimization, and user interface design.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Salary Info */}
-              {modalDetailTab === 'Salary Info' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <h3 className="box-title">Compensation & Salary Information</h3>
-                    <div className="salary-info-grid">
-                      <div className="salary-box">
-                        <span className="salary-label">Pay Grade</span>
-                        <span className="salary-val">Level 4 — Senior Engineer</span>
-                      </div>
-                      <div className="salary-box">
-                        <span className="salary-label">Base Salary</span>
-                        <span className="salary-val">$110,000 / annum</span>
-                      </div>
-                      <div className="salary-box">
-                        <span className="salary-label">HRA & Allowances</span>
-                        <span className="salary-val">$18,000 / annum</span>
-                      </div>
-                      <div className="salary-box">
-                        <span className="salary-label">Tax Deduction</span>
-                        <span className="salary-val">Standard Corporate Slab</span>
-                      </div>
                     </div>
                   </div>
                 </div>
