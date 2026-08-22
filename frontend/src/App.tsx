@@ -174,6 +174,9 @@ function App() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [detailTab, setDetailTab] = useState<'Resume' | 'Private Info' | 'Salary Info'>('Private Info')
   
+  // Attendance view mode option
+  const [attendanceViewMode, setAttendanceViewMode] = useState<'Day' | 'Overview'>('Day')
+  
   const [searchQuery, setSearchQuery] = useState('')
   const [deptFilter, setDeptFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
@@ -717,7 +720,7 @@ function App() {
           )
         )}
 
-        {/* ==================== TAB 2: ATTENDANCE (WIREFRAME MATCH) ==================== */}
+        {/* ==================== TAB 2: ATTENDANCE (WITH OVERVIEW OPTION) ==================== */}
         {activeTab === 'Attendance' && (
           <div className="attendance-wireframe-layout">
             {/* Top Header Title & Action Tools */}
@@ -742,6 +745,15 @@ function App() {
                 </div>
 
                 <button 
+                  className={`btn-attendance-overview ${attendanceViewMode === 'Overview' ? 'active' : ''}`}
+                  onClick={() => setAttendanceViewMode(attendanceViewMode === 'Overview' ? 'Day' : 'Overview')}
+                  title="Toggle Attendance Overview Metrics"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                  Overview
+                </button>
+
+                <button 
                   className={`btn-attendance-filter ${statusFilter !== 'All' ? 'active' : ''}`}
                   onClick={() => setStatusFilter(statusFilter === 'All' ? 'Absent' : 'All')}
                 >
@@ -756,7 +768,87 @@ function App() {
               </div>
             </div>
 
-            {/* Controls Bar (Date controls + Present/Absent Badges) */}
+            {/* Attendance Overview Option Expanded Panel */}
+            {attendanceViewMode === 'Overview' && (
+              <div className="attendance-overview-expandable-card">
+                <div className="overview-card-header">
+                  <div>
+                    <h3 className="overview-card-title">Attendance Overview & Daily Statistics</h3>
+                    <p className="overview-card-sub">Real-time attendance rate, status breakdown, and staff metrics</p>
+                  </div>
+                  <span className="overview-badge">Live Metrics Overview</span>
+                </div>
+
+                <div className="attendance-metrics-grid">
+                  <div 
+                    className={`metric-card metric-present ${statusFilter === 'Present' ? 'active-metric' : ''}`}
+                    onClick={() => setStatusFilter(statusFilter === 'Present' ? 'All' : 'Present')}
+                  >
+                    <div className="metric-icon-box">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div className="metric-info">
+                      <span className="metric-value">{employees.filter(e => e.status === 'Present').length}</span>
+                      <span className="metric-label">Present Today</span>
+                    </div>
+                  </div>
+
+                  <div 
+                    className={`metric-card metric-absent ${statusFilter === 'Absent' ? 'active-metric' : ''}`}
+                    onClick={() => setStatusFilter(statusFilter === 'Absent' ? 'All' : 'Absent')}
+                  >
+                    <div className="metric-icon-box">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </div>
+                    <div className="metric-info">
+                      <span className="metric-value">{employees.filter(e => e.status === 'Absent').length}</span>
+                      <span className="metric-label">Absent</span>
+                    </div>
+                  </div>
+
+                  <div 
+                    className={`metric-card metric-on-leave ${statusFilter === 'On Leave' ? 'active-metric' : ''}`}
+                    onClick={() => setStatusFilter(statusFilter === 'On Leave' ? 'All' : 'On Leave')}
+                  >
+                    <div className="metric-icon-box">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <div className="metric-info">
+                      <span className="metric-value">{employees.filter(e => e.status === 'On Leave').length}</span>
+                      <span className="metric-label">On Leave</span>
+                    </div>
+                  </div>
+
+                  <div 
+                    className={`metric-card metric-late ${statusFilter === 'Late' ? 'active-metric' : ''}`}
+                    onClick={() => setStatusFilter(statusFilter === 'Late' ? 'All' : 'Late')}
+                  >
+                    <div className="metric-icon-box">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div className="metric-info">
+                      <span className="metric-value">{employees.filter(e => e.status === 'Late').length}</span>
+                      <span className="metric-label">Late Arrival</span>
+                    </div>
+                  </div>
+
+                  <div 
+                    className={`metric-card metric-sick ${statusFilter === 'Sick Leave' ? 'active-metric' : ''}`}
+                    onClick={() => setStatusFilter(statusFilter === 'Sick Leave' ? 'All' : 'Sick Leave')}
+                  >
+                    <div className="metric-icon-box">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    </div>
+                    <div className="metric-info">
+                      <span className="metric-value">{employees.filter(e => e.status === 'Sick Leave').length}</span>
+                      <span className="metric-label">Sick Leave</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Controls Bar (Date controls + Tab toggles + Present/Absent Summary) */}
             <div className="attendance-control-panel">
               <div className="panel-left-controls">
                 <div className="arrow-btn-group">
@@ -769,7 +861,20 @@ function App() {
                   Date ▾
                 </button>
 
-                <button className="ctrl-btn-tab active">Day</button>
+                <div className="view-mode-toggle-group">
+                  <button 
+                    className={`ctrl-btn-tab ${attendanceViewMode === 'Day' ? 'active' : ''}`}
+                    onClick={() => setAttendanceViewMode('Day')}
+                  >
+                    Day
+                  </button>
+                  <button 
+                    className={`ctrl-btn-tab ${attendanceViewMode === 'Overview' ? 'active' : ''}`}
+                    onClick={() => setAttendanceViewMode('Overview')}
+                  >
+                    Overview
+                  </button>
+                </div>
               </div>
 
               <div className="panel-center-date">
