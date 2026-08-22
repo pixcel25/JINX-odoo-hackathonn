@@ -1,55 +1,10 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import './App.css'
+import { EmployeeDetailsModal } from './components/EmployeeDetailsModal'
+import type { Employee } from './components/EmployeeDetailsModal'
 
 type Mode = 'login' | 'signup'
-
-interface AttendanceRecord {
-  date: string
-  status: 'Present' | 'Absent' | 'On Leave' | 'Late' | 'Sick Leave'
-  checkIn: string
-  checkOut: string
-  workHours: string
-}
-
-interface LeaveHistoryItem {
-  id: string
-  leaveType: string
-  startDate: string
-  endDate: string
-  days: number
-  reason: string
-  status: 'Approved' | 'Pending' | 'Refused'
-}
-
-interface Employee {
-  id: string
-  name: string
-  title: string
-  empId: string
-  dept: string
-  status: 'Present' | 'Absent' | 'On Leave' | 'Late' | 'Sick Leave'
-  email: string
-  phone: string
-  company: string
-  manager: string
-  location: string
-  checkIn?: string
-  checkOut?: string
-  workHours?: string
-  about: string
-  jobLove: string
-  hobbies: string
-  skills: string[]
-  certifications: string[]
-  avatarUrl?: string
-  initials?: string
-  paidLeaveAvailable?: number
-  sickLeaveAvailable?: number
-  casualLeaveAvailable?: number
-  attendanceHistory?: AttendanceRecord[]
-  leaveHistory?: LeaveHistoryItem[]
-}
 
 interface TimeOffRequest {
   id: string
@@ -301,7 +256,6 @@ function App() {
   
   // Employee Popup Modal State
   const [profileModalEmployee, setProfileModalEmployee] = useState<Employee | null>(null)
-  const [modalDetailTab, setModalDetailTab] = useState<'Private Info' | 'Attendance History' | 'Leave & Time Off' | 'Resume' | 'Salary Info'>('Private Info')
 
   // Time Off view state & requests
   const [timeOffSubTab, setTimeOffSubTab] = useState<'Time Off' | 'Allocation'>('Time Off')
@@ -311,10 +265,6 @@ function App() {
   const [deptFilter, setDeptFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [newSkillInput, setNewSkillInput] = useState('')
-  const [newCertInput, setNewCertInput] = useState('')
-  const [isAddingSkill, setIsAddingSkill] = useState(false)
-  const [isAddingCert, setIsAddingCert] = useState(false)
 
   // New Employee form state
   const [newEmp, setNewEmp] = useState<{
@@ -334,7 +284,6 @@ function App() {
   // Open employee details modal popup handler
   const openEmployeePopup = (emp: Employee) => {
     setProfileModalEmployee(emp)
-    setModalDetailTab('Private Info')
   }
 
   // Sign in handler
@@ -380,30 +329,6 @@ function App() {
     openEmployeePopup(created)
     setNewEmp({ name: '', title: '', empId: '', dept: 'Engineering', status: 'Present' })
     setIsModalOpen(false)
-  }
-
-  const handleAddSkill = () => {
-    if (!newSkillInput.trim() || !profileModalEmployee) return
-    const updated = {
-      ...profileModalEmployee,
-      skills: [...profileModalEmployee.skills, newSkillInput.trim()]
-    }
-    setProfileModalEmployee(updated)
-    setEmployees(employees.map(e => e.id === updated.id ? updated : e))
-    setNewSkillInput('')
-    setIsAddingSkill(false)
-  }
-
-  const handleAddCert = () => {
-    if (!newCertInput.trim() || !profileModalEmployee) return
-    const updated = {
-      ...profileModalEmployee,
-      certifications: [...profileModalEmployee.certifications, newCertInput.trim()]
-    }
-    setProfileModalEmployee(updated)
-    setEmployees(employees.map(e => e.id === updated.id ? updated : e))
-    setNewCertInput('')
-    setIsAddingCert(false)
   }
 
   // Time off actions
@@ -959,384 +884,12 @@ function App() {
         )}
       </main>
 
-      {/* Employee Details Popup Modal Overlay */}
-      {profileModalEmployee && (
-        <div className="modal-backdrop" onClick={() => setProfileModalEmployee(null)}>
-          <div className="modal-content profile-popup-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="popup-title-wrap">
-                <h2>Employee Details & Track Record</h2>
-                <span className="popup-emp-id">ID: {profileModalEmployee.empId}</span>
-              </div>
-              <button className="close-btn" onClick={() => setProfileModalEmployee(null)}>✕</button>
-            </div>
-
-            <div className="modal-body-scrollable">
-              {/* Banner Header Card */}
-              <div className="profile-banner-box">
-                <div className="profile-avatar-pencil-wrap">
-                  {profileModalEmployee.avatarUrl ? (
-                    <img src={profileModalEmployee.avatarUrl} alt={profileModalEmployee.name} className="profile-circle-avatar" />
-                  ) : (
-                    <div className="profile-circle-initials">{profileModalEmployee.initials || 'EP'}</div>
-                  )}
-                  <button className="avatar-edit-pencil" title="Edit Profile Photo">✎</button>
-                </div>
-
-                {/* Main Fields Grid */}
-                <div className="profile-fields-grid">
-                  <div className="fields-col">
-                    <div className="name-field-row">
-                      <h2 className="profile-name-heading">{profileModalEmployee.name}</h2>
-                      <button className="inline-pencil-btn" title="Edit Name">✎</button>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Login ID</span>
-                      <span className="field-val-line">{profileModalEmployee.empId}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Email</span>
-                      <span className="field-val-line">{profileModalEmployee.email}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Mobile</span>
-                      <span className="field-val-line">{profileModalEmployee.phone}</span>
-                    </div>
-                  </div>
-
-                  <div className="fields-col">
-                    <div className="field-line-item margin-top-spacer">
-                      <span className="field-key">Company</span>
-                      <span className="field-val-line">{profileModalEmployee.company}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Department</span>
-                      <span className="field-val-line">{profileModalEmployee.dept}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Manager</span>
-                      <span className="field-val-line">{profileModalEmployee.manager}</span>
-                    </div>
-
-                    <div className="field-line-item">
-                      <span className="field-key">Location</span>
-                      <span className="field-val-line">{profileModalEmployee.location}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Profile Inner Tabs Bar (All 5 Subtabs) */}
-              <div className="wireframe-tabs-bar">
-                <button 
-                  className={`wireframe-tab-btn ${modalDetailTab === 'Private Info' ? 'active' : ''}`}
-                  onClick={() => setModalDetailTab('Private Info')}
-                >
-                  Private Info
-                </button>
-                <button 
-                  className={`wireframe-tab-btn ${modalDetailTab === 'Attendance History' ? 'active' : ''}`}
-                  onClick={() => setModalDetailTab('Attendance History')}
-                >
-                  Attendance Track Record
-                </button>
-                <button 
-                  className={`wireframe-tab-btn ${modalDetailTab === 'Leave & Time Off' ? 'active' : ''}`}
-                  onClick={() => setModalDetailTab('Leave & Time Off')}
-                >
-                  Leaves & Time Off
-                </button>
-                <button 
-                  className={`wireframe-tab-btn ${modalDetailTab === 'Resume' ? 'active' : ''}`}
-                  onClick={() => setModalDetailTab('Resume')}
-                >
-                  Resume
-                </button>
-                <button 
-                  className={`wireframe-tab-btn ${modalDetailTab === 'Salary Info' ? 'active' : ''}`}
-                  onClick={() => setModalDetailTab('Salary Info')}
-                >
-                  Salary Info
-                </button>
-              </div>
-
-              {/* TAB CONTENT: Private Info */}
-              {modalDetailTab === 'Private Info' && (
-                <div className="wireframe-tab-grid">
-                  <div className="tab-left-col">
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">About</h3>
-                        <button className="card-pencil-btn" title="Edit About">✎</button>
-                      </div>
-                      <p className="box-text-content">{profileModalEmployee.about}</p>
-                    </div>
-
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">What I love about my job</h3>
-                        <button className="card-pencil-btn" title="Edit Job Interest">✎</button>
-                      </div>
-                      <p className="box-text-content">{profileModalEmployee.jobLove}</p>
-                    </div>
-
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">My interests and hobbies</h3>
-                        <button className="card-pencil-btn" title="Edit Hobbies">✎</button>
-                      </div>
-                      <p className="box-text-content">{profileModalEmployee.hobbies}</p>
-                    </div>
-                  </div>
-
-                  <div className="tab-right-col">
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">Skills</h3>
-                      </div>
-                      
-                      <div className="tags-flex-wrap">
-                        {profileModalEmployee.skills.map((skill, index) => (
-                          <span key={index} className="skill-pill-tag">{skill}</span>
-                        ))}
-                      </div>
-
-                      {isAddingSkill ? (
-                        <div className="inline-add-input-wrap">
-                          <input 
-                            type="text" 
-                            placeholder="Enter skill name..." 
-                            value={newSkillInput}
-                            onChange={(e) => setNewSkillInput(e.target.value)}
-                            className="inline-input"
-                          />
-                          <button className="btn-inline-save" onClick={handleAddSkill}>Save</button>
-                          <button className="btn-inline-cancel" onClick={() => setIsAddingSkill(false)}>✕</button>
-                        </div>
-                      ) : (
-                        <button className="btn-add-item-action" onClick={() => setIsAddingSkill(true)}>
-                          + Add Skills
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="content-card-box">
-                      <div className="card-header-line">
-                        <h3 className="box-title">Certification</h3>
-                      </div>
-
-                      <div className="cert-list-wrap">
-                        {profileModalEmployee.certifications.map((cert, index) => (
-                          <div key={index} className="cert-item-row">
-                            <span className="cert-badge-dot"></span>
-                            <span className="cert-title">{cert}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {isAddingCert ? (
-                        <div className="inline-add-input-wrap">
-                          <input 
-                            type="text" 
-                            placeholder="Enter certification..." 
-                            value={newCertInput}
-                            onChange={(e) => setNewCertInput(e.target.value)}
-                            className="inline-input"
-                          />
-                          <button className="btn-inline-save" onClick={handleAddCert}>Save</button>
-                          <button className="btn-inline-cancel" onClick={() => setIsAddingCert(false)}>✕</button>
-                        </div>
-                      ) : (
-                        <button className="btn-add-item-action" onClick={() => setIsAddingCert(true)}>
-                          + Add Certification
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Attendance Track Record */}
-              {modalDetailTab === 'Attendance History' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <div className="card-header-line">
-                      <h3 className="box-title">Attendance Track Record</h3>
-                      <span className="overview-badge">Historical Attendance Log</span>
-                    </div>
-
-                    <div className="attendance-track-summary-grid">
-                      <div className="track-summary-box">
-                        <span className="track-val">18 Days</span>
-                        <span className="track-lbl">Present (This Month)</span>
-                      </div>
-                      <div className="track-summary-box">
-                        <span className="track-val">1 Day</span>
-                        <span className="track-lbl">Late Arrivals</span>
-                      </div>
-                      <div className="track-summary-box">
-                        <span className="track-val">1 Day</span>
-                        <span className="track-lbl">Approved Absences</span>
-                      </div>
-                    </div>
-
-                    <div className="table-wrapper-box">
-                      <table className="profile-record-table">
-                        <thead>
-                          <tr>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Check In</th>
-                            <th>Check Out</th>
-                            <th>Work Hours</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(profileModalEmployee.attendanceHistory || [
-                            { date: '22 Oct 2025', status: profileModalEmployee.status, checkIn: profileModalEmployee.checkIn || '10:00 AM', checkOut: profileModalEmployee.checkOut || '19:00 PM', workHours: profileModalEmployee.workHours || '09:00' }
-                          ]).map((log, i) => (
-                            <tr key={i}>
-                              <td><strong>{log.date}</strong></td>
-                              <td>
-                                <span className={`status-pill-wireframe ${log.status === 'Present' ? 'pill-present' : 'pill-absent'}`}>
-                                  {log.status}
-                                </span>
-                              </td>
-                              <td>{log.checkIn}</td>
-                              <td>{log.checkOut}</td>
-                              <td>{log.workHours}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Leaves & Time Off */}
-              {modalDetailTab === 'Leave & Time Off' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <div className="card-header-line">
-                      <h3 className="box-title">Available Leaves & Leave History</h3>
-                      <span className="overview-badge">Leave Management</span>
-                    </div>
-
-                    <div className="timeoff-balance-cards-grid margin-bottom-spacer">
-                      <div className="balance-card balance-paid">
-                        <span className="balance-title">Paid Time Off</span>
-                        <span className="balance-days">{profileModalEmployee.paidLeaveAvailable ?? 24} Days Available</span>
-                      </div>
-                      <div className="balance-card balance-sick">
-                        <span className="balance-title">Sick Time Off</span>
-                        <span className="balance-days">{profileModalEmployee.sickLeaveAvailable ?? 7} Days Available</span>
-                      </div>
-                      <div className="balance-card balance-casual">
-                        <span className="balance-title">Casual Leave</span>
-                        <span className="balance-days">{profileModalEmployee.casualLeaveAvailable ?? 5} Days Available</span>
-                      </div>
-                    </div>
-
-                    <h4 className="section-subheading">Previous Leaves Taken & Reasons</h4>
-                    <div className="table-wrapper-box">
-                      <table className="profile-record-table">
-                        <thead>
-                          <tr>
-                            <th>Leave Type</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Duration</th>
-                            <th>Reason</th>
-                            <th>Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(profileModalEmployee.leaveHistory && profileModalEmployee.leaveHistory.length > 0) ? (
-                            profileModalEmployee.leaveHistory.map(lh => (
-                              <tr key={lh.id}>
-                                <td className="type-blue-cell">{lh.leaveType}</td>
-                                <td>{lh.startDate}</td>
-                                <td>{lh.endDate}</td>
-                                <td>{lh.days} Day{lh.days > 1 ? 's' : ''}</td>
-                                <td className="reason-text-cell">{lh.reason}</td>
-                                <td>
-                                  <span className={`timeoff-status-badge status-${lh.status.toLowerCase()}`}>
-                                    {lh.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan={6} style={{ textAlign: 'center', color: '#64748b', padding: '24px' }}>
-                                No previous leave records found for {profileModalEmployee.name}.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Resume */}
-              {modalDetailTab === 'Resume' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <h3 className="box-title">Work Experience & Education</h3>
-                    <div className="resume-section">
-                      <div className="resume-item">
-                        <h4>Senior Developer — DayFlow Solutions</h4>
-                        <span className="resume-period">2023 - Present</span>
-                        <p>Building high-throughput full-stack enterprise web modules and leading backend API integrations.</p>
-                      </div>
-                      <div className="resume-item">
-                        <h4>{profileModalEmployee.title}</h4>
-                        <span className="resume-period">Graduated 2022</span>
-                        <p>Focused on software architecture, algorithms, database optimization, and user interface design.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB CONTENT: Salary Info */}
-              {modalDetailTab === 'Salary Info' && (
-                <div className="wireframe-single-card">
-                  <div className="content-card-box">
-                    <h3 className="box-title">Compensation & Salary Information</h3>
-                    <div className="salary-info-grid">
-                      <div className="salary-box">
-                        <span className="salary-label">Pay Grade</span>
-                        <span className="salary-val">Level 4 — Senior Engineer</span>
-                      </div>
-                      <div className="salary-box">
-                        <span className="salary-label">Base Salary</span>
-                        <span className="salary-val">$110,000 / annum</span>
-                      </div>
-                      <div className="salary-box">
-                        <span className="salary-label">HRA & Allowances</span>
-                        <span className="salary-val">$18,000 / annum</span>
-                      </div>
-                      <div className="salary-box">
-                        <span className="salary-label">Tax Deduction</span>
-                        <span className="salary-val">Standard Corporate Slab</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Employee Details Popup Modal Overlay Component */}
+      <EmployeeDetailsModal 
+        employee={profileModalEmployee}
+        onClose={() => setProfileModalEmployee(null)}
+        showAllTabs={activeTab !== 'Time Off'}
+      />
 
       {/* New Employee Modal */}
       {isModalOpen && (
