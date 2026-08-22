@@ -175,7 +175,7 @@ function App() {
   const [detailTab, setDetailTab] = useState<'Resume' | 'Private Info' | 'Salary Info'>('Private Info')
   
   // Attendance view mode option
-  const [attendanceViewMode, setAttendanceViewMode] = useState<'Day' | 'Overview'>('Day')
+  const [attendanceViewMode, setAttendanceViewMode] = useState<'Day' | 'Overview'>('Overview')
   
   const [searchQuery, setSearchQuery] = useState('')
   const [deptFilter, setDeptFilter] = useState('All')
@@ -720,10 +720,10 @@ function App() {
           )
         )}
 
-        {/* ==================== TAB 2: ATTENDANCE (WITH OVERVIEW OPTION) ==================== */}
+        {/* ==================== TAB 2: ATTENDANCE ==================== */}
         {activeTab === 'Attendance' && (
           <div className="attendance-wireframe-layout">
-            {/* Top Header Title & Action Tools */}
+            {/* Top Header Title & Employee Search + Action Tools */}
             <div className="attendance-header-bar">
               <div className="attendance-title-wrap">
                 <h1 className="attendance-main-title">Attendance</h1>
@@ -745,15 +745,6 @@ function App() {
                 </div>
 
                 <button 
-                  className={`btn-attendance-overview ${attendanceViewMode === 'Overview' ? 'active' : ''}`}
-                  onClick={() => setAttendanceViewMode(attendanceViewMode === 'Overview' ? 'Day' : 'Overview')}
-                  title="Toggle Attendance Overview Metrics"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                  Overview
-                </button>
-
-                <button 
                   className={`btn-attendance-filter ${statusFilter !== 'All' ? 'active' : ''}`}
                   onClick={() => setStatusFilter(statusFilter === 'All' ? 'Absent' : 'All')}
                 >
@@ -768,7 +759,53 @@ function App() {
               </div>
             </div>
 
-            {/* Attendance Overview Option Expanded Panel */}
+            {/* Controls Bar (Date controls + View tabs + Present/Absent Summary) */}
+            <div className="attendance-control-panel">
+              <div className="panel-left-controls">
+                <div className="arrow-btn-group">
+                  <button className="ctrl-btn-square">‹</button>
+                  <button className="ctrl-btn-square">›</button>
+                </div>
+
+                <button className="ctrl-btn-dropdown">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Date ▾
+                </button>
+
+                <div className="view-mode-toggle-group">
+                  <button 
+                    className={`ctrl-btn-tab ${attendanceViewMode === 'Day' ? 'active' : ''}`}
+                    onClick={() => setAttendanceViewMode('Day')}
+                  >
+                    Day
+                  </button>
+                  <button 
+                    className={`ctrl-btn-tab ${attendanceViewMode === 'Overview' ? 'active' : ''}`}
+                    onClick={() => setAttendanceViewMode('Overview')}
+                  >
+                    Overview
+                  </button>
+                </div>
+              </div>
+
+              <div className="panel-center-date">
+                <div className="date-display-pill">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <span>22 October 2025</span>
+                </div>
+              </div>
+
+              <div className="panel-right-summary">
+                <span className="summary-pill present">
+                  <span className="dot present-dot"></span> Present ({employees.filter(e => e.status === 'Present').length})
+                </span>
+                <span className="summary-pill absent">
+                  <span className="dot absent-dot"></span> Absent ({employees.filter(e => e.status === 'Absent' || e.status === 'On Leave' || e.status === 'Sick Leave').length})
+                </span>
+              </div>
+            </div>
+
+            {/* Attendance Overview Metrics Panel (PLACED BELOW DATE/CONTROL BAR) */}
             {attendanceViewMode === 'Overview' && (
               <div className="attendance-overview-expandable-card">
                 <div className="overview-card-header">
@@ -847,52 +884,6 @@ function App() {
                 </div>
               </div>
             )}
-
-            {/* Controls Bar (Date controls + Tab toggles + Present/Absent Summary) */}
-            <div className="attendance-control-panel">
-              <div className="panel-left-controls">
-                <div className="arrow-btn-group">
-                  <button className="ctrl-btn-square">‹</button>
-                  <button className="ctrl-btn-square">›</button>
-                </div>
-
-                <button className="ctrl-btn-dropdown">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  Date ▾
-                </button>
-
-                <div className="view-mode-toggle-group">
-                  <button 
-                    className={`ctrl-btn-tab ${attendanceViewMode === 'Day' ? 'active' : ''}`}
-                    onClick={() => setAttendanceViewMode('Day')}
-                  >
-                    Day
-                  </button>
-                  <button 
-                    className={`ctrl-btn-tab ${attendanceViewMode === 'Overview' ? 'active' : ''}`}
-                    onClick={() => setAttendanceViewMode('Overview')}
-                  >
-                    Overview
-                  </button>
-                </div>
-              </div>
-
-              <div className="panel-center-date">
-                <div className="date-display-pill">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  <span>22 October 2025</span>
-                </div>
-              </div>
-
-              <div className="panel-right-summary">
-                <span className="summary-pill present">
-                  <span className="dot present-dot"></span> Present ({employees.filter(e => e.status === 'Present').length})
-                </span>
-                <span className="summary-pill absent">
-                  <span className="dot absent-dot"></span> Absent ({employees.filter(e => e.status === 'Absent' || e.status === 'On Leave' || e.status === 'Sick Leave').length})
-                </span>
-              </div>
-            </div>
 
             {/* Attendance Wireframe Table Card */}
             <div className="attendance-wireframe-card">
