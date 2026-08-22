@@ -301,9 +301,6 @@ function App() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [detailTab, setDetailTab] = useState<'Private Info' | 'Attendance History' | 'Leave & Time Off' | 'Resume' | 'Salary Info'>('Private Info')
   
-  // Attendance view mode option
-  const [attendanceViewMode, setAttendanceViewMode] = useState<'Day' | 'Overview'>('Overview')
-
   // Time Off view state & requests
   const [timeOffSubTab, setTimeOffSubTab] = useState<'Time Off' | 'Allocation'>('Time Off')
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>(INITIAL_TIME_OFF_REQUESTS)
@@ -1098,21 +1095,6 @@ function App() {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   Date ▾
                 </button>
-
-                <div className="view-mode-toggle-group">
-                  <button 
-                    className={`ctrl-btn-tab ${attendanceViewMode === 'Day' ? 'active' : ''}`}
-                    onClick={() => setAttendanceViewMode('Day')}
-                  >
-                    Day
-                  </button>
-                  <button 
-                    className={`ctrl-btn-tab ${attendanceViewMode === 'Overview' ? 'active' : ''}`}
-                    onClick={() => setAttendanceViewMode('Overview')}
-                  >
-                    Overview
-                  </button>
-                </div>
               </div>
 
               <div className="panel-center-date">
@@ -1132,85 +1114,83 @@ function App() {
               </div>
             </div>
 
-            {/* Attendance Overview Metrics Panel (PLACED BELOW DATE/CONTROL BAR) */}
-            {attendanceViewMode === 'Overview' && (
-              <div className="attendance-overview-expandable-card">
-                <div className="overview-card-header">
-                  <div>
-                    <h3 className="overview-card-title">Attendance Overview & Daily Statistics</h3>
-                    <p className="overview-card-sub">Real-time attendance rate, status breakdown, and staff metrics</p>
+            {/* Attendance Overview Metrics Panel (PERMANENTLY VISIBLE BELOW DATE BAR) */}
+            <div className="attendance-overview-expandable-card">
+              <div className="overview-card-header">
+                <div>
+                  <h3 className="overview-card-title">Attendance Overview & Daily Statistics</h3>
+                  <p className="overview-card-sub">Real-time attendance rate, status breakdown, and staff metrics</p>
+                </div>
+                <span className="overview-badge">Live Metrics Overview</span>
+              </div>
+
+              <div className="attendance-metrics-grid">
+                <div 
+                  className={`metric-card metric-present ${statusFilter === 'Present' ? 'active-metric' : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'Present' ? 'All' : 'Present')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                   </div>
-                  <span className="overview-badge">Live Metrics Overview</span>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'Present').length}</span>
+                    <span className="metric-label">Present Today</span>
+                  </div>
                 </div>
 
-                <div className="attendance-metrics-grid">
-                  <div 
-                    className={`metric-card metric-present ${statusFilter === 'Present' ? 'active-metric' : ''}`}
-                    onClick={() => setStatusFilter(statusFilter === 'Present' ? 'All' : 'Present')}
-                  >
-                    <div className="metric-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    </div>
-                    <div className="metric-info">
-                      <span className="metric-value">{employees.filter(e => e.status === 'Present').length}</span>
-                      <span className="metric-label">Present Today</span>
-                    </div>
+                <div 
+                  className={`metric-card metric-absent ${statusFilter === 'Absent' ? 'active-metric' : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'Absent' ? 'All' : 'Absent')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </div>
-
-                  <div 
-                    className={`metric-card metric-absent ${statusFilter === 'Absent' ? 'active-metric' : ''}`}
-                    onClick={() => setStatusFilter(statusFilter === 'Absent' ? 'All' : 'Absent')}
-                  >
-                    <div className="metric-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </div>
-                    <div className="metric-info">
-                      <span className="metric-value">{employees.filter(e => e.status === 'Absent').length}</span>
-                      <span className="metric-label">Absent</span>
-                    </div>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'Absent').length}</span>
+                    <span className="metric-label">Absent</span>
                   </div>
+                </div>
 
-                  <div 
-                    className={`metric-card metric-on-leave ${statusFilter === 'On Leave' ? 'active-metric' : ''}`}
-                    onClick={() => setStatusFilter(statusFilter === 'On Leave' ? 'All' : 'On Leave')}
-                  >
-                    <div className="metric-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    </div>
-                    <div className="metric-info">
-                      <span className="metric-value">{employees.filter(e => e.status === 'On Leave').length}</span>
-                      <span className="metric-label">On Leave</span>
-                    </div>
+                <div 
+                  className={`metric-card metric-on-leave ${statusFilter === 'On Leave' ? 'active-metric' : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'On Leave' ? 'All' : 'On Leave')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   </div>
-
-                  <div 
-                    className={`metric-card metric-late ${statusFilter === 'Late' ? 'active-metric' : ''}`}
-                    onClick={() => setStatusFilter(statusFilter === 'Late' ? 'All' : 'Late')}
-                  >
-                    <div className="metric-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </div>
-                    <div className="metric-info">
-                      <span className="metric-value">{employees.filter(e => e.status === 'Late').length}</span>
-                      <span className="metric-label">Late Arrival</span>
-                    </div>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'On Leave').length}</span>
+                    <span className="metric-label">On Leave</span>
                   </div>
+                </div>
 
-                  <div 
-                    className={`metric-card metric-sick ${statusFilter === 'Sick Leave' ? 'active-metric' : ''}`}
-                    onClick={() => setStatusFilter(statusFilter === 'Sick Leave' ? 'All' : 'Sick Leave')}
-                  >
-                    <div className="metric-icon-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                    </div>
-                    <div className="metric-info">
-                      <span className="metric-value">{employees.filter(e => e.status === 'Sick Leave').length}</span>
-                      <span className="metric-label">Sick Leave</span>
-                    </div>
+                <div 
+                  className={`metric-card metric-late ${statusFilter === 'Late' ? 'active-metric' : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'Late' ? 'All' : 'Late')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  </div>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'Late').length}</span>
+                    <span className="metric-label">Late Arrival</span>
+                  </div>
+                </div>
+
+                <div 
+                  className={`metric-card metric-sick ${statusFilter === 'Sick Leave' ? 'active-metric' : ''}`}
+                  onClick={() => setStatusFilter(statusFilter === 'Sick Leave' ? 'All' : 'Sick Leave')}
+                >
+                  <div className="metric-icon-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                  </div>
+                  <div className="metric-info">
+                    <span className="metric-value">{employees.filter(e => e.status === 'Sick Leave').length}</span>
+                    <span className="metric-label">Sick Leave</span>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
 
             {/* Attendance Wireframe Table Card */}
             <div className="attendance-wireframe-card">
