@@ -230,12 +230,6 @@ function App() {
           </div>
         </div>
 
-        <div className="sidebar-action-wrap">
-          <button className="btn-sidebar-new" onClick={() => setIsModalOpen(true)}>
-            <span>+</span> New Request
-          </button>
-        </div>
-
         <nav className="sidebar-nav">
           <button 
             className={`nav-item ${activeTab === 'Dashboard' ? 'active' : ''}`}
