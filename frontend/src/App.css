@@ -2102,22 +2102,23 @@ input:focus {
 }
 
 /* ==================== POPUP MODAL ENHANCEMENTS ==================== */
-.profile-popup-modal {
-  width: 90%;
-  max-width: 980px;
-  max-height: 90vh;
+.modal-content.profile-popup-modal {
+  width: 92vw !important;
+  max-width: 1040px !important;
+  max-height: 88vh;
   display: flex;
   flex-direction: column;
   padding: 0;
   overflow: hidden;
   border-radius: 16px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
 }
 
 .profile-popup-modal .modal-header {
-  padding: 20px 24px;
+  padding: 18px 24px;
   border-bottom: 1px solid #e2e8f0;
   background-color: #ffffff;
+  margin-bottom: 0;
 }
 
 .popup-title-wrap {
@@ -2130,7 +2131,6 @@ input:focus {
   font-size: 18px;
   font-weight: 700;
   color: #0f172a;
-
 }
 
 .popup-emp-id {
@@ -2145,7 +2145,7 @@ input:focus {
 .modal-body-scrollable {
   padding: 24px;
   overflow-y: auto;
-  max-height: calc(90vh - 75px);
+  max-height: calc(88vh - 70px);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -2154,14 +2154,25 @@ input:focus {
 
 .profile-popup-modal .profile-banner-box {
   background-color: #ffffff;
+  margin-bottom: 0;
 }
 
 .profile-popup-modal .wireframe-tabs-bar {
   background-color: #ffffff;
-  padding: 6px;
+  padding: 6px 12px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
 }
+
+.profile-popup-modal .wireframe-tab-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 
 
 
