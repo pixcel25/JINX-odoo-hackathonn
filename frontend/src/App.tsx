@@ -5,6 +5,8 @@ import { EmployeeDetailsModal } from './components/EmployeeDetailsModal'
 import type { Employee } from './components/EmployeeDetailsModal'
 import { DEFAULT_SALARY_STRUCTURE } from './data/salary'
 import type { SalaryLog, SalaryStructure } from './data/salary'
+import { DEFAULT_PRIVATE_INFO } from './data/privateInfo'
+import type { PrivateInfo } from './data/privateInfo'
 import { LeaveApplicationModal } from './components/LeaveApplicationModal'
 import employeeData from './data/employees.json'
 import timeOffRequestData from './data/timeOffRequests.json'
@@ -332,6 +334,7 @@ function App() {
   })
   const [salarySaving, setSalarySaving] = useState(false)
   const [salaryError, setSalaryError] = useState('')
+  const [privateInfoByEmployee, setPrivateInfoByEmployee] = useState<Record<string, PrivateInfo>>({})
 
   useEffect(() => {
     localStorage.setItem('dayflow-salary-structures', JSON.stringify(salaryByEmployee))
@@ -408,6 +411,10 @@ function App() {
     } finally {
       setSalarySaving(false)
     }
+  }
+
+  const handleSavePrivateInfo = (employee: Employee, privateInfo: PrivateInfo) => {
+    setPrivateInfoByEmployee((current) => ({ ...current, [employee.id]: privateInfo }))
   }
 
   const handleAuthSubmit = async (e: FormEvent) => {
@@ -1109,6 +1116,8 @@ function App() {
         onSaveSalary={profileModalEmployee ? (salary) => handleSaveSalary(profileModalEmployee, salary) : undefined}
         salarySaving={salarySaving}
         salaryError={salaryError}
+        privateInfo={profileModalEmployee ? privateInfoByEmployee[profileModalEmployee.id] ?? DEFAULT_PRIVATE_INFO : undefined}
+        onSavePrivateInfo={profileModalEmployee ? (privateInfo) => handleSavePrivateInfo(profileModalEmployee, privateInfo) : undefined}
       />
 
       {selectedLeaveApplication && leaveApplicationEmployee && (
