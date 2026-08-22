@@ -1,35 +1,33 @@
-import { AttendanceRecord } from "../models";
+import { apiRequest } from "../../../auth/authService";
+import { AttendanceRecord, AttendanceSummary } from "../models";
 
-export const todayAttendance: AttendanceRecord | null = null;
+type AttendanceResponse = {
+  records: AttendanceRecord[];
+  summary: AttendanceSummary;
+};
 
-export async function checkInAttendance(
-  hasRegisteredToday: boolean,
-): Promise<AttendanceRecord> {
-  if (hasRegisteredToday) {
-    throw new Error("Attendance has already been registered for today.");
-  }
+type AttendanceRecordResponse = {
+  record: AttendanceRecord;
+};
 
-  return {
-    id: "attendance-today",
-    date: "23 Aug",
-    checkIn: "09:07 AM",
-    checkOut: "",
-    duration: "4h 32m",
-    status: "present",
-  };
+export async function getAttendance(token: string): Promise<AttendanceResponse> {
+  return apiRequest<AttendanceResponse>("/hr/attendance/", token);
 }
 
-export async function checkOutAttendance(isCheckedIn: boolean): Promise<AttendanceRecord> {
-  if (!isCheckedIn) {
-    throw new Error("This attendance day has already been checked out.");
-  }
+export async function checkInAttendance(token: string): Promise<AttendanceRecord> {
+  const response = await apiRequest<AttendanceRecordResponse>(
+    "/hr/attendance/check-in/",
+    token,
+    { method: "POST", body: JSON.stringify({}) },
+  );
+  return response.record;
+}
 
-  return {
-    id: "attendance-today",
-    date: "23 Aug",
-    checkIn: "09:07 AM",
-    checkOut: "05:41 PM",
-    duration: "8h 34m",
-    status: "present",
-  };
+export async function checkOutAttendance(token: string): Promise<AttendanceRecord> {
+  const response = await apiRequest<AttendanceRecordResponse>(
+    "/hr/attendance/check-out/",
+    token,
+    { method: "POST", body: JSON.stringify({}) },
+  );
+  return response.record;
 }

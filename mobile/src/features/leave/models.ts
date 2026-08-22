@@ -19,4 +19,7 @@ export type ExistingLeave = {
 export type LeaveRequest = LeaveRequestFormValues & {
   id: string;
   status: LeaveStatus;
+  timeOffType?: string;
+  days?: number;
+  reviewerComment?: string;
 };

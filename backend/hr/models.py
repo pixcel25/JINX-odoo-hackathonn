@@ -58,6 +58,7 @@ class LeaveRequest(models.Model):
     start_date = models.DateField()
     end_date = models.DateField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    reason = models.TextField(blank=True)
     reviewer_comment = models.TextField(blank=True)
 
     class Meta:
@@ -71,6 +72,11 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
+    title = models.CharField(max_length=150, blank=True)
+    department = models.CharField(max_length=100, blank=True)
+    company = models.CharField(max_length=200, blank=True)
+    manager = models.CharField(max_length=150, blank=True)
+    location = models.CharField(max_length=150, blank=True)
     phone = models.CharField(max_length=30, blank=True)
     address = models.TextField(blank=True)
     avatar_url = models.URLField(max_length=500, blank=True)
@@ -84,6 +90,7 @@ class UserProfile(models.Model):
 
 class PayrollDetails(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='payroll_details')
+    pay_grade = models.CharField(max_length=100, blank=True)
     base_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     allowances = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     deductions = models.DecimalField(max_digits=12, decimal_places=2, default=0)

@@ -1,19 +1,36 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import type { Employee } from './src/auth/authService';
+import { useEffect, useState } from 'react';
 import { HrmsApp } from './src/application/HrmsApp';
+import { clearSession, loadSession } from './src/auth/authService';
+import type { Employee } from './src/auth/authService';
 import { LandingScreen, LoginScreen } from './src/screens/AuthScreens';
 
 export default function App() {
-  const [screen, setScreen] = useState<'landing' | 'login' | 'app'>('landing');
+  const [screen, setScreen] = useState<'landing' | 'login' | 'app'>('login');
   const [employee, setEmployee] = useState<Employee | null>(null);
+  const [isRestoringSession, setIsRestoringSession] = useState(true);
+
+  useEffect(() => {
+    loadSession()
+      .then((storedEmployee) => {
+        if (storedEmployee) {
+          setEmployee(storedEmployee);
+          setScreen('app');
+        }
+      })
+      .finally(() => setIsRestoringSession(false));
+  }, []);
+
+  if (isRestoringSession) {
+    return <StatusBar style="dark" />;
+  }
 
   if (screen === 'login') {
     return (
       <>
         <LoginScreen
-          onAuthenticated={(authenticatedEmployee) => {
-            setEmployee(authenticatedEmployee);
+          onAuthenticated={(signedInEmployee) => {
+            setEmployee(signedInEmployee);
             setScreen('app');
           }}
           onBack={() => setScreen('landing')}
@@ -23,8 +40,17 @@ export default function App() {
     );
   }
 
-  if (screen === 'app') {
-    return employee ? <HrmsApp employee={employee} /> : null;
+  if (screen === 'app' && employee) {
+    return (
+      <HrmsApp
+        employee={employee}
+        onSignOut={async () => {
+          await clearSession();
+          setEmployee(null);
+          setScreen('login');
+        }}
+      />
+    );
   }
 
   return (
