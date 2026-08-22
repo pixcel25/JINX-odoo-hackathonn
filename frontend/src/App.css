@@ -1836,6 +1836,17 @@ input:focus {
   border-bottom: none;
 }
 
+.timeoff-wireframe-table th:nth-child(1),
+.timeoff-wireframe-table td:nth-child(1) { width: 22%; }
+.timeoff-wireframe-table th:nth-child(2),
+.timeoff-wireframe-table td:nth-child(2) { width: 18%; }
+.timeoff-wireframe-table th:nth-child(3),
+.timeoff-wireframe-table td:nth-child(3) { width: 18%; }
+.timeoff-wireframe-table th:nth-child(4),
+.timeoff-wireframe-table td:nth-child(4) { width: 20%; }
+.timeoff-wireframe-table th:nth-child(5),
+.timeoff-wireframe-table td:nth-child(5) { width: 22%; }
+
 .emp-name-cell {
   font-weight: 600;
   color: #0f172a;
@@ -1873,6 +1884,7 @@ input:focus {
 .timeoff-status-cell-wrap {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 14px;
 }
 
@@ -1923,5 +1935,6 @@ input:focus {
   opacity: 0.88;
   transform: scale(1.05);
 }
+
 
 
