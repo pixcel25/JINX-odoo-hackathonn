@@ -4,6 +4,24 @@ import './App.css'
 
 type Mode = 'login' | 'signup'
 
+interface AttendanceRecord {
+  date: string
+  status: 'Present' | 'Absent' | 'On Leave' | 'Late' | 'Sick Leave'
+  checkIn: string
+  checkOut: string
+  workHours: string
+}
+
+interface LeaveHistoryItem {
+  id: string
+  leaveType: string
+  startDate: string
+  endDate: string
+  days: number
+  reason: string
+  status: 'Approved' | 'Pending' | 'Refused'
+}
+
 interface Employee {
   id: string
   name: string
@@ -26,6 +44,11 @@ interface Employee {
   certifications: string[]
   avatarUrl?: string
   initials?: string
+  paidLeaveAvailable?: number
+  sickLeaveAvailable?: number
+  casualLeaveAvailable?: number
+  attendanceHistory?: AttendanceRecord[]
+  leaveHistory?: LeaveHistoryItem[]
 }
 
 interface TimeOffRequest {
@@ -59,7 +82,22 @@ const INITIAL_EMPLOYEES: Employee[] = [
     hobbies: 'Building side projects, playing chess, listening to tech podcasts, and exploring nature.',
     skills: ['TypeScript', 'React', 'Python', 'Django', 'REST APIs', 'UI/UX Design'],
     certifications: ['AWS Certified Developer', 'Meta Front-End Certificate', 'Scrum Master'],
-    initials: 'JD'
+    initials: 'JD',
+    paidLeaveAvailable: 24,
+    sickLeaveAvailable: 7,
+    casualLeaveAvailable: 5,
+    attendanceHistory: [
+      { date: '22 Oct 2025', status: 'Present', checkIn: '10:00 AM', checkOut: '19:00 PM', workHours: '09:00' },
+      { date: '21 Oct 2025', status: 'Present', checkIn: '09:55 AM', checkOut: '19:05 PM', workHours: '09:10' },
+      { date: '20 Oct 2025', status: 'Late', checkIn: '10:45 AM', checkOut: '19:30 PM', workHours: '08:45' },
+      { date: '19 Oct 2025', status: 'On Leave', checkIn: '-:-', checkOut: '-:-', workHours: '00:00' },
+      { date: '18 Oct 2025', status: 'Present', checkIn: '09:50 AM', checkOut: '19:00 PM', workHours: '09:10' }
+    ],
+    leaveHistory: [
+      { id: 'lh1', leaveType: 'Paid Time Off', startDate: '28/10/2025', endDate: '28/10/2025', days: 1, reason: 'Family event and personal commitments', status: 'Pending' },
+      { id: 'lh2', leaveType: 'Sick Time Off', startDate: '15/09/2025', endDate: '16/09/2025', days: 2, reason: 'High fever and medical rest advised by physician', status: 'Approved' },
+      { id: 'lh3', leaveType: 'Casual Leave', startDate: '05/08/2025', endDate: '05/08/2025', days: 1, reason: 'Urgent home maintenance works', status: 'Approved' }
+    ]
   },
   {
     id: '2',
@@ -81,7 +119,18 @@ const INITIAL_EMPLOYEES: Employee[] = [
     hobbies: 'Open source contribution, cycling, and web performance tuning.',
     skills: ['SEO', 'Digital Marketing', 'HubSpot', 'Content Strategy'],
     certifications: ['Google Analytics Professional'],
-    initials: 'JS'
+    initials: 'JS',
+    paidLeaveAvailable: 20,
+    sickLeaveAvailable: 5,
+    casualLeaveAvailable: 4,
+    attendanceHistory: [
+      { date: '22 Oct 2025', status: 'Present', checkIn: '10:00 AM', checkOut: '19:00 PM', workHours: '09:00' },
+      { date: '21 Oct 2025', status: 'Present', checkIn: '10:00 AM', checkOut: '19:00 PM', workHours: '09:00' },
+      { date: '20 Oct 2025', status: 'Present', checkIn: '09:45 AM', checkOut: '18:50 PM', workHours: '09:05' }
+    ],
+    leaveHistory: [
+      { id: 'lh4', leaveType: 'Sick Time Off', startDate: '01/11/2025', endDate: '03/11/2025', days: 3, reason: 'Dental surgery and recovery rest', status: 'Approved' }
+    ]
   },
   {
     id: '3',
@@ -103,7 +152,17 @@ const INITIAL_EMPLOYEES: Employee[] = [
     hobbies: 'UI motion design, photography, and interior styling.',
     skills: ['Salesforce', 'B2B Sales', 'Negotiation'],
     certifications: ['Certified Sales Professional'],
-    initials: 'AW'
+    initials: 'AW',
+    paidLeaveAvailable: 18,
+    sickLeaveAvailable: 6,
+    casualLeaveAvailable: 3,
+    attendanceHistory: [
+      { date: '22 Oct 2025', status: 'Absent', checkIn: '-:-', checkOut: '-:-', workHours: '00:00' },
+      { date: '21 Oct 2025', status: 'Present', checkIn: '09:30 AM', checkOut: '18:30 PM', workHours: '09:00' }
+    ],
+    leaveHistory: [
+      { id: 'lh5', leaveType: 'Paid Time Off', startDate: '12/11/2025', endDate: '15/11/2025', days: 4, reason: 'Annual family vacation trip', status: 'Pending' }
+    ]
   },
   {
     id: '4',
@@ -125,7 +184,16 @@ const INITIAL_EMPLOYEES: Employee[] = [
     hobbies: 'Content writing, marathon running, and digital media analytics.',
     skills: ['React', 'Node.js', 'PostgreSQL', 'Docker'],
     certifications: ['AWS Solutions Architect'],
-    initials: 'MK'
+    initials: 'MK',
+    paidLeaveAvailable: 22,
+    sickLeaveAvailable: 7,
+    casualLeaveAvailable: 5,
+    attendanceHistory: [
+      { date: '22 Oct 2025', status: 'Present', checkIn: '09:00 AM', checkOut: '17:00 PM', workHours: '08:00' }
+    ],
+    leaveHistory: [
+      { id: 'lh6', leaveType: 'Paid Time Off', startDate: '20/11/2025', endDate: '20/11/2025', days: 1, reason: 'Personal work', status: 'Refused' }
+    ]
   },
   {
     id: '5',
@@ -147,7 +215,14 @@ const INITIAL_EMPLOYEES: Employee[] = [
     hobbies: 'Building side projects, playing chess.',
     skills: ['TypeScript', 'React', 'Python'],
     certifications: ['AWS Certified Developer'],
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    paidLeaveAvailable: 24,
+    sickLeaveAvailable: 7,
+    casualLeaveAvailable: 5,
+    attendanceHistory: [
+      { date: '22 Oct 2025', status: 'Present', checkIn: '09:00 AM', checkOut: '06:00 PM', workHours: '09:00' }
+    ],
+    leaveHistory: []
   },
   {
     id: '6',
@@ -169,7 +244,14 @@ const INITIAL_EMPLOYEES: Employee[] = [
     hobbies: 'Sketching, hiking.',
     skills: ['Figma', 'Accessibility', 'React'],
     certifications: ['CPACC Accessibility Certification'],
-    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    paidLeaveAvailable: 21,
+    sickLeaveAvailable: 6,
+    casualLeaveAvailable: 4,
+    attendanceHistory: [
+      { date: '22 Oct 2025', status: 'Present', checkIn: '09:10 AM', checkOut: '18:00 PM', workHours: '08:50' }
+    ],
+    leaveHistory: []
   }
 ]
 
@@ -217,7 +299,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<'Employees' | 'Attendance' | 'Time Off'>('Employees')
   const [employees, setEmployees] = useState<Employee[]>(INITIAL_EMPLOYEES)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
-  const [detailTab, setDetailTab] = useState<'Resume' | 'Private Info' | 'Salary Info'>('Private Info')
+  const [detailTab, setDetailTab] = useState<'Private Info' | 'Attendance History' | 'Leave & Time Off' | 'Resume' | 'Salary Info'>('Private Info')
   
   // Attendance view mode option
   const [attendanceViewMode, setAttendanceViewMode] = useState<'Day' | 'Overview'>('Overview')
@@ -262,6 +344,13 @@ function App() {
     status: 'Present'
   })
 
+  // Open employee profile helper
+  const openEmployeeProfile = (emp: Employee) => {
+    setSelectedEmployee(emp)
+    setActiveTab('Employees')
+    setDetailTab('Private Info')
+  }
+
   // Sign in handler
   const handleAuthSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -292,7 +381,14 @@ function App() {
       hobbies: 'Reading and coding.',
       skills: ['TypeScript', 'Web Development'],
       certifications: ['DayFlow Onboarding'],
-      initials
+      initials,
+      paidLeaveAvailable: 24,
+      sickLeaveAvailable: 7,
+      casualLeaveAvailable: 5,
+      attendanceHistory: [
+        { date: '22 Oct 2025', status: newEmp.status, checkIn: newEmp.status === 'Present' ? '10:00 AM' : '-:-', checkOut: newEmp.status === 'Present' ? '19:00 PM' : '-:-', workHours: newEmp.status === 'Present' ? '09:00' : '00:00' }
+      ],
+      leaveHistory: []
     }
     setEmployees([created, ...employees])
     setSelectedEmployee(created)
@@ -487,7 +583,7 @@ function App() {
         <div className="wireframe-subheader">
           <div className="subheader-title-group">
             <h1 className="subheader-title">
-              {selectedEmployee ? 'My Profile' : 'Employees Directory'}
+              {selectedEmployee ? 'Employee Profile & Details' : 'Employees Directory'}
             </h1>
             {selectedEmployee && (
               <button className="btn-back-directory" onClick={() => setSelectedEmployee(null)}>
@@ -497,9 +593,11 @@ function App() {
           </div>
 
           <div className="subheader-actions">
-            <button className="btn-add-new-emp" onClick={() => setIsModalOpen(true)}>
-              + Add Employee
-            </button>
+            {!selectedEmployee && (
+              <button className="btn-add-new-emp" onClick={() => setIsModalOpen(true)}>
+                + Add Employee
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -509,7 +607,7 @@ function App() {
         {/* ==================== TAB 1: EMPLOYEES ==================== */}
         {activeTab === 'Employees' && (
           selectedEmployee ? (
-            /* Profile Details View */
+            /* Detailed Profile View with Attendance & Leaves Track Record */
             <div className="profile-format-view">
               {/* Banner Header Card */}
               <div className="profile-banner-box">
@@ -577,16 +675,28 @@ function App() {
               {/* Profile Inner Tabs Bar */}
               <div className="wireframe-tabs-bar">
                 <button 
-                  className={`wireframe-tab-btn ${detailTab === 'Resume' ? 'active' : ''}`}
-                  onClick={() => setDetailTab('Resume')}
-                >
-                  Resume
-                </button>
-                <button 
                   className={`wireframe-tab-btn ${detailTab === 'Private Info' ? 'active' : ''}`}
                   onClick={() => setDetailTab('Private Info')}
                 >
                   Private Info
+                </button>
+                <button 
+                  className={`wireframe-tab-btn ${detailTab === 'Attendance History' ? 'active' : ''}`}
+                  onClick={() => setDetailTab('Attendance History')}
+                >
+                  Attendance Track Record
+                </button>
+                <button 
+                  className={`wireframe-tab-btn ${detailTab === 'Leave & Time Off' ? 'active' : ''}`}
+                  onClick={() => setDetailTab('Leave & Time Off')}
+                >
+                  Leaves & Time Off
+                </button>
+                <button 
+                  className={`wireframe-tab-btn ${detailTab === 'Resume' ? 'active' : ''}`}
+                  onClick={() => setDetailTab('Resume')}
+                >
+                  Resume
                 </button>
                 <button 
                   className={`wireframe-tab-btn ${detailTab === 'Salary Info' ? 'active' : ''}`}
@@ -596,7 +706,7 @@ function App() {
                 </button>
               </div>
 
-              {/* Tab Content Section */}
+              {/* TAB CONTENT: Private Info */}
               {detailTab === 'Private Info' && (
                 <div className="wireframe-tab-grid">
                   {/* Left Wide Column */}
@@ -694,6 +804,136 @@ function App() {
                 </div>
               )}
 
+              {/* TAB CONTENT: Attendance Track Record */}
+              {detailTab === 'Attendance History' && (
+                <div className="wireframe-single-card">
+                  <div className="content-card-box">
+                    <div className="card-header-line">
+                      <h3 className="box-title">Attendance Track Record</h3>
+                      <span className="overview-badge">Historical Attendance Log</span>
+                    </div>
+
+                    {/* Attendance Metric Mini Badges */}
+                    <div className="attendance-track-summary-grid">
+                      <div className="track-summary-box">
+                        <span className="track-val">18 Days</span>
+                        <span className="track-lbl">Present (This Month)</span>
+                      </div>
+                      <div className="track-summary-box">
+                        <span className="track-val">1 Day</span>
+                        <span className="track-lbl">Late Arrivals</span>
+                      </div>
+                      <div className="track-summary-box">
+                        <span className="track-val">1 Day</span>
+                        <span className="track-lbl">Approved Absences</span>
+                      </div>
+                    </div>
+
+                    {/* Log Table */}
+                    <div className="table-wrapper-box">
+                      <table className="profile-record-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Check In</th>
+                            <th>Check Out</th>
+                            <th>Work Hours</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(selectedEmployee.attendanceHistory || [
+                            { date: '22 Oct 2025', status: selectedEmployee.status, checkIn: selectedEmployee.checkIn || '10:00 AM', checkOut: selectedEmployee.checkOut || '19:00 PM', workHours: selectedEmployee.workHours || '09:00' }
+                          ]).map((log, i) => (
+                            <tr key={i}>
+                              <td><strong>{log.date}</strong></td>
+                              <td>
+                                <span className={`status-pill-wireframe ${log.status === 'Present' ? 'pill-present' : 'pill-absent'}`}>
+                                  {log.status}
+                                </span>
+                              </td>
+                              <td>{log.checkIn}</td>
+                              <td>{log.checkOut}</td>
+                              <td>{log.workHours}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB CONTENT: Leaves & Time Off */}
+              {detailTab === 'Leave & Time Off' && (
+                <div className="wireframe-single-card">
+                  <div className="content-card-box">
+                    <div className="card-header-line">
+                      <h3 className="box-title">Available Leaves & Leave History</h3>
+                      <span className="overview-badge">Leave Management</span>
+                    </div>
+
+                    {/* Available Leaves Balance Grid */}
+                    <div className="timeoff-balance-cards-grid margin-bottom-spacer">
+                      <div className="balance-card balance-paid">
+                        <span className="balance-title">Paid Time Off</span>
+                        <span className="balance-days">{selectedEmployee.paidLeaveAvailable ?? 24} Days Available</span>
+                      </div>
+                      <div className="balance-card balance-sick">
+                        <span className="balance-title">Sick Time Off</span>
+                        <span className="balance-days">{selectedEmployee.sickLeaveAvailable ?? 7} Days Available</span>
+                      </div>
+                      <div className="balance-card balance-casual">
+                        <span className="balance-title">Casual Leave</span>
+                        <span className="balance-days">{selectedEmployee.casualLeaveAvailable ?? 5} Days Available</span>
+                      </div>
+                    </div>
+
+                    {/* Details of Previous Leaves Taken & Reason */}
+                    <h4 className="section-subheading">Previous Leaves Taken & Reasons</h4>
+                    <div className="table-wrapper-box">
+                      <table className="profile-record-table">
+                        <thead>
+                          <tr>
+                            <th>Leave Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Duration</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(selectedEmployee.leaveHistory && selectedEmployee.leaveHistory.length > 0) ? (
+                            selectedEmployee.leaveHistory.map(lh => (
+                              <tr key={lh.id}>
+                                <td className="type-blue-cell">{lh.leaveType}</td>
+                                <td>{lh.startDate}</td>
+                                <td>{lh.endDate}</td>
+                                <td>{lh.days} Day{lh.days > 1 ? 's' : ''}</td>
+                                <td className="reason-text-cell">{lh.reason}</td>
+                                <td>
+                                  <span className={`timeoff-status-badge status-${lh.status.toLowerCase()}`}>
+                                    {lh.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={6} style={{ textAlign: 'center', color: '#64748b', padding: '24px' }}>
+                                No previous leave records found for {selectedEmployee.name}.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB CONTENT: Resume */}
               {detailTab === 'Resume' && (
                 <div className="wireframe-single-card">
                   <div className="content-card-box">
@@ -714,6 +954,7 @@ function App() {
                 </div>
               )}
 
+              {/* TAB CONTENT: Salary Info */}
               {detailTab === 'Salary Info' && (
                 <div className="wireframe-single-card">
                   <div className="content-card-box">
@@ -779,7 +1020,7 @@ function App() {
                   <div 
                     key={emp.id} 
                     className="directory-emp-card"
-                    onClick={() => setSelectedEmployee(emp)}
+                    onClick={() => openEmployeeProfile(emp)}
                   >
                     <div className="card-top-avatar">
                       {emp.avatarUrl ? (
@@ -991,12 +1232,12 @@ function App() {
                     return (
                       <tr key={emp.id} className={isAbsent ? 'row-absent' : ''}>
                         <td>
-                          <div className="emp-cell">
+                          <div className="emp-cell clickable-emp-row" onClick={() => openEmployeeProfile(emp)}>
                             <div className={`emp-cell-avatar ${isAbsent ? 'avatar-absent' : 'avatar-present'}`}>
                               {emp.initials || emp.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
                             </div>
                             <div className="emp-cell-info">
-                              <span className="emp-cell-name">{emp.name}</span>
+                              <span className="emp-cell-name clickable-link-name">{emp.name}</span>
                               <span className="emp-cell-dept">{emp.dept}</span>
                             </div>
                           </div>
@@ -1013,7 +1254,7 @@ function App() {
                           {emp.status === 'Present' ? '01:00' : '00:00'}
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          <button className="row-action-pencil" title="Edit Record">✎</button>
+                          <button className="row-action-pencil" title="View Details" onClick={() => openEmployeeProfile(emp)}>✎</button>
                         </td>
                       </tr>
                     )
@@ -1106,37 +1347,50 @@ function App() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTimeOffRequests.map(req => (
-                    <tr key={req.id}>
-                      <td className="emp-name-cell">[{req.employeeName}]</td>
-                      <td>{req.startDate}</td>
-                      <td>{req.endDate}</td>
-                      <td className="type-blue-cell">{req.timeOffType}</td>
-                      <td>
-                        <div className="timeoff-status-cell-wrap">
-                          <span className={`timeoff-status-badge status-${req.status.toLowerCase()}`}>
-                            {req.status}
+                  {filteredTimeOffRequests.map(req => {
+                    const targetEmp = employees.find(e => e.name === req.employeeName)
+                    return (
+                      <tr key={req.id}>
+                        <td className="emp-name-cell">
+                          <span 
+                            className="clickable-link-name"
+                            onClick={() => {
+                              if (targetEmp) openEmployeeProfile(targetEmp)
+                            }}
+                            title="Click to view employee details"
+                          >
+                            [{req.employeeName}]
                           </span>
-                          <div className="approval-action-boxes">
-                            <button 
-                              className="box-btn-reject"
-                              title="Refuse Request"
-                              onClick={() => handleRejectLeave(req.id)}
-                            >
-                              ✖
-                            </button>
-                            <button 
-                              className="box-btn-approve"
-                              title="Approve Request"
-                              onClick={() => handleApproveLeave(req.id)}
-                            >
-                              ✔
-                            </button>
+                        </td>
+                        <td>{req.startDate}</td>
+                        <td>{req.endDate}</td>
+                        <td className="type-blue-cell">{req.timeOffType}</td>
+                        <td>
+                          <div className="timeoff-status-cell-wrap">
+                            <span className={`timeoff-status-badge status-${req.status.toLowerCase()}`}>
+                              {req.status}
+                            </span>
+                            <div className="approval-action-boxes">
+                              <button 
+                                className="box-btn-reject"
+                                title="Refuse Request"
+                                onClick={() => handleRejectLeave(req.id)}
+                              >
+                                ✖
+                              </button>
+                              <button 
+                                className="box-btn-approve"
+                                title="Approve Request"
+                                onClick={() => handleApproveLeave(req.id)}
+                              >
+                                ✔
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
