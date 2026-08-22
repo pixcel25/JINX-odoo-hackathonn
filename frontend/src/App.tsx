@@ -322,6 +322,11 @@ function App() {
     e.preventDefault()
     setAuthError('')
     setAuthSuccess('')
+    // Temporary demo access: allow the login form to submit with both fields blank.
+    if (mode === 'login' && !form.email.trim() && !form.password) {
+      setIsAuthenticated(true)
+      return
+    }
     const nextErrors: FormErrors = {}
     const email = form.email.trim().toLowerCase()
     if (!email) nextErrors.email = 'Work email is required.'

@@ -1194,58 +1194,6 @@ input[aria-invalid='true'] {
   border-bottom: 1px solid #cbd5e1;
 }
 
-/* Tabs Bar */
-.wireframe-tabs-bar {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  max-width: 100%;
-  gap: 4px;
-  background-color: #f1f5f9;
-  padding: 4px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  overflow-x: auto;
-  scrollbar-width: none;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
-}
-
-.wireframe-tabs-bar::-webkit-scrollbar {
-  display: none;
-}
-
-.wireframe-tab-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 36px;
-  min-height: 36px;
-  padding: 0 18px;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  background-color: transparent;
-  color: #64748b;
-  font-size: 13.5px;
-  font-weight: 600;
-  line-height: 1;
-  white-space: nowrap;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: all 0.15s ease-in-out;
-}
-
-.wireframe-tab-btn:hover {
-  background-color: rgba(255, 255, 255, 0.7);
-  color: #0f172a;
-}
-
-.wireframe-tab-btn.active {
-  background-color: #197344;
-  color: #ffffff;
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgba(25, 115, 68, 0.22);
-}
-
 /* Content Grid */
 .wireframe-tab-grid {
   display: grid;
@@ -2224,10 +2172,11 @@ input[aria-invalid='true'] {
   padding: 4px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-   width: 100%;
+  width: 100%;
   max-width: 100%;
+  min-height: 46px;
   gap: 4px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -2243,16 +2192,17 @@ input[aria-invalid='true'] {
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-   flex-shrink: 0;
-  height: 36px;
-  min-height: 36px;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 38px;
+  min-height: 38px;
   padding: 0 18px;
-  border: 1px solid transparent;
+  border: 1px solid #dbe3ec;
   border-radius: 7px;
   font-size: 13.5px;
   font-weight: 600;
   line-height: 1;
-  background-color: transparent;
+  background-color: #ffffff;
   color: #64748b;
   cursor: pointer;
   transition: all 0.15s ease-in-out;
@@ -2265,9 +2215,17 @@ input[aria-invalid='true'] {
 
 .profile-popup-modal .wireframe-tab-btn.active {
   background-color: #197344;
+  border-color: #197344;
   color: #ffffff;
   font-weight: 700;
   box-shadow: 0 2px 6px rgba(25, 115, 68, 0.22);
+}
+
+@media (max-width: 600px) {
+  .profile-popup-modal .wireframe-tab-btn {
+    flex: 0 0 auto;
+    min-width: 145px;
+  }
 }
 
 /* Leaves & Time Off Modal Styles */
@@ -2335,7 +2293,5 @@ input[aria-invalid='true'] {
   color: #be123c;
   border: 1px solid #fecdd3;
 }
-
-
 
 
