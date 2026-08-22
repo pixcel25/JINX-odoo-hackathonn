@@ -1,29 +1,22 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { Employee } from './src/auth/authService';
-import { LandingScreen, LoginScreen } from './src/screens/AuthScreens';
 import { HrmsApp } from './src/application/HrmsApp';
+import { LandingScreen, LoginScreen } from './src/screens/AuthScreens';
 
 export default function App() {
-  const [screen, setScreen] = useState<'landing' | 'login' | 'home'>('landing');
-  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [screen, setScreen] = useState<'landing' | 'login' | 'app'>('landing');
 
-  if (screen === 'home' && employee) {
+  if (screen === 'login') {
     return (
       <>
-        <HrmsApp />
+        <LoginScreen onAuthenticated={() => setScreen('app')} onBack={() => setScreen('landing')} />
         <StatusBar style="dark" />
       </>
     );
   }
 
-  if (screen === 'login') {
-    return (
-      <>
-        <LoginScreen onAuthenticated={(signedInEmployee) => { setEmployee(signedInEmployee); setScreen('home'); }} onBack={() => setScreen('landing')} />
-        <StatusBar style="dark" />
-      </>
-    );
+  if (screen === 'app') {
+    return <HrmsApp />;
   }
 
   return (

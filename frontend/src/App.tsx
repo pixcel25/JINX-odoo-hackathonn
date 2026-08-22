@@ -20,6 +20,11 @@ function validPassword(password: string) {
   return password.length >= 10 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password)
 }
 
+function generateEmployeePassword(company: string) {
+  const companyCode = company.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
+  return companyCode ? `${companyCode}123` : ''
+}
+
 function csrfCookie() {
   return document.cookie.split('; ').find((item) => item.startsWith('csrftoken='))?.split('=')[1]
 }
@@ -300,18 +305,24 @@ function App() {
 
   // New Employee form state
   const [newEmp, setNewEmp] = useState<{
+    company: string
     name: string
-    title: string
-    empId: string
-    dept: string
-    status: Employee['status']
+    email: string
+    phone: string
+    password: string
+    confirmPassword: string
   }>({
+    company: '',
     name: '',
-    title: '',
-    empId: '',
-    dept: dashboardData.defaultDepartment,
-    status: dashboardData.defaultAttendanceStatus as Employee['status']
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
   })
+  const [employeeFormError, setEmployeeFormError] = useState('')
+  const [employeeFormSuccess, setEmployeeFormSuccess] = useState('')
+  const [logoFileName, setLogoFileName] = useState('')
+  const [employeeFormLoading, setEmployeeFormLoading] = useState(false)
 
   // Open employee details modal popup handler
   const openEmployeePopup = (emp: Employee) => {
@@ -356,43 +367,71 @@ function App() {
     } finally { setAuthLoading(false) }
   }
 
-  const handleAddEmployee = (e: FormEvent) => {
+  const handleAddEmployee = async (e: FormEvent) => {
     e.preventDefault()
-    if (!newEmp.name.trim()) return
-    const initials = newEmp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-    const created: Employee = {
-      id: Date.now().toString(),
-      name: newEmp.name,
-      title: newEmp.title || 'Team Member',
-      empId: newEmp.empId || `EMP-${Math.floor(1000 + Math.random() * 9000)}`,
-      dept: newEmp.dept,
-      status: newEmp.status,
-      checkIn: newEmp.status === 'Present' ? '10:00 AM' : '-:-',
-      checkOut: newEmp.status === 'Present' ? '19:00 PM' : '-:-',
-      workHours: newEmp.status === 'Present' ? '09:00' : '00:00',
-      email: `${newEmp.name.toLowerCase().replace(/\s+/g, '.')}@dayflow.com`,
-      phone: '+91 9876543210',
-      company: 'DayFlow Technologies',
-      manager: 'Michael Chang',
-      location: 'Goa, India',
-      about: 'New team member profile.',
-      jobLove: 'Excited to contribute to DayFlow development.',
-      hobbies: 'Reading and coding.',
-      skills: ['TypeScript', 'Web Development'],
-      certifications: ['DayFlow Onboarding'],
-      initials,
-      paidLeaveAvailable: 24,
-      sickLeaveAvailable: 7,
-      casualLeaveAvailable: 5,
-      attendanceHistory: [
-        { date: '22 Oct 2025', status: newEmp.status, checkIn: newEmp.status === 'Present' ? '10:00 AM' : '-:-', checkOut: newEmp.status === 'Present' ? '19:00 PM' : '-:-', workHours: newEmp.status === 'Present' ? '09:00' : '00:00' }
-      ],
-      leaveHistory: []
+    setEmployeeFormSuccess('')
+    if (newEmp.password !== newEmp.confirmPassword) {
+      setEmployeeFormError('Passwords do not match.')
+      return
     }
-    setEmployees([created, ...employees])
-    openEmployeePopup(created)
-    setNewEmp({ name: '', title: '', empId: '', dept: dashboardData.defaultDepartment, status: dashboardData.defaultAttendanceStatus as Employee['status'] })
-    setIsModalOpen(false)
+    setEmployeeFormError('')
+    setEmployeeFormLoading(true)
+    try {
+      const token = await getCsrfToken()
+      const response = await fetch(`${API_URL}/auth/employees/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'X-CSRFToken': token } : {}) },
+        body: JSON.stringify({
+          company: newEmp.company,
+          name: newEmp.name,
+          email: newEmp.email,
+          phone: newEmp.phone,
+          password: newEmp.password,
+        }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error ?? 'Unable to add this employee.')
+
+      const initials = newEmp.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+      const created: Employee = {
+        id: String(data.id),
+        name: data.name,
+        title: 'Team Member',
+        empId: data.employeeId,
+        dept: dashboardData.defaultDepartment,
+        status: dashboardData.defaultAttendanceStatus as Employee['status'],
+        checkIn: '10:00 AM',
+        checkOut: '19:00 PM',
+        workHours: '09:00',
+        email: data.email,
+        phone: data.phone,
+        company: data.company,
+        manager: 'Michael Chang',
+        location: 'Goa, India',
+        about: 'New team member profile.',
+        jobLove: 'Excited to contribute to DayFlow development.',
+        hobbies: 'Reading and coding.',
+        skills: ['TypeScript', 'Web Development'],
+        certifications: ['DayFlow Onboarding'],
+        initials,
+        paidLeaveAvailable: 24,
+        sickLeaveAvailable: 7,
+        casualLeaveAvailable: 5,
+        attendanceHistory: [
+          { date: '22 Oct 2025', status: dashboardData.defaultAttendanceStatus as Employee['status'], checkIn: '10:00 AM', checkOut: '19:00 PM', workHours: '09:00' }
+        ],
+        leaveHistory: []
+      }
+      setEmployees(currentEmployees => [created, ...currentEmployees])
+      setNewEmp({ company: '', name: '', email: '', phone: '', password: '', confirmPassword: '' })
+      setLogoFileName('')
+      setEmployeeFormSuccess(`Employee added successfully. Login ID: ${data.employeeId}`)
+    } catch (error) {
+      setEmployeeFormError(error instanceof Error ? error.message : 'A network error occurred. Please try again.')
+    } finally {
+      setEmployeeFormLoading(false)
+    }
   }
 
   // Time off actions
@@ -552,7 +591,7 @@ function App() {
           </div>
 
           <div className="subheader-actions">
-            <button className="btn-add-new-emp" onClick={() => setIsModalOpen(true)}>
+            <button type="button" className="btn-add-new-emp" onClick={() => { setEmployeeFormError(''); setEmployeeFormSuccess(''); setIsModalOpen(true) }}>
               + Add Employee
             </button>
           </div>
@@ -639,7 +678,7 @@ function App() {
                     <circle cx="11" cy="11" r="8"/>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                   </svg>
-                  <input 
+                  <input
                     type="text" 
                     placeholder="Search employee..." 
                     value={searchQuery}
@@ -962,67 +1001,112 @@ function App() {
       {/* New Employee Modal */}
       {isModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content employee-signup-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Add New Employee</h2>
+              <h2>Add Employee</h2>
               <button className="close-btn" onClick={() => setIsModalOpen(false)}>✕</button>
             </div>
             <form onSubmit={handleAddEmployee} className="modal-form">
+              <div className="employee-logo-field">
+                <div className="logo-placeholder">d</div>
+                <div>
+                  <strong>App/Web Logo</strong>
+                  <label className="logo-upload" htmlFor="employee-logo">⇧ Upload Logo</label>
+                  <input
+                    id="employee-logo"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setLogoFileName(e.target.files?.[0]?.name ?? '')}
+                  />
+                  {logoFileName && <span className="logo-file-name">{logoFileName}</span>}
+                </div>
+              </div>
+
               <div className="modal-field">
-                <label>Full Name</label>
+                <label htmlFor="employee-company">Company Name</label>
+                <input
+                  id="employee-company"
+                  type="text"
+                  required
+                  placeholder="Enter company name"
+                  value={newEmp.company}
+                  onChange={(e) => {
+                    const company = e.target.value
+                    const password = generateEmployeePassword(company)
+                    setNewEmp({ ...newEmp, company, password, confirmPassword: password })
+                  }}
+                />
+              </div>
+
+              <div className="modal-field">
+                <label htmlFor="employee-name">Name</label>
                 <input 
+                  id="employee-name"
                   type="text" 
-                  required 
-                  placeholder="e.g. Sarah Jenkins"
+                  required
+                  placeholder="Enter employee name"
                   value={newEmp.name}
                   onChange={(e) => setNewEmp({ ...newEmp, name: e.target.value })}
                 />
               </div>
 
               <div className="modal-field">
-                <label>Job Title</label>
+                <label htmlFor="employee-email">Email</label>
                 <input 
-                  type="text" 
-                  placeholder="e.g. UX Designer"
-                  value={newEmp.title}
-                  onChange={(e) => setNewEmp({ ...newEmp, title: e.target.value })}
+                  id="employee-email"
+                  type="email"
+                  required
+                  placeholder="employee@company.com"
+                  value={newEmp.email}
+                  onChange={(e) => setNewEmp({ ...newEmp, email: e.target.value })}
                 />
               </div>
 
               <div className="modal-field">
-                <label>Employee ID</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. EMP-2041"
-                  value={newEmp.empId}
-                  onChange={(e) => setNewEmp({ ...newEmp, empId: e.target.value })}
+                <label htmlFor="employee-phone">Phone</label>
+                <input
+                  id="employee-phone"
+                  type="tel"
+                  required
+                  placeholder="Enter phone number"
+                  value={newEmp.phone}
+                  onChange={(e) => setNewEmp({ ...newEmp, phone: e.target.value })}
                 />
               </div>
 
               <div className="modal-field">
-                <label>Department</label>
-                <select 
-                  value={newEmp.dept}
-                  onChange={(e) => setNewEmp({ ...newEmp, dept: e.target.value })}
-                >
-                  {dashboardData.departments.map((department) => <option key={department} value={department}>{department}</option>)}
-                </select>
+                <label htmlFor="employee-password">Password</label>
+                <input
+                  id="employee-password"
+                  type="password"
+                  required
+                  minLength={8}
+                  placeholder="Generated from company name"
+                  readOnly
+                  value={newEmp.password}
+                />
               </div>
 
               <div className="modal-field">
-                <label>Attendance Status</label>
-                <select 
-                  value={newEmp.status}
-                  onChange={(e) => setNewEmp({ ...newEmp, status: e.target.value as Employee['status'] })}
-                >
-                  {dashboardData.attendanceStatuses.map((status) => <option key={status} value={status}>{status}</option>)}
-                </select>
+                <label htmlFor="employee-confirm-password">Confirm Password</label>
+                <input
+                  id="employee-confirm-password"
+                  type="password"
+                  required
+                  minLength={8}
+                  placeholder="Generated automatically"
+                  readOnly
+                  value={newEmp.confirmPassword}
+                />
               </div>
 
+              {employeeFormError && <div className="alert error" role="alert">{employeeFormError}</div>}
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn-primary">Add Employee</button>
+                <button type="submit" className="btn-primary employee-signup-button" disabled={employeeFormLoading}>
+                  {employeeFormLoading ? 'Saving...' : 'Add Employee'}
+                </button>
               </div>
+              {employeeFormSuccess && <div className="alert success employee-form-success" role="status">{employeeFormSuccess}</div>}
             </form>
           </div>
         </div>
