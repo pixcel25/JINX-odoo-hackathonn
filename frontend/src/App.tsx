@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 // Main admin dashboard: authentication, navigation, employee records, and admin actions.
 import type { FormEvent } from 'react'
 import './App.css'
+import logo from './assets/logo.jpeg'
 import { EmployeeDetailsModal } from './components/EmployeeDetailsModal'
 import type { Employee, ResumeEntry } from './components/EmployeeDetailsModal'
 import { DEFAULT_SALARY_STRUCTURE, EMPTY_SALARY_STRUCTURE } from './data/salary'
@@ -28,10 +29,6 @@ function formatAttendanceDate(date: string) {
 
 function validEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-function validPassword(password: string) {
-  return password.length >= 10 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password)
 }
 
 function csrfCookie() {
@@ -281,7 +278,7 @@ const ADMIN_PROFILE: Employee = {
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [mode, setMode] = useState<Mode>('login')
-  const [form, setForm] = useState({ email: 'admin', password: '1234567890', confirmPassword: '' })
+  const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' })
   const [authErrors, setAuthErrors] = useState<FormErrors>({})
   const [authError, setAuthError] = useState('')
   const [authSuccess, setAuthSuccess] = useState('')
@@ -431,17 +428,11 @@ function App() {
     e.preventDefault()
     setAuthError('')
     setAuthSuccess('')
-    // Temporary demo access: allow the login form to submit with both fields blank.
-    if (mode === 'login' && !form.email.trim() && !form.password) {
-      setIsAuthenticated(true)
-      return
-    }
     const nextErrors: FormErrors = {}
     const email = form.email.trim().toLowerCase()
     if (!email) nextErrors.email = 'Work email is required.'
     else if (!validEmail(email)) nextErrors.email = 'Enter a valid email address.'
     if (!form.password) nextErrors.password = 'Password is required.'
-    else if (mode === 'signup' && !validPassword(form.password)) nextErrors.password = 'Use 10+ characters with upper, lower, and a number.'
     if (mode === 'signup' && form.password !== form.confirmPassword) nextErrors.confirmPassword = 'Passwords do not match.'
     setAuthErrors(nextErrors)
     if (Object.keys(nextErrors).length) return
@@ -594,8 +585,7 @@ function App() {
         <section className="brand-panel">
           <div className="brand-content">
             <div className="brand-badge">
-              <div className="brand-mark">d</div>
-              <h1 className="brand-title">DayFlow</h1>
+              <img className="brand-logo-image" src={logo} alt="DayFlow" />
             </div>
             <div className="brand-card">
               <div className="card-dot"></div>
@@ -612,8 +602,7 @@ function App() {
         <section className="form-panel">
           <div className="form-wrap">
             <div className="mobile-brand">
-              <div className="brand-mark">d</div>
-              <span className="brand-title">DayFlow</span>
+              <img className="brand-logo-image" src={logo} alt="DayFlow" />
             </div>
 
             <div className="admin-badge-tag">ADMIN PORTAL</div>
@@ -621,20 +610,20 @@ function App() {
             <h2>{mode === 'login' ? 'Admin Sign In' : 'Create Admin Account'}</h2>
 
             <div className="mode-switch" role="tablist" aria-label="Authentication mode">
-              <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setForm({ email: 'admin', password: '1234567890', confirmPassword: '' }); setAuthErrors({}); setAuthError(''); setAuthSuccess('') }} role="tab" aria-selected={mode === 'login'}>Sign in</button>
+              <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setForm({ email: '', password: '', confirmPassword: '' }); setAuthErrors({}); setAuthError(''); setAuthSuccess('') }} role="tab" aria-selected={mode === 'login'}>Sign in</button>
               <button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => { setMode('signup'); setForm({ email: '', password: '', confirmPassword: '' }); setAuthErrors({}); setAuthError(''); setAuthSuccess('') }} role="tab" aria-selected={mode === 'signup'}>Sign up</button>
             </div>
 
             <form onSubmit={handleAuthSubmit} noValidate>
               <div className="field-group">
                 <label htmlFor="email">{mode === 'login' ? 'Admin Username / Email' : 'Work Email'}</label>
-                  <input id="email" type="text" autoComplete="username" placeholder={mode === 'login' ? 'admin' : 'admin@company.com'} value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} aria-invalid={Boolean(authErrors.email)} />
+                  <input id="email" type="email" autoComplete="username" placeholder="admin@company.com" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} aria-invalid={Boolean(authErrors.email)} />
                   {authErrors.email && <span className="field-error">{authErrors.email}</span>}
               </div>
 
               <div className="field-group">
                 <label htmlFor="password">Password</label>
-                  <input id="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder={mode === 'login' ? '1234567890' : 'Enter your admin password'} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} aria-invalid={Boolean(authErrors.password)} />
+                  <input id="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder="Enter your admin password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} aria-invalid={Boolean(authErrors.password)} />
                   {authErrors.password && <span className="field-error">{authErrors.password}</span>}
               </div>
 
@@ -667,8 +656,7 @@ function App() {
       <header className="wireframe-navbar">
         <div className="nav-left">
           <div className="company-logo-badge">
-            <span className="logo-icon">d</span>
-            <span className="logo-text">Company Logo</span>
+            <img className="company-logo-image" src={logo} alt="DayFlow" />
           </div>
 
           <nav className="nav-links-bar">

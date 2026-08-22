@@ -7,7 +7,6 @@ import secrets
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.core.mail import send_mail
@@ -61,10 +60,6 @@ def signup_view(request):
         return error('An account with this email already exists.')
     is_staff = (role == 'admin')
     user = User(username=email, email=email, is_staff=is_staff)
-    try:
-        validate_password(password, user)
-    except ValidationError as exc:
-        return error(exc.messages[0])
     user.set_password(password)
     user.save()
     return JsonResponse({'message': f'Account created for {role}.'}, status=201)
@@ -76,9 +71,14 @@ def login_view(request):
     if not values:
         return error('Enter a valid email and password.')
     email, password, role = values
+    user_record = User.objects.filter(username=email).first()
+    if not user_record:
+        return error('No account exists with that email.', 401)
     user = authenticate(request, username=email, password=password)
-    if not user or not user.is_active:
-        return error('Invalid credentials.', 401)
+    if not user:
+        return error('Incorrect password.', 401)
+    if not user.is_active:
+        return error('This account is inactive. Contact an administrator.', 403)
     if role == 'admin' and not user.is_staff:
         return error('Admin access required for this portal.', 403)
     login(request, user)
