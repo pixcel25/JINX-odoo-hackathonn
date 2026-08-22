@@ -5,6 +5,26 @@ import { EmployeeDetailsModal } from './components/EmployeeDetailsModal'
 import type { Employee } from './components/EmployeeDetailsModal'
 
 type Mode = 'login' | 'signup'
+type FormErrors = Record<string, string>
+
+const API_URL = import.meta.env.VITE_API_URL ?? '/api'
+
+function validEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+function validPassword(password: string) {
+  return password.length >= 10 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password)
+}
+
+function csrfCookie() {
+  return document.cookie.split('; ').find((item) => item.startsWith('csrftoken='))?.split('=')[1]
+}
+
+async function getCsrfToken() {
+  await fetch(`${API_URL}/auth/csrf/`, { credentials: 'include' })
+  return csrfCookie()
+}
 
 interface TimeOffRequest {
   id: string
@@ -249,6 +269,10 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [mode, setMode] = useState<Mode>('login')
   const [form, setForm] = useState({ email: '', password: '', confirmPassword: '' })
+  const [authErrors, setAuthErrors] = useState<FormErrors>({})
+  const [authError, setAuthError] = useState('')
+  const [authSuccess, setAuthSuccess] = useState('')
+  const [authLoading, setAuthLoading] = useState(false)
   
   // Navigation state
   const [activeTab, setActiveTab] = useState<'Employees' | 'Attendance' | 'Time Off'>('Employees')
@@ -286,10 +310,41 @@ function App() {
     setProfileModalEmployee(emp)
   }
 
-  // Sign in handler
-  const handleAuthSubmit = (e: FormEvent) => {
+  const handleAuthSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setIsAuthenticated(true)
+    setAuthError('')
+    setAuthSuccess('')
+    if (mode === 'login') {
+      setIsAuthenticated(true)
+      return
+    }
+    const nextErrors: FormErrors = {}
+    const email = form.email.trim().toLowerCase()
+    if (!email) nextErrors.email = 'Work email is required.'
+    else if (!validEmail(email)) nextErrors.email = 'Enter a valid email address.'
+    if (!form.password) nextErrors.password = 'Password is required.'
+    else if (mode === 'signup' && !validPassword(form.password)) nextErrors.password = 'Use 10+ characters with upper, lower, and a number.'
+    if (mode === 'signup' && form.password !== form.confirmPassword) nextErrors.confirmPassword = 'Passwords do not match.'
+    setAuthErrors(nextErrors)
+    if (Object.keys(nextErrors).length) return
+    setAuthLoading(true)
+    try {
+      const token = await getCsrfToken()
+      const response = await fetch(`${API_URL}/auth/${mode}/`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'X-CSRFToken': token } : {}) },
+        body: JSON.stringify({ email, password: form.password }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error ?? 'Unable to complete your request.')
+      if (mode === 'signup') {
+        setMode('login')
+        setForm({ email, password: '', confirmPassword: '' })
+        setAuthSuccess('Account created. You can now sign in.')
+      } else setIsAuthenticated(true)
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : 'A network error occurred. Please try again.')
+    } finally { setAuthLoading(false) }
   }
 
   const handleAddEmployee = (e: FormEvent) => {
@@ -394,30 +449,35 @@ function App() {
             <h2>{mode === 'login' ? 'Admin Sign In' : 'Create Admin Account'}</h2>
 
             <div className="mode-switch" role="tablist" aria-label="Authentication mode">
-              <button className={mode === 'login' ? 'active' : ''} onClick={() => setMode('login')} role="tab" aria-selected={mode === 'login'}>Sign in</button>
-              <button className={mode === 'signup' ? 'active' : ''} onClick={() => setMode('signup')} role="tab" aria-selected={mode === 'signup'}>Sign up</button>
+              <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setAuthErrors({}); setAuthError(''); setAuthSuccess('') }} role="tab" aria-selected={mode === 'login'}>Sign in</button>
+              <button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => { setMode('signup'); setAuthErrors({}); setAuthError(''); setAuthSuccess('') }} role="tab" aria-selected={mode === 'signup'}>Sign up</button>
             </div>
 
             <form onSubmit={handleAuthSubmit} noValidate>
               <div className="field-group">
                 <label htmlFor="email">Work Email</label>
-                <input id="email" type="email" autoComplete="email" placeholder="admin@company.com" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
+                  <input id="email" type="email" autoComplete="email" placeholder="admin@company.com" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} aria-invalid={Boolean(authErrors.email)} />
+                  {authErrors.email && <span className="field-error">{authErrors.email}</span>}
               </div>
 
               <div className="field-group">
                 <label htmlFor="password">Password</label>
-                <input id="password" type="password" autoComplete="current-password" placeholder="Enter your admin password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
+                  <input id="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} placeholder="Enter your admin password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} aria-invalid={Boolean(authErrors.password)} />
+                  {authErrors.password && <span className="field-error">{authErrors.password}</span>}
               </div>
 
               {mode === 'signup' && (
                 <div className="field-group">
                   <label htmlFor="confirmPassword">Confirm Password</label>
-                  <input id="confirmPassword" type="password" autoComplete="new-password" placeholder="Repeat your admin password" value={form.confirmPassword} onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })} />
+                  <input id="confirmPassword" type="password" autoComplete="new-password" placeholder="Repeat your admin password" value={form.confirmPassword} onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })} aria-invalid={Boolean(authErrors.confirmPassword)} />
+                  {authErrors.confirmPassword && <span className="field-error">{authErrors.confirmPassword}</span>}
                 </div>
               )}
 
-              <button className="submit" type="submit">
-                {mode === 'login' ? 'Sign in to Admin Portal' : 'Create Admin Account'} <span>→</span>
+              {authError && <div className="alert error" role="alert">{authError}</div>}
+              {authSuccess && <div className="alert success" role="status">{authSuccess}</div>}
+              <button className="submit" type="submit" disabled={authLoading}>
+                {authLoading ? 'Please wait...' : mode === 'login' ? 'Sign in to Admin Portal' : 'Create Admin Account'} <span>→</span>
               </button>
             </form>
 
